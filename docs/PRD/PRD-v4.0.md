@@ -1,47 +1,47 @@
-# Engineering Quick Service (EQS) Product Requirements Document V4.0
+# 工程快捷服务 (EQS) 产品需求文档 V4.0
 
-> **Document Version**: V4.0  
-> **Creation Date**: 2026-08-07  
-> **Document Status**: Final  
-> **Confidentiality**: Internal Confidential  
-> **Timeline**: 3 months  
-> **Driving Mode**: Spec-driven + Test-driven + AI-driven
-
----
-
-## Document Revision History
-
-| Version | Date       | Author   | Changes                                      |
-|---------|------------|----------|----------------------------------------------|
-| V1.0    | 2026-08-07 | -        | Initial version, merged EQS.md requirements  |
-| V2.0    | 2026-08-07 | -        | Audit: added API, data model, WeChat, tests  |
-| V3.0    | 2026-08-07 | -        | TDD + AI pipeline + domestic model integration |
-| V4.0    | 2026-08-07 | Liu Dongliang (ldl@chzu.edu.cn) | English diagrams, deployment specs, party info |
+> **文档版本**：V4.0  
+> **创建日期**：2026-08-07  
+> **文档状态**：正式版  
+> **机密等级**：内部机密  
+> **工期规划**：3个月  
+> **驱动模式**：规范驱动 + 测试驱动 + AI驱动
 
 ---
 
-## Project Participants
+## 文档修订历史
 
-### Party A (Client)
+| 版本 | 日期 | 修订人 | 修订内容 |
+|------|------|--------|----------|
+| V1.0 | 2026-08-07 | - | 初始版本，整合EQS.md需求，明确技术栈 |
+| V2.0 | 2026-08-07 | - | 审核完善：补充API设计、数据模型、微信集成、测试策略、部署架构 |
+| V3.0 | 2026-08-07 | - | 规范驱动+测试驱动+AI流水线+国产模型集成 |
+| V4.0 | 2026-08-07 | 刘东良 (ldl@chzu.edu.cn) | 图表改英文、补充部署规格、添加参与方信息 |
 
-| Item               | Information |
-|--------------------|-------------|
-| Company Name       | TBD         |
-| Project Manager    | TBD         |
-| Product Manager    | TBD         |
-| Phone              | TBD         |
-| Email              | TBD         |
-| Decision Maker     | TBD         |
+---
 
-### Party B (Developer)
+## 项目参与方
 
-| Item               | Information                     |
-|--------------------|---------------------------------|
-| Name               | Liu Dongliang                   |
-| Role               | Project Lead / Full-stack Dev   |
-| Phone              | TBD                             |
-| Email              | ldl@chzu.edu.cn                 |
-| Tech Stack         | Uni-app + Vue 3 + Go + Gin + GORM |
+### 甲方（需求方）
+
+| 项目 | 信息 |
+|------|------|
+| 公司名称 | 待填写 |
+| 项目负责人 | 待填写 |
+| 产品经理 | 待填写 |
+| 联系电话 | 待填写 |
+| 电子邮箱 | 待填写 |
+| 项目决策人 | 待填写 |
+
+### 乙方（开发方）
+
+| 项目 | 信息 |
+|------|------|
+| 姓名 | 刘东良 |
+| 角色 | 项目负责人 / 全栈开发 |
+| 联系电话 | 待填写 |
+| 电子邮箱 | ldl@chzu.edu.cn |
+| 技术栈 | Uni-app + Vue 3 + Go + Gin + GORM |
 
 ---
 
@@ -90,15 +90,18 @@
 - 对甲方：像"点外卖"一样找工程服务——简单、透明、可控
 - 对服务方：像"滴滴抢单"一样接项目——高效、低成本、有背书
 
-### 1.3 Business Flow
+### 1.3 业务闭环
 
 ```
-Publish Request -> Match/Claim -> Online Contract -> Process Delivery 
-    (File Upload/Approval) -> Result Confirmation -> Milestone/Settlement 
-    -> Review & Credit Accumulation
-```
++-------------------------------------------------------------------+
+|                        BUSINESS FLOW                                |
++-------------------------------------------------------------------+
+  Publish Request -> Match/Claim -> Online Contract -> Delivery
+  -> Result Confirm -> Milestone Settlement -> Credit Accumulation
++-------------------------------------------------------------------+
 
-Note: This is the core business flow from project initiation to completion.
+说明：从发布需求到信用沉淀的完整业务闭环
+```
 
 ### 1.4 项目范围
 
@@ -259,13 +262,10 @@ Note: This is the core business flow from project initiation to completion.
 
 **功能描述**：实时跟踪服务交付进度，类似"物流追踪"体验。
 
-**Status Flow**:
+**状态流转**：
 ```
-Published -> Accepted -> Surveying -> Report Drafting -> Under Review 
-    -> Delivered -> Accepted -> Settled
+已发布 → 已接单 → 勘察中 → 报告编制中 → 审核中 → 已交付 → 验收完成 → 已结算
 ```
-
-Note: Each status transition triggers notifications to relevant parties.
 
 **详细功能**：
 
@@ -386,13 +386,10 @@ Note: Each status transition triggers notifications to relevant parties.
 | 审核记录 | 记录审核历史，支持追溯 | P0 |
 | 资质到期提醒 | 资质到期前30天自动提醒更新 | P1 |
 
-**Audit Flow**:
+**审核流程**：
 ```
-Supplier Submit -> OCR Auto-recognize -> System Pre-audit 
-    -> Manual Review -> Approved/Rejected -> Onboard/Reject
+服务商提交资料 → OCR自动识别 → 系统初审 → 人工复核 → 审核通过/拒绝 → 入驻/驳回
 ```
-
-Note: OCR results must be confirmed by human review before final decision.
 
 #### 5.3.2 合同管理模块
 
@@ -576,7 +573,7 @@ Note: OCR results must be confirmed by human review before final decision.
 | 容器化 | Docker + Docker Compose | 本地开发环境，生产部署 |
 | 反向代理 | Nginx | 负载均衡、静态资源、SSL终端 |
 
-### 7.2 System Architecture
+### 7.2 系统架构图
 
 ```
 +=====================================================================+
@@ -609,9 +606,7 @@ Note: OCR results must be confirmed by human review before final decision.
 |  +----------+  +----------+  +----------+  +----------+             |
 +=====================================================================+
 
-Note: All communication between layers uses HTTPS (TLS 1.3).
-      Redis is used for session caching and rate limiting.
-      COS stores project files (drawings, reports, contracts).
+Note: 所有层间通信使用HTTPS (TLS 1.3)
 ```
 
 ### 7.3 项目结构
@@ -865,13 +860,10 @@ eqs/
 
 ### 9.1 微信小程序登录
 
-**Flow**:
+**流程**：
 ```
-User Open Mini App -> wx.login() Get code -> Backend Exchange openid 
-    -> Generate JWT Token -> Return to Frontend
+用户打开小程序 → wx.login()获取code → 后端换取openid → 生成JWT Token → 返回前端
 ```
-
-Note: JWT token expires in 2 hours. Refresh token required for long sessions.
 
 **接口**：`POST /api/v1/auth/wx-login`
 
@@ -889,13 +881,10 @@ Note: JWT token expires in 2 hours. Refresh token required for long sessions.
 
 ### 9.2 微信支付集成
 
-**Flow**:
+**流程**：
 ```
-User Place Order -> Backend Create Prepay -> Frontend Invoke WeChat Pay 
-    -> Payment Callback -> Update Order Status
+用户下单 → 后端创建预付单 → 前端调起微信支付 → 支付回调 → 更新订单状态
 ```
-
-Note: Payment callback must be verified with WeChat signature.
 
 **接口**：`POST /api/v1/pay/wx-create`
 
@@ -989,7 +978,7 @@ Note: Payment callback must be verified with WeChat signature.
 | OCR识别 | 讯飞星火 | 营业执照、资质证书识别 |
 | 语音转写 | 讯飞星火 | 会议记录、语音消息转文字 |
 
-### 11.2 AI Pipeline Architecture
+### 11.2 AI流水线架构
 
 ```
 +=====================================================================+
@@ -1000,11 +989,11 @@ Note: Payment callback must be verified with WeChat signature.
 |  +--------------+  +--------------+  +--------------+  +----------+ |
 +=====================================================================+
 
-Note: 
-  - Baidu ERNIE:    Contract generation, intelligent Q&A
-  - Alibaba QWen:   Data analysis, report generation
-  - iFlytek Spark:  OCR recognition, speech-to-text
-  - Fallback:       If primary model fails, auto-switch to backup
+说明：
+  - 百度文心：合同生成、智能问答
+  - 阿里通义：数据分析、报告生成
+  - 讯飞星火：OCR识别、语音转文字
+  - 降级策略：主模型失败时自动切换备用模型
 ```
 
 #### 11.2.1 数据采集层
@@ -1336,15 +1325,11 @@ Note:
 | 预发布环境 | 上线前验证 | 生产数据副本 |
 | 生产环境 | 正式运行 | 真实数据 |
 
-### 17.4 Test Flow
+### 17.4 测试流程
 
 ```
-Requirement Review -> Write Test Cases -> Development Complete 
-    -> Unit Test -> API Test -> Integration Test -> E2E Test 
-    -> Performance Test -> Security Test -> Go Live
+需求评审 → 编写测试用例 → 开发完成 → 单元测试 → 接口测试 → 集成测试 → E2E测试 → 性能测试 → 安全测试 → 上线
 ```
-
-Note: All tests must pass before deployment to production.
 
 ### 17.5 测试用例规范
 
@@ -1410,9 +1395,9 @@ jobs:
 
 ---
 
-## 18. Deployment Architecture
+## 18. 部署架构
 
-### 18.1 Network Topology
+### 18.1 网络拓扑
 
 ```
 +=====================================================================+
@@ -1443,15 +1428,14 @@ jobs:
 |  |                     PRIVATE SUBNET                           |    |
 |  |  +--------------+  +--------------+  +--------------+        |    |
 |  |  |    MySQL     |  |    Redis     |  |     COS      |        |    |
-|  |  |    8.0       |  |    7.0       |  |  (Object)    |        |    |
 |  |  +--------------+  +--------------+  +--------------+        |    |
 |  +------------------------------------------------------------+    |
 +=====================================================================+
 
-Note:
-  - Public subnet: Only Nginx has public IP (80/443)
-  - Private subnet: Databases are not exposed to internet
-  - All inter-service communication via internal IP
+说明：
+  - 公网子网：仅Nginx有公网IP (80/443)
+  - 私网子网：数据库不暴露到公网
+  - 所有服务间通信使用内网IP
 ```
 
 ### 18.2 安全组配置
@@ -1483,76 +1467,76 @@ Note:
 | 审计日志 | 数据库 | 180天 |
 | 错误日志 | 云日志服务 | 90天 |
 
-### 18.5 Production Environment Specifications
+### 18.5 生产环境配置清单
 
-#### 18.5.1 Server Specifications (Tencent Cloud)
+#### 18.5.1 腾讯云资源配置
 
-| Resource              | Specification          | Quantity | Monthly Cost (Est.) |
-|-----------------------|------------------------|----------|---------------------|
-| CVM (Backend)         | 2 cores / 4GB RAM     | 1        | ¥120                |
-| MySQL (Cloud DB)      | 2 cores / 4GB RAM     | 1        | ¥200                |
-| Redis (Cloud)         | 1GB                   | 1        | ¥80                 |
-| COS (Object Storage)  | Pay-as-you-go         | -        | ¥50                 |
-| CDN                   | Pay-by-traffic        | -        | ¥30                 |
-| Domain + SSL          | -                     | 1        | ¥10                 |
-| **Total**             |                       |          | **~¥490/month**     |
+| 资源 | 规格 | 数量 | 月费用(预估) |
+|------|------|------|-------------|
+| CVM (后端) | 2核4G | 1台 | ¥120 |
+| 云数据库MySQL | 2核4G | 1个 | ¥200 |
+| 云数据库Redis | 1G | 1个 | ¥80 |
+| 对象存储COS | 按量计费 | - | ¥50 |
+| CDN | 按流量计费 | - | ¥30 |
+| 域名+SSL证书 | - | 1个 | ¥10 |
+| **合计** | | | **约¥490/月** |
 
-#### 18.5.2 Server Configuration Details
+#### 18.5.2 服务器配置详情
 
-| Item                  | Specification                                        |
-|-----------------------|------------------------------------------------------|
-| OS                    | Ubuntu 22.04 LTS / Tencent Linux 3.1                |
-| CPU                   | Intel Xeon Platinum 863 (2.1GHz)                     |
-| Memory                | 4GB DDR4                                             |
-| System Disk           | 50GB SSD Cloud Disk                                  |
-| Data Disk             | 100GB SSD Cloud Disk (for MySQL)                     |
-| Bandwidth             | 5Mbps (pay-by-traffic)                               |
-| Public IP             | Elastic IP (fixed)                                   |
-| VPC                   | Custom VPC (172.16.0.0/12)                           |
-| Security Group        | Inbound: 22/80/443; Outbound: All                    |
+| 配置项 | 规格说明 |
+|--------|----------|
+| 操作系统 | Ubuntu 22.04 LTS / 腾讯云Linux 3.1 |
+| CPU | Intel Xeon Platinum 863 (2.1GHz) |
+| 内存 | 4GB DDR4 |
+| 系统盘 | 50GB SSD云硬盘 |
+| 数据盘 | 100GB SSD云硬盘 (MySQL专用) |
+| 带宽 | 5Mbps (按流量计费) |
+| 公网IP | 弹性IP (固定) |
+| VPC | 自定义VPC (172.16.0.0/12) |
+| 安全组 | 入站: 22/80/443; 出站: 全部 |
 
-#### 18.5.3 Database Configuration
+#### 18.5.3 数据库配置
 
-| Item                  | Value                                                 |
-|-----------------------|------------------------------------------------------|
-| Engine                | MySQL 8.0                                            |
-| Instance Type         | 2 cores / 4GB RAM / 100GB SSD                        |
-| Character Set         | utf8mb4 (Chinese support)                            |
-| Collation             | utf8mb4_unicode_ci                                   |
-| Backup Strategy       | Daily full backup (retained 7 days)                  |
-| High Availability     | Multi-AZ deployment (optional for MVP)               |
-| Connection            | Private network only (no public access)              |
+| 配置项 | 说明 |
+|--------|------|
+| 引擎 | MySQL 8.0 |
+| 实例类型 | 2核4G / 100GB SSD |
+| 字符集 | utf8mb4 (支持中文) |
+| 排序规则 | utf8mb4_unicode_ci |
+| 备份策略 | 每日全量备份 (保留7天) |
+| 高可用 | 多可用区部署 (MVP可选) |
+| 连接方式 | 私网连接 (不开放公网) |
 
-#### 18.5.4 Network Configuration
+#### 18.5.4 网络配置
 
-| Item                  | Value                                                 |
-|-----------------------|------------------------------------------------------|
-| VPC CIDR              | 172.16.0.0/12                                        |
-| Public Subnet         | 172.16.1.0/24                                        |
-| Private Subnet        | 172.16.2.0/24                                        |
-| NAT Gateway           | Required for private subnet internet access          |
-| SSL Certificate       | Free SSL from Tencent Cloud (Let's Encrypt)          |
-| Domain                | eqs.example.com (to be registered)                   |
+| 配置项 | 说明 |
+|--------|------|
+| VPC CIDR | 172.16.0.0/12 |
+| 公网子网 | 172.16.1.0/24 |
+| 私网子网 | 172.16.2.0/24 |
+| NAT网关 | 私网子网访问公网需要 |
+| SSL证书 | 腾讯云免费SSL (Let's Encrypt) |
+| 域名 | eqs.example.com (待注册) |
 
-#### 18.5.5 Deployment Checklist
+#### 18.5.5 部署检查清单
 
-| Step | Task | Status |
-|------|------|--------|
-| 1 | Register domain name | [ ] |
-| 2 | Apply for SSL certificate | [ ] |
-| 3 | Create VPC and subnets | [ ] |
-| 4 | Create CVM instance | [ ] |
-| 5 | Create MySQL instance | [ ] |
-| 6 | Create Redis instance | [ ] |
-| 7 | Create COS bucket | [ ] |
-| 8 | Configure CDN | [ ] |
-| 9 | Install Docker & Docker Compose | [ ] |
-| 10 | Deploy backend services | [ ] |
-| 11 | Configure Nginx | [ ] |
-| 12 | Deploy admin dashboard | [ ] |
-| 13 | Test all functions | [ ] |
-| 14 | Configure monitoring | [ ] |
-| 15 | Go live | [ ] |
+| 步骤 | 任务 | 状态 |
+|------|------|------|
+| 1 | 注册域名 | [ ] |
+| 2 | 申请SSL证书 | [ ] |
+| 3 | 创建VPC和子网 | [ ] |
+| 4 | 创建CVM实例 | [ ] |
+| 5 | 创建MySQL实例 | [ ] |
+| 6 | 创建Redis实例 | [ ] |
+| 7 | 创建COS存储桶 | [ ] |
+| 8 | 配置CDN | [ ] |
+| 9 | 安装Docker & Docker Compose | [ ] |
+| 10 | 部署后端服务 | [ ] |
+| 11 | 配置Nginx | [ ] |
+| 12 | 部署管理后台 | [ ] |
+| 13 | 测试所有功能 | [ ] |
+| 14 | 配置监控告警 | [ ] |
+| 15 | 正式上线 | [ ] |
 
 ---
 
