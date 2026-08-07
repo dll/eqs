@@ -1,0 +1,22 @@
+[Unit]
+Description=EQS Server
+After=network.target mysql.service redis.service
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/eqs/packages/server
+ExecStart=/opt/eqs/packages/server/server
+Restart=always
+RestartSec=5
+Environment=SERVER_PORT=8080
+Environment=DB_HOST=localhost
+Environment=DB_PORT=3306
+Environment=DB_USER=root
+Environment=DB_PASSWORD=${DB_PASSWORD}
+Environment=DB_NAME=eqs
+Environment=REDIS_ADDR=localhost:6379
+Environment=JWT_SECRET=${JWT_SECRET}
+
+[Install]
+WantedBy=multi-user.target

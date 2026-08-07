@@ -1,0 +1,169 @@
+name: CD - Deploy to Tencent Cloud
+
+on:
+  push:
+    branches: [main]
+    types: [completed]
+
+env:
+  TENCENT_CLOUD_SECRET_ID: ${{ secrets.TENCENT_CLOUD_SECRET_ID }}
+  TENCENT_CLOUD_SECRET_KEY: ${{ secrets.TENCENT_CLOUD_SECRET_KEY }}
+  TENCENT_CLOUD_REGION: ap-guangzhou
+
+jobs:
+  build-admin:
+    name: Build Admin
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install pnpm
+        run: npm install -g pnpm
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Build admin
+        run: pnpm --filter @eqs/admin build
+        env:
+          VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL }}
+
+      - name: Upload admin dist
+        uses: actions/upload-artifact@v4
+        with:
+          name: admin-dist
+          path: packages/admin/dist
+
+  build-server:
+    name: Build Server
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Build server binary
+        run: |
+          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o server cmd/server/main.go
+        working-directory: packages/server
+
+      - name: Upload server binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: server-binary
+          path: packages/server/server
+
+  deploy-server:
+    name: Deploy Server to CVM
+    runs-on: ubuntu-latest
+    needs: [build-server]
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download server binary
+        uses: actions/download-artifact@v4
+        with:
+          name: server-binary
+          path: packages/server
+
+      - name: Deploy to Tencent Cloud CVM
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.CVM_HOST }}
+          username: ${{ secrets.CVM_USERNAME }}
+          key: ${{ secrets.CVM_SSH_KEY }}
+          script: |
+            cd /opt/eqs
+            git pull origin main
+            
+            # Build and restart server
+            cd packages/server
+            go build -o server cmd/server/main.go
+            
+            # Restart service
+            sudo systemctl restart eqs-server
+            
+            echo "Server deployed successfully"
+
+  deploy-admin:
+    name: Deploy Admin to COS
+    runs-on: ubuntu-latest
+    needs: [build-admin]
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download admin dist
+        uses: actions/download-artifact@v4
+        with:
+          name: admin-dist
+          path: packages/admin/dist
+
+      - name: Install coscli
+        run: |
+          curl -L https://github.com/tencentyun/coscli/releases/latest/download/coscli-linux -o coscli
+          chmod +x coscli
+          sudo mv coscli /usr/local/bin/
+
+      - name: Deploy to Tencent Cloud COS
+        run: |
+          coscli sync packages/admin/dist/ cos://eqs-admin-${{ vars.ENV }} --delete
+        env:
+          COS_SECRET_ID: ${{ secrets.TENCENT_CLOUD_SECRET_ID }}
+          COS_SECRET_KEY: ${{ secrets.TENCENT_CLOUD_SECRET_KEY }}
+          COS_BUCKET: eqs-admin-${{ vars.ENV }}
+          COS_REGION: ${{ env.TENCENT_CLOUD_REGION }}
+
+  deploy-client:
+    name: Deploy Client to COS
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install pnpm
+        run: npm install -g pnpm
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Build client H5
+        run: pnpm --filter @eqs/client build:h5
+
+      - name: Install coscli
+        run: |
+          curl -L https://github.com/tencentyun/coscli/releases/latest/download/coscli-linux -o coscli
+          chmod +x coscli
+          sudo mv coscli /usr/local/bin/
+
+      - name: Deploy to Tencent Cloud COS
+        run: |
+          coscli sync packages/client/dist/h5/ cos://eqs-client-${{ vars.ENV }} -delete
+        env:
+          COS_SECRET_ID: ${{ secrets.TENCENT_CLOUD_SECRET_ID }}
+          COS_SECRET_KEY: ${{ secrets.TENCENT_CLOUD_SECRET_KEY }}
+          COS_BUCKET: eqs-client-${{ vars.ENV }}
+          COS_REGION: ${{ env.TENCENT_CLOUD_REGION }}
