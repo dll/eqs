@@ -19,12 +19,25 @@ var DB *gorm.DB
 var RDB *redis.Client
 
 func InitDB(cfg *config.Config) (*gorm.DB, error) {
-	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local",
-		cfg.DBUser, cfg.DBPassword, cfg.DBHost, cfg.DBPort, cfg.DBName)
+	var db *gorm.DB
+	var err error
 
-	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{
-		Logger: logger.Default.LogMode(logger.Warn),
-	})
+	if cfg.DBDriver == "sqlite" {
+		// DEV/SQLite 模式：使用文件库 eqs.db，无需 MySQL
+		name := cfg.DBName
+		if name == "" || name == "eqs" || name == "eqs.db" {
+			name = "eqs.db"
+		}
+		db, err = gorm.Open(sqlite.Open(name), &gorm.Config{
+			Logger: logger.Default.LogMode(logger.Warn),
+		})
+	} else {
+		dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local",
+			cfg.DBUser, cfg.DBPassword, cfg.DBHost, cfg.DBPort, cfg.DBName)
+		db, err = gorm.Open(mysql.Open(dsn), &gorm.Config{
+			Logger: logger.Default.LogMode(logger.Warn),
+		})
+	}
 	if err != nil {
 		return nil, err
 	}

@@ -19,7 +19,11 @@ func main() {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}
 
-	_ = model.InitRedis(cfg)
+	if cfg.DBDriver == "sqlite" {
+		log.Printf("SQLite 模式：使用本地文件库 %s，Redis 校验降级为内置模拟", cfg.DBName)
+	} else {
+		_ = model.InitRedis(cfg)
+	}
 
 	r := setupRouter(db, cfg)
 	log.Printf("Server starting on port %s", cfg.ServerPort)
