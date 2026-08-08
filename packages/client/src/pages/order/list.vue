@@ -2,6 +2,7 @@
   <view class="container">
     <view class="filter-bar">
       <view :class="['filter-item', activeStatus === -1 ? 'active' : '']" @tap="filterByStatus(-1)">全部</view>
+      <view :class="['filter-item', activeStatus === 0 ? 'active' : '']" @tap="filterByStatus(0)">待签约</view>
       <view :class="['filter-item', activeStatus === 1 ? 'active' : '']" @tap="filterByStatus(1)">进行中</view>
       <view :class="['filter-item', activeStatus === 2 ? 'active' : '']" @tap="filterByStatus(2)">待验收</view>
       <view :class="['filter-item', activeStatus === 3 ? 'active' : '']" @tap="filterByStatus(3)">已完成</view>
@@ -10,7 +11,7 @@
     <view class="order-list">
       <view class="order-card" v-for="order in orders" :key="order.id" @tap="goToDetail(order.id)">
         <view class="order-info">
-          <text class="order-title">订单 #{{ order.id }}</text>
+          <text class="order-title">订单 #{{ order.id }} · {{ order.project?.title || '项目' }}</text>
           <text class="order-amount">金额：¥{{ order.amount }}</text>
           <text class="order-status">状态：{{ statusText(order.status) }}</text>
         </view>
@@ -25,12 +26,29 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import { onShow } from '@dcloudio/uni-app'
+import { request } from '@/utils/request'
 
 const activeStatus = ref(-1)
-const orders = ref([])
+const orders = ref<any[]>([])
+
+const loadOrders = async () => {
+  try {
+    const res = await request.get('/api/v1/order/list')
+    const all = res.orders || []
+    orders.value = activeStatus.value === -1 ? all : all.filter((o: any) => o.status === activeStatus.value)
+  } catch {
+    // request 已提示
+  }
+}
+
+onShow(() => {
+  loadOrders()
+})
 
 const filterByStatus = (status: number) => {
   activeStatus.value = status
+  loadOrders()
 }
 
 const goToDetail = (id: number) => {
@@ -61,7 +79,7 @@ const statusText = (status: number) => {
 .filter-item {
   flex: 1;
   text-align: center;
-  font-size: 28rpx;
+  font-size: 26rpx;
   color: #666;
 }
 

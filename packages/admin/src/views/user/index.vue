@@ -7,10 +7,9 @@
         <el-table-column prop="phone" label="手机号" width="140" />
         <el-table-column prop="company_name" label="公司名称" />
         <el-table-column prop="user_type" label="类型" width="100">
-          <template #default="{ row }">
-            {{ row.user_type === 1 ? '甲方' : row.user_type === 2 ? '服务方' : '管理员' }}
-          </template>
+          <template #default="{ row }">{{ userTypeText(row.user_type) }}</template>
         </el-table-column>
+        <el-table-column prop="credit_score" label="信用分" width="80" />
         <el-table-column prop="status" label="状态" width="80">
           <template #default="{ row }">
             <el-tag :type="row.status === 1 ? 'success' : 'danger'">
@@ -24,10 +23,24 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
+import { api } from '@/utils/request'
 
-const users = ref([
-  { id: 1, phone: '138****8888', company_name: '示例甲方', user_type: 1, status: 1 },
-  { id: 2, phone: '139****9999', company_name: '示例服务方', user_type: 2, status: 1 },
-])
+const users = ref<any[]>([])
+
+const load = async () => {
+  try {
+    const res = await api.get<{ users: any[] }>('/api/v1/admin/users')
+    users.value = res.users || []
+  } catch {
+    // interceptor 已提示
+  }
+}
+
+onMounted(load)
+
+const userTypeText = (t: number) => {
+  const map: Record<number, string> = { 1: '甲方', 2: '服务方', 3: '管理员', 4: '评审专家' }
+  return map[t] || '未知'
+}
 </script>

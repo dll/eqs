@@ -8,6 +8,7 @@ import (
 	"github.com/eqs/server/internal/middleware"
 	"github.com/eqs/server/internal/model"
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
 func main() {
@@ -27,7 +28,7 @@ func main() {
 	}
 }
 
-func setupRouter(db *model.DB, cfg *config.Config) *gin.Engine {
+func setupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 	r := gin.Default()
 
 	r.Use(middleware.CORS())
@@ -37,7 +38,12 @@ func setupRouter(db *model.DB, cfg *config.Config) *gin.Engine {
 	{
 		// Auth
 		api.POST("/sms/send", handler.SendSMS)
-		api.POST("/auth/login", handler.Login)
+		api.POST("/auth/login", handler.PhoneLogin)
+		api.POST("/auth/wechat-login", handler.WxLogin)
+
+		// Licensed provider callbacks (公开，验签后处理)
+		api.POST("/pay/notify/:channel", handler.PaymentNotify)
+		api.POST("/sign/notify", handler.SignNotify)
 
 		// Protected routes
 		auth := api.Group("")
@@ -50,19 +56,76 @@ func setupRouter(db *model.DB, cfg *config.Config) *gin.Engine {
 			// Project
 			auth.POST("/project/create", handler.CreateProject)
 			auth.GET("/project/list", handler.ListProjects)
+			auth.GET("/project/:id/recommend", handler.GetRecommendations)
 			auth.GET("/project/:id", handler.GetProject)
-			auth.POST("/project/:id/apply", handler.ApplyProject)
-			auth.POST("/project/:id/select", handler.SelectSupplier)
+			auth.POST("/project/:id/invite", handler.InviteSuppliers)
+
+			// Bid
+			auth.POST("/bid/submit", handler.SubmitBid)
+			auth.GET("/project/:id/bids", handler.ListBids)
+			auth.PUT("/bid/:id/withdraw", handler.WithdrawBid)
+			auth.POST("/bid/:id/select", handler.SelectBid)
 
 			// Order
-			auth.POST("/order/create", handler.CreateOrder)
-			auth.POST("/order/:id/deliver", handler.UploadDeliverable)
-			auth.POST("/order/:id/confirm", handler.ConfirmDelivery)
+			auth.GET("/order/list", handler.ListMyOrders)
+			auth.GET("/order/:id", handler.GetOrder)
+			auth.PUT("/order/:id/milestones", handler.SetMilestones)
+			auth.POST("/milestone/:id/deliver", handler.UploadDeliverable)
+			auth.POST("/milestone/:id/accept", handler.ConfirmAcceptance)
 
-			// Payment
-			auth.POST("/pay/recharge", handler.Recharge)
-			auth.POST("/pay/withdraw", handler.Withdraw)
-			auth.GET("/pay/records", handler.GetPayRecords)
+			// Contract
+			auth.GET("/contract/templates", handler.ListContractTemplates)
+			auth.POST("/order/:id/contract", handler.GenerateContract)
+			auth.POST("/contract/:id/sign", handler.SignContract)
+			auth.GET("/contract/:id/download", handler.DownloadContract)
+
+			// Payment（经持牌机构，非托管）
+			auth.POST("/pay/create", handler.CreatePayment)
+			auth.POST("/milestone/:id/settle", handler.SettleMilestone)
+			auth.GET("/pay/transactions", handler.ListPaymentTransactions)
+			auth.GET("/pay/balance", handler.GetBalance)
+
+			// Dispute（专家评审+平台调解）
+			auth.POST("/dispute/create", handler.CreateDispute)
+			auth.GET("/order/:id/disputes", handler.ListDisputes)
+			auth.POST("/dispute/:id/evidence", handler.UploadDisputeEvidence)
+			auth.GET("/dispute/:id", handler.GetDispute)
+			auth.POST("/dispute/:id/expert", handler.AssignDisputeExpert)
+			auth.POST("/dispute-expert/:id/opinion", handler.SubmitExpertOpinion)
+			auth.POST("/dispute/:id/close", handler.CloseDispute)
+
+			// Attendance（现场打卡）
+			auth.POST("/attendance/checkin", handler.CheckIn)
+			auth.GET("/order/:id/attendance", handler.ListAttendance)
+
+			// Qualification（资质核验）
+			auth.GET("/supplier/:id/qualifications", handler.ListQualifications)
+			auth.POST("/supplier/:id/qualifications", handler.SubmitQualification)
+			auth.POST("/qualification/:id/review", handler.ReviewQualification)
+
+			// File（文件与批注）
+			auth.POST("/file/upload", handler.UploadFile)
+			auth.GET("/project/:id/files", handler.ListFiles)
+			auth.POST("/annotation/add", handler.AddAnnotation)
+			auth.GET("/annotation/list/:id", handler.ListAnnotations)
+			auth.PUT("/annotation/:id/resolve", handler.ResolveAnnotation)
+
+			// Review
+			auth.POST("/review/submit", handler.SubmitReview)
+			auth.GET("/user/:id/reviews", handler.GetUserReviews)
+		}
+
+		// Admin routes
+		admin := api.Group("")
+		admin.Use(middleware.Auth(cfg))
+		admin.Use(handler.RequireAdmin())
+		{
+			admin.GET("/admin/stats", handler.AdminDashboardStats)
+			admin.GET("/admin/users", handler.AdminListUsers)
+			admin.GET("/admin/orders", handler.AdminListOrders)
+			admin.GET("/admin/transactions", handler.AdminListTransactions)
+			admin.GET("/admin/disputes", handler.AdminListDisputes)
+			admin.GET("/admin/qualifications", handler.AdminListPendingQualifications)
 		}
 	}
 

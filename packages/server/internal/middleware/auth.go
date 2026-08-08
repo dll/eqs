@@ -36,8 +36,21 @@ func Auth(cfg *config.Config) gin.HandlerFunc {
 			return
 		}
 
-		c.Set("user_id", uint(claims["user_id"].(float64)))
-		c.Set("user_type", int(claims["user_type"].(float64)))
+		userID, ok := claims["user_id"].(float64)
+		if !ok {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid claims"})
+			c.Abort()
+			return
+		}
+		userType, ok := claims["user_type"].(float64)
+		if !ok {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid claims"})
+			c.Abort()
+			return
+		}
+
+		c.Set("user_id", uint(userID))
+		c.Set("user_type", int(userType))
 		c.Next()
 	}
 }

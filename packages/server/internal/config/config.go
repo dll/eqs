@@ -15,6 +15,23 @@ type Config struct {
 	SMSAppKey   string
 	OSSEndpoint string
 	OSSBucket   string
+
+	// V6 交易与电子签约
+	PaymentProvider            string
+	PaymentMchID               string
+	PaymentAPIKey              string
+	PaymentNotifySecret        string
+	ESignProvider              string
+	ESignAppID                 string
+	ESignAPIKey                string
+	QualificationVerifyProvider string
+
+	// 中国国产 AI 模型
+	BaiduAPIKey    string
+	BaiduSecretKey string
+	AliyunAPIKey   string
+	IflyAPIKey     string
+	IflyAPISecret  string
 }
 
 func Load() *Config {
@@ -31,6 +48,21 @@ func Load() *Config {
 		SMSAppKey:   getEnv("SMS_APP_KEY", ""),
 		OSSEndpoint: getEnv("OSS_ENDPOINT", ""),
 		OSSBucket:   getEnv("OSS_BUCKET", ""),
+
+		PaymentProvider: getEnv("PAYMENT_PROVIDER", "mock"),
+		PaymentMchID: getEnv("PAYMENT_MCH_ID", ""),
+		PaymentAPIKey: getEnv("PAYMENT_API_KEY", ""),
+		PaymentNotifySecret: getEnv("PAYMENT_NOTIFY_SECRET", ""),
+		ESignProvider: getEnv("ESIGN_PROVIDER", "mock"),
+		ESignAppID: getEnv("ESIGN_APP_ID", ""),
+		ESignAPIKey: getEnv("ESIGN_API_KEY", ""),
+		QualificationVerifyProvider: getEnv("QUALIFICATION_VERIFY_PROVIDER", "manual"),
+
+		BaiduAPIKey:    getEnv("BAIDU_API_KEY", ""),
+		BaiduSecretKey: getEnv("BAIDU_SECRET_KEY", ""),
+		AliyunAPIKey:   getEnv("ALIYUN_API_KEY", ""),
+		IflyAPIKey:     getEnv("IFLY_API_KEY", ""),
+		IflyAPISecret:  getEnv("IFLY_API_SECRET", ""),
 	}
 }
 

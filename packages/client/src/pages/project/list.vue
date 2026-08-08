@@ -15,8 +15,9 @@
           <text class="project-status">{{ statusText(project.status) }}</text>
         </view>
         <view class="project-info">
-          <text class="info-item">类型：{{ project.project_type }}</text>
-          <text class="info-item">预算：{{ project.budget_min }}-{{ project.budget_max }}万</text>
+          <text class="info-item">类型：{{ project.title }}</text>
+          <text class="info-item">发布者：{{ project.user?.company_name || '业主' }}</text>
+          <text class="info-item">预算：¥{{ project.budget_min }} - ¥{{ project.budget_max }}</text>
         </view>
         <view class="project-footer">
           <text class="publish-time">{{ project.publish_time }}</text>
@@ -32,20 +33,35 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { onLoad } from '@dcloudio/uni-app'
+import { onLoad, onShow } from '@dcloudio/uni-app'
+import { request } from '@/utils/request'
 
 const activeType = ref('')
-const projects = ref([])
+const projects = ref<any[]>([])
+const loading = ref(false)
 
 onLoad((options) => {
   if (options?.type) {
     activeType.value = options.type
   }
+})
+
+onShow(() => {
   loadProjects()
 })
 
 const loadProjects = async () => {
-  // TODO: Call API to load projects
+  loading.value = true
+  try {
+    const typeMap: Record<string, string> = { 造价: 'cost', 监理: 'supervision', 地勘: 'geotech', 设计: 'design' }
+    const params = activeType.value
+      ? `?service_type=${typeMap[activeType.value] || activeType.value}`
+      : ''
+    const res = await request.get(`/api/v1/project/list${params}`)
+    projects.value = res.projects || []
+  } finally {
+    loading.value = false
+  }
 }
 
 const filterByType = (type: string) => {

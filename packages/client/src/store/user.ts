@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import { request } from '@/utils/request'
+import { request, setToken, clearToken } from '@/utils/request'
 
 interface User {
   id: number
@@ -8,6 +8,7 @@ interface User {
   user_type: number
   company_name: string
   credit_score: number
+  status: number
 }
 
 export const useUserStore = defineStore('user', () => {
@@ -16,27 +17,26 @@ export const useUserStore = defineStore('user', () => {
 
   const login = async (phone: string, code: string, userType: number) => {
     const res = await request.post('/api/v1/auth/login', { phone, code, user_type: userType })
-    token.value = res.data.token
-    user.value = res.data.user
-    uni.setStorageSync('token', res.data.token)
+    token.value = res.token
+    user.value = res.user
+    setToken(res.token)
   }
 
   const logout = () => {
     user.value = null
     token.value = ''
-    uni.removeStorageSync('token')
+    clearToken()
   }
 
   const loadUser = async () => {
     const storedToken = uni.getStorageSync('token')
-    if (storedToken) {
-      token.value = storedToken
-      try {
-        const res = await request.get('/api/v1/user/info')
-        user.value = res.data.user
-      } catch {
-        logout()
-      }
+    if (!storedToken) return
+    token.value = storedToken
+    try {
+      const res = await request.get('/api/v1/user/info')
+      user.value = res.user
+    } catch {
+      logout()
     }
   }
 

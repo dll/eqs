@@ -4,11 +4,19 @@
       <template #header>订单管理</template>
       <el-table :data="orders" style="width: 100%">
         <el-table-column prop="id" label="ID" width="80" />
-        <el-table-column prop="project_title" label="关联项目" />
-        <el-table-column prop="amount" label="金额" width="120" />
+        <el-table-column label="关联项目" width="200">
+          <template #default="{ row }">{{ row.project?.title || '-' }}</template>
+        </el-table-column>
+        <el-table-column prop="project_id" label="项目ID" width="80" />
+        <el-table-column label="服务方" width="140">
+          <template #default="{ row }">{{ row.supplier?.company_name || ('#' + row.supplier_id) }}</template>
+        </el-table-column>
+        <el-table-column label="金额" width="120">
+          <template #default="{ row }">¥{{ row.amount }}</template>
+        </el-table-column>
         <el-table-column prop="status" label="状态" width="100">
           <template #default="{ row }">
-            <el-tag :type="row.status === 3 ? 'success' : 'info'">{{ statusText(row.status) }}</el-tag>
+            <el-tag :type="row.status === 3 ? 'success' : row.status === 4 ? 'danger' : 'info'">{{ statusText(row.status) }}</el-tag>
           </template>
         </el-table-column>
       </el-table>
@@ -17,11 +25,21 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
+import { api } from '@/utils/request'
 
-const orders = ref([
-  { id: 1, project_title: '示例项目', amount: '¥50,000', status: 1 },
-])
+const orders = ref<any[]>([])
+
+const load = async () => {
+  try {
+    const res = await api.get<{ orders: any[] }>('/api/v1/admin/orders')
+    orders.value = res.orders || []
+  } catch {
+    // interceptor 已提示
+  }
+}
+
+onMounted(load)
 
 const statusText = (status: number) => {
   const map: Record<number, string> = {

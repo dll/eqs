@@ -2,9 +2,9 @@
   <view class="container">
     <view class="form">
       <view class="form-item">
-        <text class="label">项目类型</text>
+        <text class="label">服务类型</text>
         <picker :range="projectTypes" @change="onTypeChange">
-          <view class="picker">{{ form.projectType || '请选择项目类型' }}</view>
+          <view class="picker">{{ form.projectType || '请选择服务类型' }}</view>
         </picker>
       </view>
 
@@ -14,12 +14,17 @@
       </view>
 
       <view class="form-item">
-        <text class="label">预算范围（万元）</text>
+        <text class="label">预算范围（元）</text>
         <view class="budget-row">
           <input class="input budget-input" v-model="form.budgetMin" placeholder="最低" type="digit" />
           <text class="budget-sep">-</text>
           <input class="input budget-input" v-model="form.budgetMax" placeholder="最高" type="digit" />
         </view>
+      </view>
+
+      <view class="form-item">
+        <text class="label">项目地点</text>
+        <input class="input" v-model="form.address" placeholder="请输入工程地址" />
       </view>
 
       <view class="form-item">
@@ -34,14 +39,17 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import { request } from '@/utils/request'
 
 const projectTypes = ['造价咨询', '工程监理', '地质勘察', '工程设计']
+const typeCode: Record<string, string> = { 造价咨询: 'cost', 工程监理: 'supervision', 地质勘察: 'geotech', 工程设计: 'design' }
 
 const form = ref({
   projectType: '',
   title: '',
   budgetMin: '',
   budgetMax: '',
+  address: '',
   description: '',
 })
 
@@ -49,75 +57,26 @@ const onTypeChange = (e: any) => {
   form.value.projectType = projectTypes[e.detail.value]
 }
 
-const submit = () => {
+const submit = async () => {
   if (!form.value.projectType || !form.value.title) {
     uni.showToast({ title: '请填写必要信息', icon: 'none' })
     return
   }
-  // TODO: Call API to create project
-  uni.showToast({ title: '发布成功', icon: 'success' })
-  setTimeout(() => uni.navigateBack(), 1500)
+  try {
+    await request.post('/api/v1/project/create', {
+      project_type: typeCode[form.value.projectType] || 'cost',
+      service_type: typeCode[form.value.projectType] || 'cost',
+      title: form.value.title,
+      address: form.value.address,
+      budget_min: Number(form.value.budgetMin) || 0,
+      budget_max: Number(form.value.budgetMax) || 0,
+      description: form.value.description,
+      publish_scope: 'public',
+    })
+    uni.showToast({ title: '发布成功', icon: 'success' })
+    setTimeout(() => uni.navigateBack(), 1500)
+  } catch {
+    // request 已提示
+  }
 }
 </script>
-
-<style scoped>
-.container {
-  padding: 30rpx;
-}
-
-.form-item {
-  margin-bottom: 30rpx;
-}
-
-.label {
-  font-size: 28rpx;
-  color: #333;
-  display: block;
-  margin-bottom: 15rpx;
-}
-
-.input {
-  background: #f5f5f5;
-  padding: 20rpx;
-  border-radius: 10rpx;
-  font-size: 28rpx;
-}
-
-.picker {
-  background: #f5f5f5;
-  padding: 20rpx;
-  border-radius: 10rpx;
-  font-size: 28rpx;
-  color: #666;
-}
-
-.budget-row {
-  display: flex;
-  align-items: center;
-  gap: 15rpx;
-}
-
-.budget-input {
-  flex: 1;
-}
-
-.budget-sep {
-  font-size: 28rpx;
-  color: #999;
-}
-
-.textarea {
-  background: #f5f5f5;
-  padding: 20rpx;
-  border-radius: 10rpx;
-  font-size: 28rpx;
-  height: 200rpx;
-}
-
-.submit-btn {
-  background: #1890ff;
-  color: #fff;
-  margin-top: 40rpx;
-  border-radius: 10rpx;
-}
-</style>

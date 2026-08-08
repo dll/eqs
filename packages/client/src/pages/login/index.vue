@@ -24,6 +24,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useUserStore } from '@/store/user'
+import { request } from '@/utils/request'
 
 const userStore = useUserStore()
 
@@ -35,17 +36,22 @@ const form = ref({
 
 const countdown = ref(0)
 
-const sendCode = () => {
+const sendCode = async () => {
   if (!form.value.phone) {
     uni.showToast({ title: '请输入手机号', icon: 'none' })
     return
   }
-  countdown.value = 60
-  const timer = setInterval(() => {
-    countdown.value--
-    if (countdown.value <= 0) clearInterval(timer)
-  }, 1000)
-  // TODO: Call send SMS API
+  try {
+    await request.post('/api/v1/sms/send', { phone: form.value.phone })
+    uni.showToast({ title: '验证码已发送', icon: 'success' })
+    countdown.value = 60
+    const timer = setInterval(() => {
+      countdown.value--
+      if (countdown.value <= 0) clearInterval(timer)
+    }, 1000)
+  } catch {
+    // request 已提示
+  }
 }
 
 const login = async () => {

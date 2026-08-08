@@ -31,6 +31,8 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import { onShow } from '@dcloudio/uni-app'
+import { request } from '@/utils/request'
 
 const categories = ref([
   { id: 1, name: '造价咨询', type: '造价', icon: '/static/category/price.png' },
@@ -39,7 +41,7 @@ const categories = ref([
   { id: 4, name: '工程设计', type: '设计', icon: '/static/category/design.png' },
 ])
 
-const projects = ref([])
+const projects = ref<any[]>([])
 
 const goToProjectList = (type?: string) => {
   uni.navigateTo({ url: `/pages/project/list?type=${type || ''}` })
@@ -48,6 +50,15 @@ const goToProjectList = (type?: string) => {
 const goToProjectDetail = (id: number) => {
   uni.navigateTo({ url: `/pages/project/detail?id=${id}` })
 }
+
+onShow(async () => {
+  try {
+    const res = await request.get('/api/v1/project/list')
+    projects.value = (res.projects || []).filter((p: any) => p.status === 1).slice(0, 5)
+  } catch {
+    // request 已提示
+  }
+})
 </script>
 
 <style scoped>

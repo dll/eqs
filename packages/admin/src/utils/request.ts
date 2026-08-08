@@ -1,4 +1,6 @@
-import axios from 'axios'
+import axios, { AxiosRequestConfig } from 'axios'
+
+const getToken = () => localStorage.getItem('token')
 
 const request = axios.create({
   baseURL: '',
@@ -6,7 +8,7 @@ const request = axios.create({
 })
 
 request.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token')
+  const token = getToken()
   if (token) {
     config.headers.Authorization = `Bearer ${token}`
   }
@@ -20,8 +22,17 @@ request.interceptors.response.use(
       localStorage.removeItem('token')
       window.location.href = '/login'
     }
-    return Promise.reject(error)
+    const msg = error.response?.data?.message || '请求失败'
+    return Promise.reject(new Error(msg))
   }
 )
 
+// 泛型封装：直接返回后端数据体
+export const api = {
+  get: <T = any>(url: string, params?: any) => request.get<T, T>(url, { params }),
+  post: <T = any>(url: string, data?: any) => request.post<T, T>(url, data),
+  put: <T = any>(url: string, data?: any) => request.put<T, T>(url, data),
+}
+
 export { request }
+export type { AxiosRequestConfig }

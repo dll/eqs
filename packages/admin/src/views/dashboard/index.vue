@@ -4,7 +4,7 @@
       <el-col :span="6">
         <el-card shadow="hover">
           <div class="stat-card">
-            <div class="stat-value">1,234</div>
+            <div class="stat-value">{{ stats.user_count }}</div>
             <div class="stat-label">总用户数</div>
           </div>
         </el-card>
@@ -12,7 +12,7 @@
       <el-col :span="6">
         <el-card shadow="hover">
           <div class="stat-card">
-            <div class="stat-value">567</div>
+            <div class="stat-value">{{ stats.project_count }}</div>
             <div class="stat-label">总项目数</div>
           </div>
         </el-card>
@@ -20,16 +20,16 @@
       <el-col :span="6">
         <el-card shadow="hover">
           <div class="stat-card">
-            <div class="stat-value">¥890万</div>
-            <div class="stat-label">总交易额</div>
+            <div class="stat-value">{{ stats.order_count }}</div>
+            <div class="stat-label">总订单数</div>
           </div>
         </el-card>
       </el-col>
       <el-col :span="6">
         <el-card shadow="hover">
           <div class="stat-card">
-            <div class="stat-value">98.5%</div>
-            <div class="stat-label">系统可用性</div>
+            <div class="stat-value">¥{{ stats.settled_amount }}</div>
+            <div class="stat-label">累计结算额</div>
           </div>
         </el-card>
       </el-col>
@@ -52,11 +52,24 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
+import { api } from '@/utils/request'
 
-const recentProjects = ref([
-  { id: 1, title: '示例项目', project_type: '造价', status: 1 },
-])
+const stats = ref({ user_count: 0, project_count: 0, order_count: 0, dispute_count: 0, settled_amount: 0 })
+const recentProjects = ref<any[]>([])
+
+const load = async () => {
+  try {
+    const s = await api.get('/api/v1/admin/stats')
+    stats.value = s
+    const p = await api.get<{ projects: any[] }>('/api/v1/project/list')
+    recentProjects.value = (p.projects || []).slice(0, 8)
+  } catch {
+    // interceptor 已提示
+  }
+}
+
+onMounted(load)
 
 const statusText = (status: number) => {
   const map: Record<number, string> = {
@@ -66,9 +79,7 @@ const statusText = (status: number) => {
 }
 
 const statusType = (status: number) => {
-  const map: Record<number, string> = {
-    0: 'info', 1: 'primary', 2: 'warning', 3: 'success', 4: 'success'
-  }
+  const map: Record<number, string> = { 1: 'success', 3: 'primary', 4: 'success' }
   return map[status] || 'info'
 }
 </script>
@@ -76,16 +87,18 @@ const statusType = (status: number) => {
 <style scoped>
 .stat-card {
   text-align: center;
+  padding: 20px 0;
 }
 
 .stat-value {
-  font-size: 28px;
+  font-size: 34px;
   font-weight: bold;
-  color: #409eff;
-  margin-bottom: 10px;
+  color: #303133;
 }
 
 .stat-label {
+  margin-top: 8px;
   color: #909399;
+  font-size: 14px;
 }
 </style>
