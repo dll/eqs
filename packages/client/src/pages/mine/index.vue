@@ -15,6 +15,14 @@
         <text>我发布的项目</text>
         <text class="arrow">></text>
       </view>
+      <view class="menu-item" @tap="showThemePicker">
+        <text>主题（当前：{{ themeName }}）</text>
+        <text class="arrow">></text>
+      </view>
+      <view class="menu-item" @tap="showLangPicker">
+        <text>语言（当前：{{ langName }}）</text>
+        <text class="arrow">></text>
+      </view>
       <view class="menu-item" @tap="logout">
         <text>退出登录</text>
         <text class="arrow">></text>
@@ -24,12 +32,38 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import { useUserStore } from '@/store/user'
+import { useSettingsStore, THEMES, LANGS } from '@/store/settings'
 
 const userStore = useUserStore()
+const settingsStore = useSettingsStore()
+
+const themeName = computed(() => THEMES.find(t => t.id === settingsStore.theme)?.name || settingsStore.theme)
+const langName = computed(() => LANGS.find(l => l.id === settingsStore.lang)?.name || settingsStore.lang)
 
 const goTo = (url: string) => {
   uni.navigateTo({ url })
+}
+
+const showThemePicker = () => {
+  uni.showActionSheet({
+    itemList: THEMES.map(t => t.name),
+    success: (res: any) => {
+      const theme = THEMES[res.tapIndex]
+      if (theme) settingsStore.setTheme(theme.id)
+    },
+  })
+}
+
+const showLangPicker = () => {
+  uni.showActionSheet({
+    itemList: LANGS.map(l => l.name),
+    success: (res: any) => {
+      const lang = LANGS[res.tapIndex]
+      if (lang) settingsStore.setLang(lang.id)
+    },
+  })
 }
 
 const logout = () => {

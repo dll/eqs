@@ -74,6 +74,9 @@ func AutoMigrate(db *gorm.DB) error {
 		&Message{},
 		&Notification{},
 		&AuditLog{},
+		&SystemConfig{},
+		&UserSetting{},
+		&SystemVersion{},
 	)
 }
 

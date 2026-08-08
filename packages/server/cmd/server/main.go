@@ -117,6 +117,16 @@ func setupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 			// Review
 			auth.POST("/review/submit", handler.SubmitReview)
 			auth.GET("/user/:id/reviews", handler.GetUserReviews)
+			// V7 配置中心（用户侧）
+			auth.GET("/config/public", handler.PublicConfigs)
+			auth.GET("/config/user/prefs", handler.GetUserPrefs)
+			auth.PUT("/config/user/prefs", handler.UpdateUserPrefs)
+			auth.GET("/theme/list", handler.ThemeList)
+			auth.PUT("/project/:id/theme", handler.SetProjectTheme)
+			auth.GET("/i18n/:lang", handler.I18nMessages)
+			auth.GET("/platform/links", handler.PlatformLinks)
+			auth.GET("/version/check", handler.VersionCheck)
+			auth.GET("/version/latest", handler.VersionLatest)
 		}
 
 		// Admin routes
@@ -135,6 +145,12 @@ func setupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 			admin.POST("/admin/demo/clean", handler.DemoCleanHandler)
 			admin.POST("/admin/demo/toggle", handler.DemoToggleHandler)
 			admin.GET("/admin/demo/status", handler.DemoStatusHandler)
+			// V7 配置中心（管理员）
+			admin.GET("/admin/config/list", handler.AdminListConfigs)
+			admin.POST("/admin/config/upsert", handler.AdminUpsertConfig)
+			admin.DELETE("/admin/config/delete/:key", handler.AdminDeleteConfig)
+			admin.POST("/admin/version/publish", handler.AdminPublishVersion)
+			admin.GET("/admin/version/list", handler.AdminListVersions)
 		}
 	}
 

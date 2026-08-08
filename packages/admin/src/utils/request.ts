@@ -32,6 +32,7 @@ export const api = {
   get: <T = any>(url: string, params?: any) => request.get<T, T>(url, { params }),
   post: <T = any>(url: string, data?: any) => request.post<T, T>(url, data),
   put: <T = any>(url: string, data?: any) => request.put<T, T>(url, data),
+  delete: <T = any>(url: string) => request.delete<T, T>(url),
 }
 
 export { request }
