@@ -1,4 +1,4 @@
-package main
+﻿package main
 
 import (
 	"log"
@@ -130,6 +130,11 @@ func setupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 			admin.GET("/admin/transactions", handler.AdminListTransactions)
 			admin.GET("/admin/disputes", handler.AdminListDisputes)
 			admin.GET("/admin/qualifications", handler.AdminListPendingQualifications)
+			// Demo 数据管理（系统管理员功能）
+			admin.POST("/admin/demo/seed", handler.DemoSeedHandler)
+			admin.POST("/admin/demo/clean", handler.DemoCleanHandler)
+			admin.POST("/admin/demo/toggle", handler.DemoToggleHandler)
+			admin.GET("/admin/demo/status", handler.DemoStatusHandler)
 		}
 	}
 
