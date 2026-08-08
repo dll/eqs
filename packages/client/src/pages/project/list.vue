@@ -15,9 +15,9 @@
           <text class="project-status">{{ statusText(project.status) }}</text>
         </view>
         <view class="project-info">
-          <text class="info-item">类型：{{ project.title }}</text>
+          <text class="info-item">类型：{{ toTypeName(project.service_type) }}</text>
           <text class="info-item">发布者：{{ project.user?.company_name || '业主' }}</text>
-          <text class="info-item">预算：¥{{ project.budget_min }} - ¥{{ project.budget_max }}</text>
+          <text class="info-item">预算：{{ formatPriceWan(project.budget_min) }} - {{ formatPriceWan(project.budget_max) }}</text>
         </view>
         <view class="project-footer">
           <text class="publish-time">{{ project.publish_time }}</text>
@@ -35,6 +35,7 @@
 import { ref } from 'vue'
 import { onLoad, onShow } from '@dcloudio/uni-app'
 import { request } from '@/utils/request'
+import { toTypeName, formatPriceWan } from '@/lib/service'
 
 const activeType = ref('')
 const projects = ref<any[]>([])

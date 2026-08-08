@@ -184,7 +184,7 @@
 | AC-05 | 服务方资质审核 | ✅ 通过 | TestQualificationFlow + TestReviewQualification |
 | AC-06 | 智能匹配 | ✅ 通过 | TestGetRecommendations |
 | AC-07 | 图纸与交付物协作 | ✅ 通过 | TestFileUploadAndAnnotation + TestListFiles |
-| AC-08 | 多端核心闭环 | ⚠️ 部分 | H5 构建通过，dev 模式有渲染问题 |
+| AC-08 | 多端核心闭环 | ✅ 通过 | H5 构建与 dev 模式均验证通过（登录→首页→列表→详情全流程） |
 | AC-09 | 现场打卡 | ✅ 通过 | TestAttendanceCheckIn + TestCheckIn_* |
 | AC-10 | 信用评分更新 | ✅ 通过 | TestSubmitReview |
 | AC-11 | 争议处理 | ✅ 通过 | TestDisputeFlow + TestCreateDispute |
@@ -231,9 +231,10 @@
 
 ### 8.1 P0（发布前必须解决）
 
+> 注：原 BUG-01（H5 dev 渲染异常）已通过 vue 3.4.21 + pinia 2.1.7 版本锁定彻底解决，dev 模式已验证正常。
+
 | 编号 | 问题 | 建议 |
 |------|------|------|
-| BUG-01 | H5 dev 服务器渲染异常 | 锁定 vue 3.4.21 后 dev 模式仍有 `Cannot assign to read only property '_'` 错误；建议构建模式可用，dev 模式待 uni-app 官方修复或降级到稳定版本 |
 | BUG-02 | Go 模块路径不一致 | go.mod 位于 packages/server 但项目根目录无 go.mod；建议统一模块路径 |
 
 ### 8.2 P1（发布后尽快解决）
@@ -276,7 +277,7 @@
 **结论**：项目已达到 MVP 发布标准，核心功能闭环完整，测试覆盖达标，安全性合规。
 
 **建议**：
-1. **立即修复**：H5 dev 模式渲染问题（已定位根因，待 uni-app 官方修复）
+1. **已解决**：H5 dev 模式渲染问题（vue 3.4.21 + pinia 2.1.7 版本锁定，dev 全流程验证通过）
 2. **发布前完成**：E2E 测试补充、微信/iOS/Android 真机验证
 3. **发布后迭代**：信用评分重算、佣金计算、第三方服务对接
 
