@@ -55,6 +55,7 @@ func SubmitBid(c *gin.Context) {
 		return
 	}
 
+	WriteAudit(c, "bid.submit", "project", projectID, gin.H{"bid_id": bid.ID, "amount": bid.Amount})
 	ok(c, gin.H{"bid": bid})
 }
 
@@ -180,5 +181,6 @@ func SelectBid(c *gin.Context) {
 		return
 	}
 
+	WriteAudit(c, "bid.select", "project", bid.ProjectID, gin.H{"bid_id": bidID, "supplier_id": bid.SupplierID, "amount": bid.Amount})
 	ok(c, gin.H{"message": "中选成功，待签约"})
 }

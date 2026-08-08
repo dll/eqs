@@ -92,5 +92,6 @@ func ReviewQualification(c *gin.Context) {
 		"reviewed_by":         reviewerID,
 		"reviewed_at":         now,
 	})
+	WriteAudit(c, "qualification.review", "qualification", qualID, gin.H{"status": status, "reviewer_id": reviewerID})
 	ok(c, gin.H{"qualification": qual, "status": status})
 }

@@ -99,6 +99,7 @@ func PhoneLogin(c *gin.Context) {
 		return
 	}
 
+	WriteAudit(c, "user.login", "user", user.ID, gin.H{"phone": req.Phone})
 	ok(c, gin.H{"token": token, "user": user, "isNew": isNew})
 }
 
@@ -124,6 +125,7 @@ func WxLogin(c *gin.Context) {
 		return
 	}
 
+	WriteAudit(c, "user.login", "user", user.ID, gin.H{"openid": openid, "is_new": isNew})
 	ok(c, gin.H{"token": token, "user": user, "isNew": isNew})
 }
 

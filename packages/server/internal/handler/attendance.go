@@ -55,6 +55,7 @@ func CheckIn(c *gin.Context) {
 		model.DB.Model(&record).Update("verification_status", "exception")
 	}
 
+	WriteAudit(c, "attendance.checkin", "order", req.OrderID, gin.H{"record_id": record.ID, "distance_meters": req.DistanceMeters})
 	ok(c, gin.H{"attendance": record})
 }
 

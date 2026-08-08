@@ -75,6 +75,7 @@ func CreatePayment(c *gin.Context) {
 		return
 	}
 
+	WriteAudit(c, "payment.create", "order", req.OrderID, gin.H{"transaction_id": txn.ID, "amount": req.Amount, "channel": channel})
 	ok(c, gin.H{"transaction": txn, "paid": true})
 }
 
@@ -113,6 +114,7 @@ func PaymentNotify(c *gin.Context) {
 			Update("status", 1)
 	}
 
+	WriteAudit(c, "pay.notify", "transaction", txn.ID, gin.H{"order_id": req.OrderID, "result": req.Result, "amount": req.Amount})
 	ok(c, gin.H{"channel": channel, "message": "通知已处理"})
 }
 
@@ -165,6 +167,7 @@ func SettleMilestone(c *gin.Context) {
 	}
 
 	model.DB.Model(&ms).Update("status", "settled")
+	WriteAudit(c, "pay.settle", "milestone", milestoneID, gin.H{"amount": ms.Amount, "order_id": ms.OrderID, "transaction_id": txn.ID})
 	ok(c, gin.H{"transaction": txn, "message": "结算指令已提交"})
 }
 

@@ -126,6 +126,7 @@ func SetMilestones(c *gin.Context) {
 		return
 	}
 
+	WriteAudit(c, "order.milestones", "order", orderID, gin.H{"nodes": len(req.Milestones), "total_ratio": totalRatio})
 	ok(c, gin.H{"message": "付款节点已设置"})
 }
 
@@ -223,6 +224,7 @@ func ConfirmAcceptance(c *gin.Context) {
 			serverError(c, err)
 			return
 		}
+		WriteAudit(c, "milestone.accept", "milestone", milestoneID, gin.H{"order_id": ms.OrderID, "accept": true})
 		ok(c, gin.H{"message": "验收通过"})
 		return
 	}
@@ -237,5 +239,6 @@ func ConfirmAcceptance(c *gin.Context) {
 	model.DB.Model(&model.Deliverable{}).
 		Where("order_id = ? AND milestone_id = ?", ms.OrderID, ms.ID).
 		Update("status", 2)
+	WriteAudit(c, "milestone.reject", "milestone", milestoneID, gin.H{"order_id": ms.OrderID, "accept": false, "comment": req.Comment})
 	ok(c, gin.H{"message": "已驳回，请修改后重新提交"})
 }

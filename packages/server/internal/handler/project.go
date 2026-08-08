@@ -67,6 +67,7 @@ func CreateProject(c *gin.Context) {
 		return
 	}
 
+	WriteAudit(c, "project.publish", "project", project.ID, gin.H{"service_type": project.ServiceType, "budget_min": project.BudgetMin, "budget_max": project.BudgetMax})
 	ok(c, gin.H{"project": project})
 }
 

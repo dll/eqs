@@ -60,6 +60,7 @@ func CreateDispute(c *gin.Context) {
 	}
 
 	// 冻结对应节点：标记争议中（结算时检查 status<>closed 即拒绝）
+	WriteAudit(c, "dispute.create", "dispute", dispute.ID, gin.H{"order_id": req.OrderID, "milestone_id": req.MilestoneID, "reason": req.Reason})
 	ok(c, gin.H{"dispute": dispute, "message": "争议已发起，相关款项已冻结"})
 }
 
@@ -166,6 +167,7 @@ func SubmitExpertOpinion(c *gin.Context) {
 		"vote":         req.Vote,
 		"submitted_at": now,
 	})
+	WriteAudit(c, "dispute.expert_opinion", "expert_assignment", assignmentID, gin.H{"dispute_id": assignment.DisputeID, "vote": req.Vote})
 	ok(c, gin.H{"message": "评审意见已提交"})
 }
 
@@ -199,11 +201,12 @@ func CloseDispute(c *gin.Context) {
 
 	now := time.Now()
 	model.DB.Model(&dispute).Updates(map[string]interface{}{
-		"status":           "closed",
-		"resolution_type":  req.ResolutionType,
+		"status":            "closed",
+		"resolution_type":   req.ResolutionType,
 		"resolution_file_id": req.ResolutionFileID,
-		"closed_at":        now,
+		"closed_at":         now,
 	})
+	WriteAudit(c, "dispute.close", "dispute", disputeID, gin.H{"resolution_type": req.ResolutionType, "settle_amount": req.SettleAmount})
 	ok(c, gin.H{"dispute": dispute, "message": "争议已结案，款项已解冻"})
 }
 

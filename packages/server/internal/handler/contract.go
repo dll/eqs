@@ -101,6 +101,7 @@ func SignContract(c *gin.Context) {
 		Update("status", 1)
 	model.DB.Model(&model.Order{}).Where("id = ?", contract.OrderID).Update("signed_at", now)
 
+	WriteAudit(c, "contract.sign", "contract", contractID, gin.H{"order_id": contract.OrderID})
 	ok(c, gin.H{"contract": contract, "message": "签署完成"})
 }
 
