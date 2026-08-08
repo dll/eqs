@@ -2,14 +2,16 @@
   "compilerOptions": {
     "target": "ESNext",
     "module": "ESNext",
-    "moduleResolution": "Node",
+    "moduleResolution": "bundler",
     "strict": true,
     "jsx": "preserve",
     "sourceMap": true,
     "resolveJsonModule": true,
     "esModuleInterop": true,
+    "skipLibCheck": true,
+    "allowJs": true,
     "lib": ["ESNext", "DOM"],
-    "types": ["@dcloudio/types"],
+    "types": [],
     "paths": {
       "@/*": ["./src/*"]
     }

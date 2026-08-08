@@ -40,9 +40,9 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { request } from '@/utils/request'
+import { PROJECT_TYPES, toTypeCode } from '@/lib/service'
 
-const projectTypes = ['造价咨询', '工程监理', '地质勘察', '工程设计']
-const typeCode: Record<string, string> = { 造价咨询: 'cost', 工程监理: 'supervision', 地质勘察: 'geotech', 工程设计: 'design' }
+const projectTypes = PROJECT_TYPES
 
 const form = ref({
   projectType: '',
@@ -64,8 +64,8 @@ const submit = async () => {
   }
   try {
     await request.post('/api/v1/project/create', {
-      project_type: typeCode[form.value.projectType] || 'cost',
-      service_type: typeCode[form.value.projectType] || 'cost',
+      project_type: toTypeCode(form.value.projectType),
+      service_type: toTypeCode(form.value.projectType),
       title: form.value.title,
       address: form.value.address,
       budget_min: Number(form.value.budgetMin) || 0,

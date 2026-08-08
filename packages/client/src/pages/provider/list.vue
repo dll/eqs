@@ -23,7 +23,12 @@
 import { ref } from 'vue'
 
 const activeType = ref('')
-const providers = ref([])
+interface ProviderInfo {
+  id: number
+  company_name: string
+  credit_score: number
+}
+const providers = ref<ProviderInfo[]>([])
 
 const filterByType = (type: string) => {
   activeType.value = type

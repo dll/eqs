@@ -1,6 +1,12 @@
 // BASE_URL：开发联调走本地后端（走 vite proxy），生产由环境注入
 const BASE_URL = ''
 
+interface RequestOptions {
+  url: string
+  method?: 'GET' | 'POST' | 'PUT' | 'DELETE'
+  data?: any
+}
+
 let token = uni.getStorageSync('token')
 
 export const setToken = (t: string) => {
@@ -13,7 +19,7 @@ export const clearToken = () => {
   uni.removeStorageSync('token')
 }
 
-const handler = (options: uni.RequestOptions) =>
+const handler = (options: RequestOptions) =>
   new Promise<any>((resolve, reject) => {
     uni.request({
       ...options,
@@ -32,7 +38,7 @@ const handler = (options: uni.RequestOptions) =>
         }
         resolve(data)
       },
-      fail: (err) => {
+      fail: (err: any) => {
         uni.showToast({ title: '网络异常', icon: 'none' })
         reject(err)
       },
