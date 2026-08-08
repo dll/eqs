@@ -27,7 +27,7 @@ jobs:
         run: pnpm install
 
       - name: Lint admin
-        run: pnpm --filter @eqs/admin lint || true
+        run: pnpm --filter @eqs/admin lint
 
   build-admin:
     name: Build Admin
@@ -115,3 +115,53 @@ jobs:
       - name: Run tests
         run: go test ./...
         working-directory: packages/server
+
+  test-client:
+    name: Test Client (Vitest)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install pnpm
+        run: npm install -g pnpm
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Run client tests
+        run: pnpm --filter @eqs/client test
+
+      - name: Type check client
+        run: pnpm --filter @eqs/client lint
+
+  test-admin:
+    name: Test Admin (Vitest)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install pnpm
+        run: npm install -g pnpm
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Run admin tests
+        run: pnpm --filter @eqs/admin test
+
+      - name: Type check admin
+        run: pnpm --filter @eqs/admin lint
