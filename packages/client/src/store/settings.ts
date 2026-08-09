@@ -27,8 +27,8 @@ export const useSettingsStore = defineStore('settings', () => {
   const loadSettings = async () => {
     try {
       const [cfgRes, prefsRes] = await Promise.all([
-        request.get('/api/v1/config/public'),
-        request.get('/api/v1/config/user/prefs'),
+        request.get('/api/v1/config/public').catch(() => ({ configs: {} })),
+        request.get('/api/v1/config/user/prefs').catch(() => ({ theme: 'print', lang: 'zh-CN' })),
       ])
       publicConfigs.value = cfgRes.configs || {}
       theme.value = prefsRes.theme || publicConfigs.value['theme.default'] || 'print'

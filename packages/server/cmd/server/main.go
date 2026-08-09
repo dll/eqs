@@ -50,6 +50,14 @@ func setupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 		api.POST("/pay/notify/:channel", handler.PaymentNotify)
 		api.POST("/sign/notify", handler.SignNotify)
 
+		// V7 公开接口（无需登录）
+		api.GET("/config/public", handler.PublicConfigs)
+		api.GET("/theme/list", handler.ThemeList)
+		api.GET("/i18n/:lang", handler.I18nMessages)
+		api.GET("/platform/links", handler.PlatformLinks)
+		api.GET("/version/check", handler.VersionRateLimit(), handler.VersionCheck)
+		api.GET("/version/latest", handler.VersionLatest)
+
 		// Protected routes
 		auth := api.Group("")
 		auth.Use(middleware.Auth(cfg))
@@ -118,16 +126,10 @@ func setupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 			// Review
 			auth.POST("/review/submit", handler.SubmitReview)
 			auth.GET("/user/:id/reviews", handler.GetUserReviews)
-			// V7 配置中心（用户侧）
-			auth.GET("/config/public", handler.PublicConfigs)
+			// V7 用户偏好（需登录）
 			auth.GET("/config/user/prefs", handler.GetUserPrefs)
 			auth.PUT("/config/user/prefs", handler.UpdateUserPrefs)
-			auth.GET("/theme/list", handler.ThemeList)
 			auth.PUT("/project/:id/theme", handler.SetProjectTheme)
-			auth.GET("/i18n/:lang", handler.I18nMessages)
-			auth.GET("/platform/links", handler.PlatformLinks)
-			auth.GET("/version/check", handler.VersionRateLimit(), handler.VersionCheck)
-			auth.GET("/version/latest", handler.VersionLatest)
 		}
 
 		// Admin routes
