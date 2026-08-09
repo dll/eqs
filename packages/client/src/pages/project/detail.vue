@@ -61,7 +61,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { onLoad } from '@dcloudio/uni-app'
+import { onLoad, onUnload } from '@dcloudio/uni-app'
 import { request } from '@/utils/request'
 import { useUserStore } from '@/store/user'
 import { useSettingsStore, THEMES } from '@/store/settings'
@@ -86,11 +86,18 @@ onLoad((options) => {
   }
 })
 
+// 离开页面恢复用户级主题
+onUnload(() => {
+  settingsStore.applyTheme(settingsStore.theme)
+})
+
 const loadProject = async (id: string) => {
   try {
     const res = await request.get(`/api/v1/project/${id}`)
     project.value = res.project
     projectTheme.value = project.value.theme || ''
+    // 应用项目维度主题（覆盖用户主题）
+    settingsStore.applyProjectTheme(projectTheme.value)
     steps.value[0].done = project.value.status >= 1
     steps.value[1].done = project.value.status >= 2
     steps.value[2].done = project.value.status >= 3
@@ -126,6 +133,7 @@ const setProjectTheme = async (theme: string) => {
   try {
     await request.put(`/api/v1/project/${project.value.id}/theme`, { theme })
     projectTheme.value = theme
+    settingsStore.applyProjectTheme(theme)
     uni.showToast({ title: $t('common.success'), icon: 'success' })
   } catch {
     // request 已提示
@@ -161,7 +169,7 @@ const contact = () => {
 }
 
 .info-card, .progress-card, .theme-card {
-  background: #fff;
+  background: var(--card-bg);
   border-radius: 10rpx;
   padding: 30rpx;
   margin-bottom: 20rpx;
@@ -170,14 +178,14 @@ const contact = () => {
 .project-title {
   font-size: 36rpx;
   font-weight: bold;
-  color: #333;
+  color: var(--text-color);
   display: block;
   margin-bottom: 15rpx;
 }
 
 .project-type, .project-budget, .project-status, .project-desc {
   font-size: 28rpx;
-  color: #666;
+  color: var(--muted-color);
   display: block;
   margin-bottom: 10rpx;
 }
@@ -185,7 +193,7 @@ const contact = () => {
 .card-title {
   font-size: 30rpx;
   font-weight: bold;
-  color: #333;
+  color: var(--text-color);
   display: block;
   margin-bottom: 20rpx;
 }
@@ -200,13 +208,13 @@ const contact = () => {
   flex: 1;
   min-width: 140rpx;
   padding: 16rpx;
-  border: 2rpx solid #e5e5e5;
+  border: 2rpx solid var(--border-color);
   border-radius: 10rpx;
   text-align: center;
 }
 
 .theme-option.active {
-  border-color: #1890ff;
+  border-color: var(--primary-color);
   background: #e6f7ff;
 }
 
@@ -218,7 +226,7 @@ const contact = () => {
 
 .theme-desc {
   font-size: 22rpx;
-  color: #999;
+  color: var(--muted-color);
   display: block;
   margin-top: 4rpx;
 }
@@ -242,12 +250,12 @@ const contact = () => {
 }
 
 .timeline-item.done .dot {
-  background: #1890ff;
+  background: var(--primary-color);
 }
 
 .step-text {
   font-size: 26rpx;
-  color: #666;
+  color: var(--muted-color);
 }
 
 .action-bar {
@@ -258,13 +266,13 @@ const contact = () => {
 
 .action-btn {
   flex: 1;
-  background: #f5f5f5;
+  background: var(--input-bg);
   border-radius: 10rpx;
   font-size: 28rpx;
 }
 
 .action-btn.primary {
-  background: #1890ff;
+  background: var(--primary-color);
   color: #fff;
 }
 
@@ -288,7 +296,7 @@ const contact = () => {
   bottom: 0;
   left: 0;
   right: 0;
-  background: #fff;
+  background: var(--card-bg);
   border-radius: 20rpx 20rpx 0 0;
   padding: 40rpx;
 }
@@ -308,7 +316,7 @@ const contact = () => {
 }
 
 .modal-input {
-  background: #f5f5f5;
+  background: var(--input-bg);
   padding: 24rpx;
   border-radius: 10rpx;
   margin-bottom: 20rpx;
@@ -323,13 +331,13 @@ const contact = () => {
 
 .modal-btn {
   flex: 1;
-  background: #f5f5f5;
+  background: var(--input-bg);
   border-radius: 10rpx;
   font-size: 28rpx;
 }
 
 .modal-btn.primary {
-  background: #1890ff;
+  background: var(--primary-color);
   color: #fff;
 }
 </style>

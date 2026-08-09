@@ -93,17 +93,8 @@ func SubmitReview(c *gin.Context) {
 		return
 	}
 
-	// 联动信用分（1-5分映射-4~+2，MVP简单加权）
-	var avg float64
-	model.DB.Model(&model.Review{}).Where("reviewee_id = ?", req.RevieweeID).
-		Select("AVG(rating)").Scan(&avg)
-	if avg > 0 {
-		newScore := 100 - (5-avg)*20
-		if newScore < 0 {
-			newScore = 0
-		}
-		model.DB.Model(&model.User{}).Where("id = ?", req.RevieweeID).Update("credit_score", newScore)
-	}
+	// 联动信用分：按评价/交付/纠纷既定权重重算（幂等）
+	recalcUserCredit(req.RevieweeID)
 
 	ok(c, gin.H{"review": review, "message": "评价成功"})
 }

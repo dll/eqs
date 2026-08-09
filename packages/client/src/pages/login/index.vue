@@ -86,14 +86,14 @@ const login = async () => {
 
 .lang-btn {
   font-size: 26rpx;
-  color: #666;
+  color: var(--muted-color);
   padding: 8rpx 20rpx;
   border-radius: 8rpx;
-  background: #f0f0f0;
+  background: var(--input-bg);
 }
 
 .lang-btn.active {
-  background: #1890ff;
+  background: var(--primary-color);
   color: #fff;
 }
 
@@ -102,7 +102,7 @@ const login = async () => {
 }
 
 .input {
-  background: #f5f5f5;
+  background: var(--input-bg);
   padding: 24rpx 30rpx;
   border-radius: 10rpx;
   font-size: 30rpx;
@@ -118,7 +118,7 @@ const login = async () => {
 }
 
 .code-btn {
-  background: #1890ff;
+  background: var(--primary-color);
   color: #fff;
   font-size: 26rpx;
   padding: 0 30rpx;
@@ -135,18 +135,18 @@ const login = async () => {
   flex: 1;
   text-align: center;
   padding: 20rpx;
-  background: #f5f5f5;
+  background: var(--input-bg);
   border-radius: 10rpx;
   font-size: 28rpx;
 }
 
 .role-item.active {
-  background: #1890ff;
+  background: var(--primary-color);
   color: #fff;
 }
 
 .submit-btn {
-  background: #1890ff;
+  background: var(--primary-color);
   color: #fff;
   margin-top: 40rpx;
   border-radius: 10rpx;

@@ -28,7 +28,7 @@ onLoad((options) => {
 }
 
 .info-card {
-  background: #fff;
+  background: var(--card-bg);
   border-radius: 10rpx;
   padding: 30rpx;
 }
@@ -36,13 +36,13 @@ onLoad((options) => {
 .provider-name {
   font-size: 36rpx;
   font-weight: bold;
-  color: #333;
+  color: var(--text-color);
   display: block;
   margin-bottom: 15rpx;
 }
 
 .provider-score {
   font-size: 28rpx;
-  color: #1890ff;
+  color: var(--primary-color);
 }
 </style>

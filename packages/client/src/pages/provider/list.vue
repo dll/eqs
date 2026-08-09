@@ -46,7 +46,7 @@ const goToDetail = (id: number) => {
 
 .filter-bar {
   display: flex;
-  background: #fff;
+  background: var(--card-bg);
   padding: 20rpx;
   border-radius: 10rpx;
   margin-bottom: 20rpx;
@@ -56,16 +56,16 @@ const goToDetail = (id: number) => {
   flex: 1;
   text-align: center;
   font-size: 28rpx;
-  color: #666;
+  color: var(--muted-color);
 }
 
 .filter-item.active {
-  color: #1890ff;
+  color: var(--primary-color);
   font-weight: bold;
 }
 
 .provider-card {
-  background: #fff;
+  background: var(--card-bg);
   border-radius: 10rpx;
   padding: 30rpx;
   margin-bottom: 20rpx;
@@ -74,13 +74,13 @@ const goToDetail = (id: number) => {
 .provider-name {
   font-size: 30rpx;
   font-weight: bold;
-  color: #333;
+  color: var(--text-color);
   display: block;
   margin-bottom: 10rpx;
 }
 
 .provider-score {
   font-size: 26rpx;
-  color: #1890ff;
+  color: var(--primary-color);
 }
 </style>

@@ -168,6 +168,21 @@ func SettleMilestone(c *gin.Context) {
 
 	model.DB.Model(&ms).Update("status", "settled")
 	WriteAudit(c, "pay.settle", "milestone", milestoneID, gin.H{"amount": ms.Amount, "order_id": ms.OrderID, "transaction_id": txn.ID})
+
+	// 节点结算后重算服务方信用分（交付分加权）
+	recalcUserCredit(order.SupplierID)
+
+	// 全部节点结算完成则订单完成
+	var pending int64
+	model.DB.Model(&model.PaymentMilestone{}).Where("order_id = ? AND status <> ?", ms.OrderID, "settled").Count(&pending)
+	if pending == 0 {
+		now := time.Now()
+		model.DB.Model(&model.Order{}).Where("id = ?", ms.OrderID).Updates(map[string]interface{}{
+			"status":       3,
+			"completed_at": now,
+		})
+		model.DB.Model(&model.Project{}).Where("id = ?", order.ProjectID).Update("status", 4)
+	}
 	ok(c, gin.H{"transaction": txn, "message": "结算指令已提交"})
 }
 

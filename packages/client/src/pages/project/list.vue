@@ -89,7 +89,7 @@ const statusText = (status: number) => {
 
 .filter-bar {
   display: flex;
-  background: #fff;
+  background: var(--card-bg);
   padding: 20rpx;
   border-radius: 10rpx;
   margin-bottom: 20rpx;
@@ -99,17 +99,17 @@ const statusText = (status: number) => {
   flex: 1;
   text-align: center;
   font-size: 28rpx;
-  color: #666;
+  color: var(--muted-color);
   padding: 10rpx 0;
 }
 
 .filter-item.active {
-  color: #1890ff;
+  color: var(--primary-color);
   font-weight: bold;
 }
 
 .project-card {
-  background: #fff;
+  background: var(--card-bg);
   border-radius: 10rpx;
   padding: 30rpx;
   margin-bottom: 20rpx;
@@ -124,12 +124,12 @@ const statusText = (status: number) => {
 .project-title {
   font-size: 30rpx;
   font-weight: bold;
-  color: #333;
+  color: var(--text-color);
 }
 
 .project-status {
   font-size: 24rpx;
-  color: #1890ff;
+  color: var(--primary-color);
 }
 
 .project-info {
@@ -138,24 +138,24 @@ const statusText = (status: number) => {
 
 .info-item {
   font-size: 26rpx;
-  color: #666;
+  color: var(--muted-color);
   display: block;
   margin-bottom: 5rpx;
 }
 
 .project-footer {
-  border-top: 1rpx solid #eee;
+  border-top: 1rpx solid var(--border-color);
   padding-top: 15rpx;
 }
 
 .publish-time {
   font-size: 24rpx;
-  color: #999;
+  color: var(--muted-color);
 }
 
 .empty {
   text-align: center;
   padding: 100rpx 0;
-  color: #999;
+  color: var(--muted-color);
 }
 </style>

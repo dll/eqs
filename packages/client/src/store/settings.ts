@@ -70,6 +70,7 @@ export const useSettingsStore = defineStore('settings', () => {
         '--border-color': '#e5e5e5',
         '--muted-color': '#666666',
         '--primary-color': '#1890ff',
+        '--input-bg': '#f5f5f5',
       },
       dark: {
         '--bg-color': '#1e1e1e',
@@ -78,6 +79,7 @@ export const useSettingsStore = defineStore('settings', () => {
         '--border-color': '#444444',
         '--muted-color': '#999999',
         '--primary-color': '#4d9fff',
+        '--input-bg': '#3a3a3a',
       },
       light: {
         '--bg-color': '#f5f5f5',
@@ -86,6 +88,7 @@ export const useSettingsStore = defineStore('settings', () => {
         '--border-color': '#e5e5e5',
         '--muted-color': '#666666',
         '--primary-color': '#1890ff',
+        '--input-bg': '#f5f5f5',
       },
     }
     const themeVars = vars[t] || vars.print
@@ -103,7 +106,14 @@ export const useSettingsStore = defineStore('settings', () => {
 
   const checkVersion = async () => {
     try {
+      // 检查间隔（小时），默认 6 小时，来自 version.checkInterval 配置
+      const intervalHours = Number(publicConfigs.value['version.checkInterval']) || 6
+      const lastCheck = uni.getStorageSync('lastVersionCheck')
+      if (lastCheck && Date.now() - Number(lastCheck) < intervalHours * 3600 * 1000) {
+        return null
+      }
       const res = await request.get('/api/v1/version/check?current=1.0.0&platform=h5', { silent401: true })
+      uni.setStorageSync('lastVersionCheck', String(Date.now()))
       updateAvailable.value = !!res.update_available
       latestVersion.value = res.version || ''
       latestVersionNotes.value = res.release_notes || ''
@@ -115,9 +125,18 @@ export const useSettingsStore = defineStore('settings', () => {
     }
   }
 
+  // applyProjectTheme 应用项目维度主题（覆盖用户主题）
+  const applyProjectTheme = (projectTheme: string) => {
+    if (projectTheme && (projectTheme === 'print' || projectTheme === 'dark' || projectTheme === 'light')) {
+      applyTheme(projectTheme)
+    } else {
+      applyTheme(theme.value)
+    }
+  }
+
   return {
     theme, lang, publicConfigs, updateAvailable, latestVersion,
     latestVersionNotes, latestVersionMandatory, latestUpdateUrl,
-    loadSettings, setTheme, setLang, checkVersion, applyTheme,
+    loadSettings, setTheme, setLang, checkVersion, applyTheme, applyProjectTheme,
   }
 })

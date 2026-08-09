@@ -128,7 +128,7 @@ const goPay = () => {
 }
 
 .info-card, .contract-card, .milestones-card, .actions-card {
-  background: #fff;
+  background: var(--card-bg);
   border-radius: 10rpx;
   padding: 30rpx;
   margin-bottom: 20rpx;
@@ -137,14 +137,14 @@ const goPay = () => {
 .order-title {
   font-size: 36rpx;
   font-weight: bold;
-  color: #333;
+  color: var(--text-color);
   display: block;
   margin-bottom: 15rpx;
 }
 
 .order-item, .contract-no, .contract-status {
   font-size: 28rpx;
-  color: #666;
+  color: var(--muted-color);
   display: block;
   margin-bottom: 8rpx;
 }
@@ -152,27 +152,27 @@ const goPay = () => {
 .card-title {
   font-size: 30rpx;
   font-weight: bold;
-  color: #333;
+  color: var(--text-color);
   display: block;
   margin-bottom: 20rpx;
 }
 
 .contract-card {
-  background: #fff;
+  background: var(--card-bg);
   border-radius: 10rpx;
   padding: 30rpx;
   margin-bottom: 20rpx;
 }
 
 .milestones-card {
-  background: #fff;
+  background: var(--card-bg);
   border-radius: 10rpx;
   padding: 30rpx;
   margin-bottom: 20rpx;
 }
 
 .milestone-item {
-  border-top: 1rpx solid #eee;
+  border-top: 1rpx solid var(--border-color);
   padding: 20rpx 0;
 }
 
@@ -184,17 +184,17 @@ const goPay = () => {
 
 .ms-name {
   font-size: 28rpx;
-  color: #333;
+  color: var(--text-color);
 }
 
 .ms-ratio {
   font-size: 26rpx;
-  color: #1890ff;
+  color: var(--primary-color);
 }
 
 .ms-detail {
   font-size: 24rpx;
-  color: #999;
+  color: var(--muted-color);
   display: block;
   margin-bottom: 12rpx;
 }
@@ -205,7 +205,7 @@ const goPay = () => {
 }
 
 .mini-btn {
-  background: #f5f5f5;
+  background: var(--input-bg);
   border-radius: 8rpx;
   font-size: 24rpx;
   padding: 10rpx 0;
@@ -213,12 +213,12 @@ const goPay = () => {
 }
 
 .mini-btn.primary {
-  background: #1890ff;
+  background: var(--primary-color);
   color: #fff;
 }
 
 .actions-card {
-  background: #fff;
+  background: var(--card-bg);
   border-radius: 10rpx;
   padding: 30rpx;
   display: flex;
@@ -227,7 +227,7 @@ const goPay = () => {
 
 .action-btn {
   flex: 1;
-  background: #f5f5f5;
+  background: var(--input-bg);
   border-radius: 10rpx;
   font-size: 28rpx;
 }

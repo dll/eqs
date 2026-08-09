@@ -2,6 +2,7 @@ package handler
 
 import (
 	"net/http"
+	"sort"
 	"sync"
 	"time"
 
@@ -16,6 +17,7 @@ type requestStat struct {
 	TotalTime  time.Duration `json:"-"`
 	AvgMs      float64       `json:"avg_ms"`
 	P95Ms      float64       `json:"p95_ms"`
+	durations  []time.Duration
 }
 
 type monitor struct {
@@ -49,8 +51,25 @@ func MonitorMiddleware() gin.HandlerFunc {
 		if status >= http.StatusBadRequest {
 			stat.ErrorCount++
 		}
+		stat.durations = append(stat.durations, duration)
+		if len(stat.durations) > 500 {
+			stat.durations = stat.durations[len(stat.durations)-500:]
+		}
 		reqMonitor.mu.Unlock()
 	}
+}
+
+// computeP95 计算 P95 分位耗时（ms）
+func computeP95(durations []time.Duration) float64 {
+	n := len(durations)
+	if n == 0 {
+		return 0
+	}
+	sorted := make([]time.Duration, n)
+	copy(sorted, durations)
+	sort.Slice(sorted, func(i, j int) bool { return sorted[i] < sorted[j] })
+	idx := int(float64(n-1) * 0.95)
+	return float64(sorted[idx].Milliseconds())
 }
 
 // MonitorStats 性能统计接口（管理员）
@@ -64,6 +83,7 @@ func MonitorStats(c *gin.Context) {
 			"count":       stat.Count,
 			"error_count": stat.ErrorCount,
 			"avg_ms":      stat.AvgMs,
+			"p95_ms":      computeP95(stat.durations),
 			"error_rate":  float64(stat.ErrorCount) / float64(stat.Count) * 100,
 		}
 	}
@@ -81,8 +101,8 @@ type versionLimiter struct {
 
 var versionLimit = &versionLimiter{
 	requests: make(map[string][]time.Time),
-	limit:    10,           // 每窗口最多 10 次
-	window:   time.Hour,    // 1 小时窗口
+	limit:    10,        // 每窗口最多 10 次
+	window:   time.Hour, // 1 小时窗口
 }
 
 // VersionRateLimit 版本检查限流中间件

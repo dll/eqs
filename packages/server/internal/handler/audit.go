@@ -15,13 +15,20 @@ func WriteAudit(c *gin.Context, action, targetType string, targetID uint, detail
 		detailBytes = []byte("{}")
 	}
 
+	var userID uint
+	var ip string
+	if c != nil {
+		userID = c.GetUint("user_id")
+		ip = c.ClientIP()
+	}
+
 	entry := model.AuditLog{
-		UserID:     c.GetUint("user_id"),
+		UserID:     userID,
 		Action:     action,
 		TargetType: targetType,
 		TargetID:   targetID,
 		Detail:     string(detailBytes),
-		IP:         c.ClientIP(),
+		IP:         ip,
 	}
 	_ = model.DB.Create(&entry).Error
 }

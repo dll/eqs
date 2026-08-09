@@ -70,7 +70,7 @@ const statusText = (status: number) => {
 
 .filter-bar {
   display: flex;
-  background: #fff;
+  background: var(--card-bg);
   padding: 20rpx;
   border-radius: 10rpx;
   margin-bottom: 20rpx;
@@ -80,16 +80,16 @@ const statusText = (status: number) => {
   flex: 1;
   text-align: center;
   font-size: 26rpx;
-  color: #666;
+  color: var(--muted-color);
 }
 
 .filter-item.active {
-  color: #1890ff;
+  color: var(--primary-color);
   font-weight: bold;
 }
 
 .order-card {
-  background: #fff;
+  background: var(--card-bg);
   border-radius: 10rpx;
   padding: 30rpx;
   margin-bottom: 20rpx;
@@ -98,14 +98,14 @@ const statusText = (status: number) => {
 .order-title {
   font-size: 30rpx;
   font-weight: bold;
-  color: #333;
+  color: var(--text-color);
   display: block;
   margin-bottom: 10rpx;
 }
 
 .order-amount, .order-status {
   font-size: 26rpx;
-  color: #666;
+  color: var(--muted-color);
   display: block;
   margin-bottom: 5rpx;
 }
@@ -113,6 +113,6 @@ const statusText = (status: number) => {
 .empty {
   text-align: center;
   padding: 100rpx 0;
-  color: #999;
+  color: var(--muted-color);
 }
 </style>

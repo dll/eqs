@@ -80,7 +80,7 @@ const logout = () => {
 }
 
 .user-card {
-  background: #1890ff;
+  background: var(--primary-color);
   border-radius: 10rpx;
   padding: 40rpx 30rpx;
   margin-bottom: 30rpx;
@@ -107,7 +107,7 @@ const logout = () => {
 }
 
 .menu-list {
-  background: #fff;
+  background: var(--card-bg);
   border-radius: 10rpx;
 }
 
@@ -115,12 +115,12 @@ const logout = () => {
   display: flex;
   justify-content: space-between;
   padding: 30rpx;
-  border-bottom: 1rpx solid #eee;
+  border-bottom: 1rpx solid var(--border-color);
   font-size: 30rpx;
-  color: #333;
+  color: var(--text-color);
 }
 
 .arrow {
-  color: #999;
+  color: var(--muted-color);
 }
 </style>

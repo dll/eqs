@@ -213,9 +213,11 @@ func UpdateUserPrefs(c *gin.Context) {
 		updates := map[string]interface{}{"updated_at": now}
 		if req.Theme != "" {
 			updates["theme"] = req.Theme
+			setting.Theme = req.Theme
 		}
 		if req.Lang != "" {
 			updates["lang"] = req.Lang
+			setting.Lang = req.Lang
 		}
 		model.DB.Model(&setting).Updates(updates)
 	}

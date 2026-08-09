@@ -16,11 +16,12 @@ func created(c *gin.Context, data gin.H) {
 	c.JSON(http.StatusOK, data)
 }
 
-// fail 统一失败响应，errCode 为业务错误码
+// fail 统一失败响应，errCode 为业务错误码，message_key 供前端翻译
 func fail(c *gin.Context, status int, errCode string, message string) {
 	c.JSON(status, gin.H{
-		"error":   errCode,
-		"message": message,
+		"error":       errCode,
+		"message":     message,
+		"message_key": errCode,
 	})
 }
 

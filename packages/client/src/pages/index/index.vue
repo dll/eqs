@@ -71,7 +71,7 @@ onShow(async () => {
 }
 
 .search-input {
-  background: #fff;
+  background: var(--card-bg);
   padding: 20rpx 30rpx;
   border-radius: 10rpx;
   font-size: 28rpx;
@@ -80,7 +80,7 @@ onShow(async () => {
 .categories {
   display: flex;
   justify-content: space-around;
-  background: #fff;
+  background: var(--card-bg);
   padding: 30rpx 0;
   border-radius: 10rpx;
   margin-bottom: 30rpx;
@@ -100,11 +100,11 @@ onShow(async () => {
 
 .category-name {
   font-size: 24rpx;
-  color: #333;
+  color: var(--text-color);
 }
 
 .section {
-  background: #fff;
+  background: var(--card-bg);
   border-radius: 10rpx;
   padding: 20rpx;
 }
@@ -118,35 +118,35 @@ onShow(async () => {
 .section-title {
   font-size: 32rpx;
   font-weight: bold;
-  color: #333;
+  color: var(--text-color);
 }
 
 .section-more {
   font-size: 26rpx;
-  color: #1890ff;
+  color: var(--primary-color);
 }
 
 .project-card {
   padding: 20rpx;
-  border-bottom: 1rpx solid #eee;
+  border-bottom: 1rpx solid var(--border-color);
 }
 
 .project-title {
   font-size: 30rpx;
-  color: #333;
+  color: var(--text-color);
   display: block;
   margin-bottom: 10rpx;
 }
 
 .project-type {
   font-size: 24rpx;
-  color: #1890ff;
+  color: var(--primary-color);
   display: block;
   margin-bottom: 10rpx;
 }
 
 .project-budget {
   font-size: 26rpx;
-  color: #666;
+  color: var(--muted-color);
 }
 </style>

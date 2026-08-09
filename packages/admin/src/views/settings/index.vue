@@ -3,131 +3,139 @@
     <el-card style="margin-bottom: 20px">
       <template #header>
         <div style="display: flex; align-items: center; justify-content: space-between;">
-          <span>系统配置</span>
-          <el-select v-model="filterCategory" placeholder="全部分类" clearable style="width: 160px">
-            <el-option label="全部" value="" />
-            <el-option label="主题" value="theme" />
-            <el-option label="国际化" value="i18n" />
-            <el-option label="多端" value="multiplatform" />
-            <el-option label="版本" value="version" />
-            <el-option label="演示数据" value="demo" />
-            <el-option label="系统" value="system" />
+          <span>{{ $t('settings.configCenter') }}</span>
+          <el-select v-model="filterCategory" :placeholder="$t('settings.categoryAll')" clearable style="width: 160px">
+            <el-option :label="$t('settings.categoryAll')" value="" />
+            <el-option :label="$t('settings.categoryTheme')" value="theme" />
+            <el-option :label="$t('settings.categoryI18n')" value="i18n" />
+            <el-option :label="$t('settings.categoryMulti')" value="multiplatform" />
+            <el-option :label="$t('settings.categoryVersion')" value="version" />
+            <el-option :label="$t('settings.categoryDemo')" value="demo" />
+            <el-option :label="$t('settings.categorySystem')" value="system" />
           </el-select>
         </div>
       </template>
       <el-table :data="filteredConfigs" border stripe>
-        <el-table-column prop="config_key" label="配置键" width="240" />
-        <el-table-column prop="config_value" label="配置值" />
-        <el-table-column prop="value_type" label="类型" width="80" />
-        <el-table-column prop="description" label="说明" />
-        <el-table-column prop="is_public" label="公开" width="70">
-          <template #default="{ row }">{{ row.is_public ? '是' : '否' }}</template>
+        <el-table-column prop="config_key" :label="$t('settings.configKey')" width="240" />
+        <el-table-column prop="config_value" :label="$t('settings.configValue')" />
+        <el-table-column prop="value_type" :label="$t('settings.valueType')" width="80" />
+        <el-table-column prop="description" :label="$t('settings.description')" />
+        <el-table-column prop="is_public" :label="$t('settings.isPublic')" width="70">
+          <template #default="{ row }">{{ row.is_public ? $t('common.yes') : $t('common.no') }}</template>
         </el-table-column>
-        <el-table-column label="操作" width="140">
+        <el-table-column :label="$t('settings.actions')" width="140">
           <template #default="{ row }">
-            <el-button size="small" type="primary" @click="editConfig(row)">编辑</el-button>
-            <el-button size="small" type="danger" @click="deleteConfig(row)">删除</el-button>
+            <el-button size="small" type="primary" @click="editConfig(row)">{{ $t('common.edit') }}</el-button>
+            <el-button size="small" type="danger" @click="deleteConfig(row)">{{ $t('common.delete') }}</el-button>
           </template>
         </el-table-column>
       </el-table>
-      <el-button type="primary" style="margin-top: 15px" @click="openConfigDialog()">新增配置</el-button>
+      <el-button type="primary" style="margin-top: 15px" @click="openConfigDialog()">{{ $t('settings.addConfig') }}</el-button>
     </el-card>
 
     <el-card style="margin-bottom: 20px">
-      <template #header>演示数据管理</template>
+      <template #header>{{ $t('settings.demo') }}</template>
       <el-form inline>
-        <el-form-item label="模式">
+        <el-form-item :label="$t('settings.demoMode')">
           <el-select v-model="demoMode" style="width: 160px">
-            <el-option label="演示交流" value="demo" />
-            <el-option label="功能测试" value="test" />
-            <el-option label="培训教程" value="training" />
+            <el-option :label="$t('settings.demoModeDemo')" value="demo" />
+            <el-option :label="$t('settings.demoModeTest')" value="test" />
+            <el-option :label="$t('settings.demoModeTraining')" value="training" />
           </el-select>
         </el-form-item>
         <el-form-item>
-          <el-button type="success" @click="seedDemo">生成演示数据</el-button>
-          <el-button type="warning" @click="cleanDemo">清理演示数据</el-button>
-          <el-button @click="loadDemoStatus">刷新状态</el-button>
+          <el-button type="success" @click="seedDemo">{{ $t('settings.demoSeed') }}</el-button>
+          <el-button type="warning" @click="cleanDemo">{{ $t('settings.demoClean') }}</el-button>
+          <el-button @click="loadDemoStatus">{{ $t('settings.demoRefresh') }}</el-button>
         </el-form-item>
       </el-form>
       <el-descriptions :column="4" border size="small" style="margin-top: 12px;">
-        <el-descriptions-item label="状态">{{ demoStatus.demo_mode ? '已开启' : '已关闭' }}</el-descriptions-item>
-        <el-descriptions-item label="用户数">{{ demoStatus.user_count || 0 }}</el-descriptions-item>
-        <el-descriptions-item label="项目数">{{ demoStatus.project_count || 0 }}</el-descriptions-item>
-        <el-descriptions-item label="订单数">{{ demoStatus.order_count || 0 }}</el-descriptions-item>
+        <el-descriptions-item :label="$t('settings.demoStatus')">{{ demoStatus.demo_mode ? $t('settings.demoEnabled') : $t('settings.demoDisabled') }}</el-descriptions-item>
+        <el-descriptions-item :label="$t('settings.demoUsers')">{{ demoStatus.user_count || 0 }}</el-descriptions-item>
+        <el-descriptions-item :label="$t('settings.demoProjects')">{{ demoStatus.project_count || 0 }}</el-descriptions-item>
+        <el-descriptions-item :label="$t('settings.demoOrders')">{{ demoStatus.order_count || 0 }}</el-descriptions-item>
+        <el-descriptions-item :label="$t('settings.demoDisputes')">{{ demoStatus.dispute_count || 0 }}</el-descriptions-item>
       </el-descriptions>
-      <el-alert type="info" :closable="false" title="演示数据用于测试系统功能、演示交流、培训教程，生成与清理均写入审计日志。" style="margin-top: 12px;" />
+      <el-alert type="info" :closable="false" :title="$t('settings.demoTip')" style="margin-top: 12px;" />
     </el-card>
 
     <el-card style="margin-bottom: 20px">
-      <template #header>版本管理</template>
+      <template #header>{{ $t('settings.version') }}</template>
       <el-table :data="versions" border stripe>
-        <el-table-column prop="version" label="版本号" width="100" />
-        <el-table-column prop="build" label="构建号" width="90" />
-        <el-table-column prop="platform" label="平台" width="110" />
-        <el-table-column prop="release_notes" label="更新说明" />
-        <el-table-column prop="mandatory" label="强制" width="80">
-          <template #default="{ row }">{{ row.mandatory ? '是' : '否' }}</template>
+        <el-table-column prop="version" :label="$t('settings.versionNo')" width="100" />
+        <el-table-column prop="build" :label="$t('settings.buildNo')" width="90" />
+        <el-table-column prop="platform" :label="$t('settings.platform')" width="110" />
+        <el-table-column prop="release_notes" :label="$t('settings.releaseNotes')" />
+        <el-table-column prop="mandatory" :label="$t('settings.mandatory')" width="80">
+          <template #default="{ row }">{{ row.mandatory ? $t('common.yes') : $t('common.no') }}</template>
         </el-table-column>
       </el-table>
-      <el-button type="primary" style="margin-top: 15px" @click="openVersionDialog">发布新版本</el-button>
+      <el-button type="primary" style="margin-top: 15px" @click="openVersionDialog">{{ $t('settings.publishVersion') }}</el-button>
     </el-card>
 
     <el-card>
-      <template #header>性能监控</template>
+      <template #header>
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+          <span>{{ $t('settings.monitor') }}</span>
+          <el-button size="small" @click="loadMonitorStats">{{ $t('common.refresh') }}</el-button>
+        </div>
+      </template>
       <el-table :data="monitorStatsList" border stripe>
-        <el-table-column prop="path" label="接口" />
-        <el-table-column prop="count" label="请求次数" width="100" />
-        <el-table-column prop="error_count" label="错误次数" width="100" />
-        <el-table-column prop="avg_ms" label="平均耗时(ms)" width="120">
+        <el-table-column prop="path" :label="$t('settings.monitorPath')" />
+        <el-table-column prop="count" :label="$t('settings.monitorCount')" width="100" />
+        <el-table-column prop="error_count" :label="$t('settings.monitorErrors')" width="100" />
+        <el-table-column prop="avg_ms" :label="$t('settings.monitorAvg')" width="120">
           <template #default="{ row }">{{ row.avg_ms?.toFixed(1) || '0' }}</template>
         </el-table-column>
-        <el-table-column prop="error_rate" label="错误率(%)" width="100">
+        <el-table-column prop="p95_ms" :label="$t('settings.monitorP95')" width="120">
+          <template #default="{ row }">{{ row.p95_ms?.toFixed(1) || '0' }}</template>
+        </el-table-column>
+        <el-table-column prop="error_rate" :label="$t('settings.monitorErrorRate')" width="110">
           <template #default="{ row }">{{ row.error_rate?.toFixed(1) || '0' }}%</template>
         </el-table-column>
       </el-table>
-      <el-button style="margin-top: 15px" @click="loadMonitorStats">刷新统计</el-button>
     </el-card>
 
-    <el-dialog v-model="configDialog" title="配置项" width="500px">
+    <el-dialog v-model="configDialog" :title="$t('settings.addConfig')" width="500px">
       <el-form :model="configForm" label-width="100px">
-        <el-form-item label="配置键"><el-input v-model="configForm.config_key" /></el-form-item>
-        <el-form-item label="配置值"><el-input v-model="configForm.config_value" /></el-form-item>
-        <el-form-item label="类型">
+        <el-form-item :label="$t('settings.configKey')"><el-input v-model="configForm.config_key" /></el-form-item>
+        <el-form-item :label="$t('settings.configValue')"><el-input v-model="configForm.config_value" /></el-form-item>
+        <el-form-item :label="$t('settings.valueType')">
           <el-select v-model="configForm.value_type" style="width: 200px">
-            <el-option label="字符串" value="string" />
-            <el-option label="整数" value="int" />
-            <el-option label="布尔" value="bool" />
-            <el-option label="JSON" value="json" />
+            <el-option :label="$t('settings.typeString')" value="string" />
+            <el-option :label="$t('settings.typeInt')" value="int" />
+            <el-option :label="$t('settings.typeBool')" value="bool" />
+            <el-option :label="$t('settings.typeJson')" value="json" />
           </el-select>
         </el-form-item>
-        <el-form-item label="说明"><el-input v-model="configForm.description" /></el-form-item>
-        <el-form-item label="公开"><el-switch v-model="configForm.is_public" /></el-form-item>
+        <el-form-item :label="$t('settings.description')"><el-input v-model="configForm.description" /></el-form-item>
+        <el-form-item :label="$t('settings.isPublic')"><el-switch v-model="configForm.is_public" /></el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="configDialog = false">取消</el-button>
-        <el-button type="primary" @click="saveConfig">保存</el-button>
+        <el-button @click="configDialog = false">{{ $t('common.cancel') }}</el-button>
+        <el-button type="primary" @click="saveConfig">{{ $t('common.save') }}</el-button>
       </template>
     </el-dialog>
 
-    <el-dialog v-model="versionDialog" title="发布新版本" width="500px">
+    <el-dialog v-model="versionDialog" :title="$t('settings.publishVersion')" width="500px">
       <el-form :model="versionForm" label-width="100px">
-        <el-form-item label="版本号"><el-input v-model="versionForm.version" placeholder="如 1.1.0" /></el-form-item>
-        <el-form-item label="构建号"><el-input-number v-model="versionForm.build" /></el-form-item>
-        <el-form-item label="平台">
+        <el-form-item :label="$t('settings.versionNo')"><el-input v-model="versionForm.version" :placeholder="$t('settings.placeholderVersion')" /></el-form-item>
+        <el-form-item :label="$t('settings.buildNo')"><el-input-number v-model="versionForm.build" /></el-form-item>
+        <el-form-item :label="$t('settings.platform')">
           <el-select v-model="versionForm.platform" style="width: 200px">
-            <el-option label="全部" value="all" />
-            <el-option label="H5" value="h5" />
-            <el-option label="小程序" value="mp-weixin" />
-            <el-option label="App" value="app" />
+            <el-option :label="$t('settings.platformAll')" value="all" />
+            <el-option :label="$t('settings.platformH5')" value="h5" />
+            <el-option :label="$t('settings.platformMp')" value="mp-weixin" />
+            <el-option :label="$t('settings.platformApp')" value="app" />
           </el-select>
         </el-form-item>
-        <el-form-item label="更新地址"><el-input v-model="versionForm.update_url" /></el-form-item>
-        <el-form-item label="更新说明"><el-input type="textarea" v-model="versionForm.release_notes" /></el-form-item>
-        <el-form-item label="强制更新"><el-switch v-model="versionForm.mandatory" /></el-form-item>
+        <el-form-item :label="$t('settings.updateUrl')"><el-input v-model="versionForm.update_url" /></el-form-item>
+        <el-form-item :label="$t('settings.releaseNotes')"><el-input type="textarea" v-model="versionForm.release_notes" /></el-form-item>
+        <el-form-item :label="$t('settings.forceUpdate')"><el-switch v-model="versionForm.mandatory" /></el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="versionDialog = false">取消</el-button>
-        <el-button type="primary" @click="publishVersion">发布</el-button>
+        <el-button @click="versionDialog = false">{{ $t('common.cancel') }}</el-button>
+        <el-button type="primary" @click="publishVersion">{{ $t('settings.publishVersion') }}</el-button>
       </template>
     </el-dialog>
   </div>
@@ -137,6 +145,9 @@
 import { ref, computed, onMounted } from 'vue'
 import { api } from '@/utils/request'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { useI18n } from '@/utils/i18n'
+
+const { $t } = useI18n()
 
 const configs = ref<any[]>([])
 const versions = ref<any[]>([])
@@ -192,28 +203,28 @@ const editConfig = (row: any) => openConfigDialog(row)
 
 const saveConfig = async () => {
   await api.post('/api/v1/admin/config/upsert', configForm.value)
-  ElMessage.success('配置已保存')
+  ElMessage.success($t('settings.saved'))
   configDialog.value = false
   await loadConfigs()
 }
 
 const deleteConfig = async (row: any) => {
-  await ElMessageBox.confirm(`确认删除配置 ${row.config_key}？`, '提示')
+  await ElMessageBox.confirm($t('settings.confirmDelete', { key: row.config_key }), $t('common.prompt'))
   await api.delete(`/api/v1/admin/config/delete/${row.config_key}`)
-  ElMessage.success('已删除')
+  ElMessage.success($t('settings.deleted'))
   await loadConfigs()
 }
 
 const seedDemo = async () => {
   await api.post(`/api/v1/admin/demo/seed?mode=${demoMode.value}`)
-  ElMessage.success('演示数据已生成')
+  ElMessage.success($t('settings.demoSeedSuccess'))
   await loadDemoStatus()
 }
 
 const cleanDemo = async () => {
-  await ElMessageBox.confirm('确认清理所有演示数据？', '提示')
+  await ElMessageBox.confirm($t('settings.demoCleanConfirm'), $t('common.prompt'))
   await api.post('/api/v1/admin/demo/clean')
-  ElMessage.success('演示数据已清理')
+  ElMessage.success($t('settings.demoCleanSuccess'))
   await loadDemoStatus()
 }
 
@@ -223,7 +234,7 @@ const openVersionDialog = () => {
 
 const publishVersion = async () => {
   await api.post('/api/v1/admin/version/publish', versionForm.value)
-  ElMessage.success('版本已发布')
+  ElMessage.success($t('settings.versionPublished'))
   versionDialog.value = false
   await loadVersions()
 }

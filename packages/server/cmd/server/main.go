@@ -155,6 +155,9 @@ func setupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 			admin.POST("/admin/version/publish", handler.AdminPublishVersion)
 			admin.GET("/admin/version/list", handler.AdminListVersions)
 			admin.GET("/admin/monitor/stats", handler.MonitorStats)
+			// 佣金管理（SRC-BIZ-01）
+			admin.GET("/admin/commission/list", handler.AdminListCommissions)
+			admin.POST("/admin/commission/:id/collect", handler.AdminCollectCommission)
 		}
 	}
 

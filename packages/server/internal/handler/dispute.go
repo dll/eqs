@@ -201,11 +201,15 @@ func CloseDispute(c *gin.Context) {
 
 	now := time.Now()
 	model.DB.Model(&dispute).Updates(map[string]interface{}{
-		"status":            "closed",
-		"resolution_type":   req.ResolutionType,
+		"status":             "closed",
+		"resolution_type":    req.ResolutionType,
 		"resolution_file_id": req.ResolutionFileID,
-		"closed_at":         now,
+		"closed_at":          now,
 	})
+
+	// 争议结案后重算发起方信用分（纠纷分加权，幂等）
+	recalcUserCredit(dispute.InitiatorID)
+
 	WriteAudit(c, "dispute.close", "dispute", disputeID, gin.H{"resolution_type": req.ResolutionType, "settle_amount": req.SettleAmount})
 	ok(c, gin.H{"dispute": dispute, "message": "争议已结案，款项已解冻"})
 }

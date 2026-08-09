@@ -1,43 +1,43 @@
 <template>
   <el-container class="layout">
     <el-aside width="200px" class="aside">
-      <div class="logo">EQS 管理后台</div>
-      <el-menu :default-active="route.path" router>
+      <div class="logo">{{ $t('app.title') }}</div>
+      <el-menu :default-active="route.path" router background-color="#304156" text-color="#bfcbd9" active-text-color="#409EFF">
         <el-menu-item index="/dashboard">
           <el-icon><DataAnalysis /></el-icon>
-          <span>数据看板</span>
+          <span>{{ $t('menu.dashboard') }}</span>
         </el-menu-item>
         <el-menu-item index="/audit">
           <el-icon><DocumentChecked /></el-icon>
-          <span>资质审核</span>
+          <span>{{ $t('menu.audit') }}</span>
         </el-menu-item>
         <el-menu-item index="/project">
           <el-icon><Folder /></el-icon>
-          <span>项目管理</span>
+          <span>{{ $t('menu.project') }}</span>
         </el-menu-item>
         <el-menu-item index="/order">
           <el-icon><List /></el-icon>
-          <span>订单管理</span>
+          <span>{{ $t('menu.order') }}</span>
         </el-menu-item>
         <el-menu-item index="/settlement">
           <el-icon><Money /></el-icon>
-          <span>结算中心</span>
+          <span>{{ $t('menu.settlement') }}</span>
         </el-menu-item>
         <el-menu-item index="/credit">
           <el-icon><Star /></el-icon>
-          <span>信用评分</span>
+          <span>{{ $t('menu.credit') }}</span>
         </el-menu-item>
         <el-menu-item index="/dispute">
           <el-icon><Warning /></el-icon>
-          <span>纠纷仲裁</span>
+          <span>{{ $t('menu.dispute') }}</span>
         </el-menu-item>
         <el-menu-item index="/user">
           <el-icon><User /></el-icon>
-          <span>用户管理</span>
+          <span>{{ $t('menu.user') }}</span>
         </el-menu-item>
         <el-menu-item index="/settings">
           <el-icon><Setting /></el-icon>
-          <span>系统配置</span>
+          <span>{{ $t('menu.settings') }}</span>
         </el-menu-item>
       </el-menu>
     </el-aside>
@@ -45,7 +45,13 @@
     <el-container>
       <el-header class="header">
         <span>{{ route.meta.title }}</span>
-        <el-button type="text" @click="logout">退出登录</el-button>
+        <div>
+          <el-select :model-value="lang" size="small" style="width: 100px; margin-right: 12px" @change="onLangChange">
+            <el-option label="中文" value="zh-CN" />
+            <el-option label="EN" value="en-US" />
+          </el-select>
+          <el-button type="text" @click="logout">{{ $t('common.logout') }}</el-button>
+        </div>
       </el-header>
       <el-main class="main">
         <router-view />
@@ -57,10 +63,16 @@
 <script setup lang="ts">
 import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '@/store/user'
+import { useI18n } from '@/utils/i18n'
 
 const route = useRoute()
 const router = useRouter()
 const userStore = useUserStore()
+const { $t, lang, setAdminLang } = useI18n()
+
+const onLangChange = (v: string) => {
+  setAdminLang(v)
+}
 
 const logout = () => {
   userStore.logout()
