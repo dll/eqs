@@ -3,14 +3,33 @@
     <view class="project-info" v-if="project">
       <view class="info-card">
         <text class="project-title">{{ project.title }}</text>
-        <text class="project-type">{{ project.project_type }}</text>
-        <text class="project-budget">预算：¥{{ project.budget_min }} - ¥{{ project.budget_max }}</text>
-        <text class="project-status">状态：{{ statusText(project.status) }}</text>
+        <text class="project-type">{{ $t('project.' + project.project_type) || project.project_type }}</text>
+        <text class="project-budget">{{ $t('project.budget') }}：¥{{ project.budget_min }} - ¥{{ project.budget_max }}</text>
+        <text class="project-status">{{ $t('project.status') }}：{{ statusText(project.status) }}</text>
         <text class="project-desc" v-if="project.description">{{ project.description }}</text>
       </view>
 
+      <view class="theme-card" v-if="isOwner()">
+        <text class="card-title">{{ $t('mine.theme') }}</text>
+        <view class="theme-options">
+          <view
+            v-for="t in THEMES"
+            :key="t.id"
+            :class="['theme-option', projectTheme === t.id ? 'active' : '']"
+            @tap="setProjectTheme(t.id)"
+          >
+            <text class="theme-name">{{ t.name }}</text>
+            <text class="theme-desc">{{ t.description }}</text>
+          </view>
+          <view :class="['theme-option', projectTheme === '' ? 'active' : '']" @tap="setProjectTheme('')">
+            <text class="theme-name">{{ $t('common.all') }}</text>
+            <text class="theme-desc">跟随系统</text>
+          </view>
+        </view>
+      </view>
+
       <view class="progress-card">
-        <text class="card-title">项目进度</text>
+        <text class="card-title">{{ $t('project.progress') }}</text>
         <view class="timeline">
           <view class="timeline-item" v-for="(step, i) in steps" :key="i" :class="step.done ? 'done' : ''">
             <view class="dot" />
@@ -20,20 +39,20 @@
       </view>
 
       <view class="action-bar">
-        <button class="action-btn primary" v-if="project.status === 1 && isSupplier()" @tap="applyProject">报名</button>
-        <button class="action-btn" @tap="contact">联系</button>
+        <button class="action-btn primary" v-if="project.status === 1 && isSupplier()" @tap="applyProject">{{ $t('project.apply') }}</button>
+        <button class="action-btn" @tap="contact">{{ $t('project.contact') }}</button>
       </view>
     </view>
 
     <view class="bid-modal" v-if="showBidModal">
       <view class="modal-mask" @tap="showBidModal = false" />
       <view class="modal-card">
-        <text class="modal-title">提交报价</text>
-        <input class="modal-input" type="digit" v-model.number="bidForm.amount" placeholder="报价金额（元）" />
-        <input class="modal-input" type="number" v-model.number="bidForm.service_days" placeholder="服务天数" />
+        <text class="modal-title">{{ $t('project.bidTitle') }}</text>
+        <input class="modal-input" type="digit" v-model.number="bidForm.amount" :placeholder="$t('project.bidAmount')" />
+        <input class="modal-input" type="number" v-model.number="bidForm.service_days" :placeholder="$t('project.bidDays')" />
         <view class="modal-actions">
-          <button class="modal-btn" @tap="showBidModal = false">取消</button>
-          <button class="modal-btn primary" @tap="submitBid">提交</button>
+          <button class="modal-btn" @tap="showBidModal = false">{{ $t('common.cancel') }}</button>
+          <button class="modal-btn primary" @tap="submitBid">{{ $t('common.submit') }}</button>
         </view>
       </view>
     </view>
@@ -45,15 +64,20 @@ import { ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { request } from '@/utils/request'
 import { useUserStore } from '@/store/user'
+import { useSettingsStore, THEMES } from '@/store/settings'
 
 const project = ref<any>(null)
 const userStore = useUserStore()
+const settingsStore = useSettingsStore()
+const projectTheme = ref('')
+
+const $t = settingsStore.$t
 
 const steps = ref([
-  { label: '已发布', done: true },
-  { label: '已接单', done: false },
-  { label: '进行中', done: false },
-  { label: '已完成', done: false },
+  { label: $t('project.published'), done: true },
+  { label: $t('project.assigned'), done: false },
+  { label: $t('project.inProgress'), done: false },
+  { label: $t('project.completed'), done: false },
 ])
 
 onLoad((options) => {
@@ -66,6 +90,7 @@ const loadProject = async (id: string) => {
   try {
     const res = await request.get(`/api/v1/project/${id}`)
     project.value = res.project
+    projectTheme.value = project.value.theme || ''
     steps.value[0].done = project.value.status >= 1
     steps.value[1].done = project.value.status >= 2
     steps.value[2].done = project.value.status >= 3
@@ -77,11 +102,16 @@ const loadProject = async (id: string) => {
 
 const statusText = (status: number) => {
   const map: Record<number, string> = {
-    0: '草稿', 1: '已发布', 2: '已接单', 3: '进行中', 4: '已完成'
+    0: $t('project.draft'),
+    1: $t('project.published'),
+    2: $t('project.assigned'),
+    3: $t('project.inProgress'),
+    4: $t('project.completed'),
   }
-  return map[status] || '未知'
+  return map[status] || ''
 }
 
+const isOwner = () => userStore.user?.id === project.value?.user_id
 const isSupplier = () => userStore.user?.user_type === 2
 
 const showBidModal = ref(false)
@@ -91,9 +121,20 @@ const applyProject = () => {
   showBidModal.value = true
 }
 
+const setProjectTheme = async (theme: string) => {
+  if (!project.value) return
+  try {
+    await request.put(`/api/v1/project/${project.value.id}/theme`, { theme })
+    projectTheme.value = theme
+    uni.showToast({ title: $t('common.success'), icon: 'success' })
+  } catch {
+    // request 已提示
+  }
+}
+
 const submitBid = async () => {
   if (!bidForm.value.amount || bidForm.value.amount <= 0) {
-    uni.showToast({ title: '请填写报价金额', icon: 'none' })
+    uni.showToast({ title: $t('project.bidAmountRequired'), icon: 'none' })
     return
   }
   try {
@@ -102,7 +143,7 @@ const submitBid = async () => {
       amount: bidForm.value.amount,
       service_days: bidForm.value.service_days,
     })
-    uni.showToast({ title: '报价成功', icon: 'success' })
+    uni.showToast({ title: $t('project.bidSuccess'), icon: 'success' })
     showBidModal.value = false
   } catch {
     // request 已提示
@@ -119,7 +160,7 @@ const contact = () => {
   padding: 20rpx;
 }
 
-.info-card, .progress-card {
+.info-card, .progress-card, .theme-card {
   background: #fff;
   border-radius: 10rpx;
   padding: 30rpx;
@@ -147,6 +188,39 @@ const contact = () => {
   color: #333;
   display: block;
   margin-bottom: 20rpx;
+}
+
+.theme-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx;
+}
+
+.theme-option {
+  flex: 1;
+  min-width: 140rpx;
+  padding: 16rpx;
+  border: 2rpx solid #e5e5e5;
+  border-radius: 10rpx;
+  text-align: center;
+}
+
+.theme-option.active {
+  border-color: #1890ff;
+  background: #e6f7ff;
+}
+
+.theme-name {
+  font-size: 26rpx;
+  font-weight: bold;
+  display: block;
+}
+
+.theme-desc {
+  font-size: 22rpx;
+  color: #999;
+  display: block;
+  margin-top: 4rpx;
 }
 
 .timeline {
@@ -201,12 +275,6 @@ const contact = () => {
   right: 0;
   bottom: 0;
   z-index: 100;
-}
-
-.bid-mask {
-  position: absolute;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.4);
 }
 
 .modal-mask {

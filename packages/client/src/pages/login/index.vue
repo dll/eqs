@@ -1,22 +1,26 @@
 <template>
   <view class="container">
+    <view class="lang-switch">
+      <text class="lang-btn" :class="settingsStore.lang === 'zh-CN' ? 'active' : ''" @tap="settingsStore.setLang('zh-CN')">中文</text>
+      <text class="lang-btn" :class="settingsStore.lang === 'en-US' ? 'active' : ''" @tap="settingsStore.setLang('en-US')">EN</text>
+    </view>
     <view class="form">
       <view class="form-item">
-        <input class="input" v-model="form.phone" placeholder="请输入手机号" type="number" maxlength="11" />
+        <input class="input" v-model="form.phone" :placeholder="$t('login.phone')" type="number" maxlength="11" />
       </view>
       <view class="form-item code-row">
-        <input class="input code-input" v-model="form.code" placeholder="验证码" type="number" maxlength="6" />
+        <input class="input code-input" v-model="form.code" :placeholder="$t('login.code')" type="number" maxlength="6" />
         <button class="code-btn" @tap="sendCode" :disabled="countdown > 0">
-          {{ countdown > 0 ? `${countdown}s` : '获取验证码' }}
+          {{ countdown > 0 ? `${countdown}s` : $t('login.getCode') }}
         </button>
       </view>
       <view class="form-item">
         <view class="role-select">
-          <view :class="['role-item', form.userType === 1 ? 'active' : '']" @tap="form.userType = 1">甲方</view>
-          <view :class="['role-item', form.userType === 2 ? 'active' : '']" @tap="form.userType = 2">服务方</view>
+          <view :class="['role-item', form.userType === 1 ? 'active' : '']" @tap="form.userType = 1">{{ $t('login.client') }}</view>
+          <view :class="['role-item', form.userType === 2 ? 'active' : '']" @tap="form.userType = 2">{{ $t('login.supplier') }}</view>
         </view>
       </view>
-      <button class="submit-btn" @tap="login">登录</button>
+      <button class="submit-btn" @tap="login">{{ $t('common.login') }}</button>
     </view>
   </view>
 </template>
@@ -24,9 +28,11 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useUserStore } from '@/store/user'
+import { useSettingsStore } from '@/store/settings'
 import { request } from '@/utils/request'
 
 const userStore = useUserStore()
+const settingsStore = useSettingsStore()
 
 const form = ref({
   phone: '',
@@ -38,12 +44,12 @@ const countdown = ref(0)
 
 const sendCode = async () => {
   if (!form.value.phone) {
-    uni.showToast({ title: '请输入手机号', icon: 'none' })
+    uni.showToast({ title: settingsStore.$t('login.phoneRequired'), icon: 'none' })
     return
   }
   try {
     await request.post('/api/v1/sms/send', { phone: form.value.phone })
-    uni.showToast({ title: '验证码已发送', icon: 'success' })
+    uni.showToast({ title: settingsStore.$t('login.codeSent'), icon: 'success' })
     countdown.value = 60
     const timer = setInterval(() => {
       countdown.value--
@@ -56,7 +62,7 @@ const sendCode = async () => {
 
 const login = async () => {
   if (!form.value.phone || !form.value.code) {
-    uni.showToast({ title: '请填写完整信息', icon: 'none' })
+    uni.showToast({ title: settingsStore.$t('login.fillAll'), icon: 'none' })
     return
   }
   await userStore.login(form.value.phone, form.value.code, form.value.userType)
@@ -67,6 +73,26 @@ const login = async () => {
 <style scoped>
 .container {
   padding: 60rpx 40rpx;
+}
+
+.lang-switch {
+  display: flex;
+  justify-content: flex-end;
+  gap: 16rpx;
+  margin-bottom: 40rpx;
+}
+
+.lang-btn {
+  font-size: 26rpx;
+  color: #666;
+  padding: 8rpx 20rpx;
+  border-radius: 8rpx;
+  background: #f0f0f0;
+}
+
+.lang-btn.active {
+  background: #1890ff;
+  color: #fff;
 }
 
 .form-item {

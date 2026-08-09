@@ -4,11 +4,52 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/eqs/server/internal/model"
 	"github.com/gin-gonic/gin"
 )
+
+// ==================== 配置缓存 ====================
+
+type configCache struct {
+	mu      sync.RWMutex
+	configs map[string]interface{}
+	updated time.Time
+}
+
+var publicCache = &configCache{configs: make(map[string]interface{})}
+
+func loadPublicCache() {
+	publicCache.mu.Lock()
+	defer publicCache.mu.Unlock()
+	var configs []model.SystemConfig
+	model.DB.Where("is_public = ?", true).Find(&configs)
+	m := make(map[string]interface{}, len(configs))
+	for _, cfg := range configs {
+		m[cfg.ConfigKey] = parseConfigValue(cfg.ConfigValue, cfg.ValueType)
+	}
+	publicCache.configs = m
+	publicCache.updated = time.Now()
+}
+
+func invalidatePublicCache() {
+	publicCache.mu.Lock()
+	publicCache.configs = make(map[string]interface{})
+	publicCache.mu.Unlock()
+}
+
+func getPublicCached() map[string]interface{} {
+	publicCache.mu.RLock()
+	if len(publicCache.configs) > 0 {
+		defer publicCache.mu.RUnlock()
+		return publicCache.configs
+	}
+	publicCache.mu.RUnlock()
+	loadPublicCache()
+	return publicCache.configs
+}
 
 // ==================== 系统配置中心 ====================
 
@@ -69,6 +110,9 @@ func AdminUpsertConfig(c *gin.Context) {
 		}
 	}
 
+	if req.IsPublic {
+		invalidatePublicCache()
+	}
 	WriteAudit(c, "config.upsert", "config", cfg.ID, gin.H{"key": req.ConfigKey})
 	ok(c, gin.H{"config": cfg, "message": "配置已保存"})
 }
@@ -81,19 +125,14 @@ func AdminDeleteConfig(c *gin.Context) {
 		return
 	}
 	model.DB.Where("config_key = ?", key).Delete(&model.SystemConfig{})
+	invalidatePublicCache()
 	WriteAudit(c, "config.delete", "config", 0, gin.H{"key": key})
 	ok(c, gin.H{"message": "配置已删除"})
 }
 
-// PublicConfigs 公开配置（所有用户可读）
+// PublicConfigs 公开配置（所有用户可读）— 走缓存
 func PublicConfigs(c *gin.Context) {
-	var configs []model.SystemConfig
-	model.DB.Where("is_public = ?", true).Find(&configs)
-
-	result := gin.H{}
-	for _, cfg := range configs {
-		result[cfg.ConfigKey] = parseConfigValue(cfg.ConfigValue, cfg.ValueType)
-	}
+	result := getPublicCached()
 	ok(c, gin.H{"configs": result})
 }
 
@@ -335,13 +374,28 @@ func loadI18n(lang string) map[string]string {
 
 // ==================== 多端 ====================
 
-// PlatformLinks 各端访问地址
+// PlatformLinks 各端访问地址（从配置中心读取）
 func PlatformLinks(c *gin.Context) {
+	cfgs := getPublicCached()
+	urls, _ := cfgs["multiplatform.urls"].(map[string]interface{})
+	if urls == nil {
+		urls = make(map[string]interface{})
+	}
+
+	getURL := func(key string) string {
+		if v, ok := urls[key]; ok {
+			if s, ok := v.(string); ok {
+				return s
+			}
+		}
+		return ""
+	}
+
 	ok(c, gin.H{"platforms": []gin.H{
-		{"id": "h5", "name": "H5", "url": ""},
-		{"id": "mp-weixin", "name": "微信小程序", "url": ""},
-		{"id": "app-ios", "name": "iOS App", "url": ""},
-		{"id": "app-android", "name": "Android App", "url": ""},
+		{"id": "h5", "name": "H5", "url": getURL("h5")},
+		{"id": "mp-weixin", "name": "微信小程序", "url": getURL("mp-weixin")},
+		{"id": "app-ios", "name": "iOS App", "url": getURL("app-ios")},
+		{"id": "app-android", "name": "Android App", "url": getURL("app-android")},
 	}})
 }
 

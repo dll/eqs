@@ -1,13 +1,26 @@
 <template>
   <div class="settings-page">
     <el-card style="margin-bottom: 20px">
-      <template #header>系统配置</template>
-      <el-table :data="configs" border stripe>
-        <el-table-column prop="config_key" label="配置键" width="220" />
+      <template #header>
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+          <span>系统配置</span>
+          <el-select v-model="filterCategory" placeholder="全部分类" clearable style="width: 160px">
+            <el-option label="全部" value="" />
+            <el-option label="主题" value="theme" />
+            <el-option label="国际化" value="i18n" />
+            <el-option label="多端" value="multiplatform" />
+            <el-option label="版本" value="version" />
+            <el-option label="演示数据" value="demo" />
+            <el-option label="系统" value="system" />
+          </el-select>
+        </div>
+      </template>
+      <el-table :data="filteredConfigs" border stripe>
+        <el-table-column prop="config_key" label="配置键" width="240" />
         <el-table-column prop="config_value" label="配置值" />
-        <el-table-column prop="value_type" label="类型" width="100" />
+        <el-table-column prop="value_type" label="类型" width="80" />
         <el-table-column prop="description" label="说明" />
-        <el-table-column prop="is_public" label="公开" width="80">
+        <el-table-column prop="is_public" label="公开" width="70">
           <template #default="{ row }">{{ row.is_public ? '是' : '否' }}</template>
         </el-table-column>
         <el-table-column label="操作" width="140">
@@ -33,12 +46,19 @@
         <el-form-item>
           <el-button type="success" @click="seedDemo">生成演示数据</el-button>
           <el-button type="warning" @click="cleanDemo">清理演示数据</el-button>
+          <el-button @click="loadDemoStatus">刷新状态</el-button>
         </el-form-item>
       </el-form>
-      <el-alert type="info" :closable="false" title="演示数据用于测试系统功能、演示交流、培训教程，生成与清理均写入审计日志。" />
+      <el-descriptions :column="4" border size="small" style="margin-top: 12px;">
+        <el-descriptions-item label="状态">{{ demoStatus.demo_mode ? '已开启' : '已关闭' }}</el-descriptions-item>
+        <el-descriptions-item label="用户数">{{ demoStatus.user_count || 0 }}</el-descriptions-item>
+        <el-descriptions-item label="项目数">{{ demoStatus.project_count || 0 }}</el-descriptions-item>
+        <el-descriptions-item label="订单数">{{ demoStatus.order_count || 0 }}</el-descriptions-item>
+      </el-descriptions>
+      <el-alert type="info" :closable="false" title="演示数据用于测试系统功能、演示交流、培训教程，生成与清理均写入审计日志。" style="margin-top: 12px;" />
     </el-card>
 
-    <el-card>
+    <el-card style="margin-bottom: 20px">
       <template #header>版本管理</template>
       <el-table :data="versions" border stripe>
         <el-table-column prop="version" label="版本号" width="100" />
@@ -50,6 +70,22 @@
         </el-table-column>
       </el-table>
       <el-button type="primary" style="margin-top: 15px" @click="openVersionDialog">发布新版本</el-button>
+    </el-card>
+
+    <el-card>
+      <template #header>性能监控</template>
+      <el-table :data="monitorStatsList" border stripe>
+        <el-table-column prop="path" label="接口" />
+        <el-table-column prop="count" label="请求次数" width="100" />
+        <el-table-column prop="error_count" label="错误次数" width="100" />
+        <el-table-column prop="avg_ms" label="平均耗时(ms)" width="120">
+          <template #default="{ row }">{{ row.avg_ms?.toFixed(1) || '0' }}</template>
+        </el-table-column>
+        <el-table-column prop="error_rate" label="错误率(%)" width="100">
+          <template #default="{ row }">{{ row.error_rate?.toFixed(1) || '0' }}%</template>
+        </el-table-column>
+      </el-table>
+      <el-button style="margin-top: 15px" @click="loadMonitorStats">刷新统计</el-button>
     </el-card>
 
     <el-dialog v-model="configDialog" title="配置项" width="500px">
@@ -98,7 +134,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { api } from '@/utils/request'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
@@ -107,8 +143,19 @@ const versions = ref<any[]>([])
 const configDialog = ref(false)
 const versionDialog = ref(false)
 const demoMode = ref('demo')
+const filterCategory = ref('')
 const configForm = ref<any>({ config_key: '', config_value: '', value_type: 'string', description: '', is_public: false })
 const versionForm = ref<any>({ version: '', build: 0, platform: 'all', update_url: '', release_notes: '', mandatory: false })
+const demoStatus = ref<any>({ demo_mode: false, user_count: 0, project_count: 0, order_count: 0, dispute_count: 0 })
+const monitorStats = ref<any>({})
+const monitorStatsList = computed(() =>
+  Object.entries(monitorStats.value).map(([path, stat]: [string, any]) => ({ path, ...stat }))
+)
+
+const filteredConfigs = computed(() => {
+  if (!filterCategory.value) return configs.value
+  return configs.value.filter(c => c.config_key.startsWith(filterCategory.value + '.'))
+})
 
 const loadConfigs = async () => {
   const res = await api.get('/api/v1/admin/config/list')
@@ -118,6 +165,20 @@ const loadConfigs = async () => {
 const loadVersions = async () => {
   const res = await api.get('/api/v1/admin/version/list')
   versions.value = res.versions || []
+}
+
+const loadDemoStatus = async () => {
+  try {
+    const res = await api.get('/api/v1/admin/demo/status')
+    demoStatus.value = res
+  } catch { /* ignore */ }
+}
+
+const loadMonitorStats = async () => {
+  try {
+    const res = await api.get('/api/v1/admin/monitor/stats')
+    monitorStats.value = res.stats || {}
+  } catch { /* ignore */ }
 }
 
 const openConfigDialog = (row?: any) => {
@@ -146,12 +207,14 @@ const deleteConfig = async (row: any) => {
 const seedDemo = async () => {
   await api.post(`/api/v1/admin/demo/seed?mode=${demoMode.value}`)
   ElMessage.success('演示数据已生成')
+  await loadDemoStatus()
 }
 
 const cleanDemo = async () => {
   await ElMessageBox.confirm('确认清理所有演示数据？', '提示')
   await api.post('/api/v1/admin/demo/clean')
   ElMessage.success('演示数据已清理')
+  await loadDemoStatus()
 }
 
 const openVersionDialog = () => {
@@ -168,5 +231,7 @@ const publishVersion = async () => {
 onMounted(() => {
   loadConfigs()
   loadVersions()
+  loadDemoStatus()
+  loadMonitorStats()
 })
 </script>

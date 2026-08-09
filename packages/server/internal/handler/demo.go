@@ -32,15 +32,57 @@ func DemoToggleHandler(c *gin.Context) {
 		badRequest(c, "参数错误")
 		return
 	}
+
+	// 持久化到 system_configs 表
+	var cfg model.SystemConfig
+	err := model.DB.Where("config_key = ?", "demo.enabled").First(&cfg).Error
+	now := time.Now()
+	if err != nil {
+		cfg = model.SystemConfig{
+			ConfigKey:   "demo.enabled",
+			ConfigValue: fmt.Sprintf("%v", req.Enable),
+			ValueType:   "bool",
+			Description: "演示数据开关",
+			IsPublic:    false,
+			UpdatedAt:   now,
+		}
+		model.DB.Create(&cfg)
+	} else {
+		cfg.ConfigValue = fmt.Sprintf("%v", req.Enable)
+		cfg.UpdatedAt = now
+		model.DB.Save(&cfg)
+	}
+
 	status := "disabled"
 	if req.Enable {
 		status = "enabled"
 	}
+	WriteAudit(c, "admin.demo.toggle", "system", 0, gin.H{"enabled": req.Enable})
 	ok(c, gin.H{"message": "演示模式已" + status, "demo_mode": req.Enable})
 }
 
 func DemoStatusHandler(c *gin.Context) {
-	ok(c, gin.H{"demo_mode": false})
+	// 查询演示数据开关状态
+	var cfg model.SystemConfig
+	demoEnabled := false
+	if err := model.DB.Where("config_key = ?", "demo.enabled").First(&cfg).Error; err == nil {
+		demoEnabled = cfg.ConfigValue == "true" || cfg.ConfigValue == "1"
+	}
+
+	// 统计演示数据
+	var userCount, projectCount, orderCount, disputeCount int64
+	model.DB.Model(&model.User{}).Count(&userCount)
+	model.DB.Model(&model.Project{}).Count(&projectCount)
+	model.DB.Model(&model.Order{}).Count(&orderCount)
+	model.DB.Model(&model.Dispute{}).Count(&disputeCount)
+
+	ok(c, gin.H{
+		"demo_mode":      demoEnabled,
+		"user_count":     userCount,
+		"project_count":  projectCount,
+		"order_count":    orderCount,
+		"dispute_count":  disputeCount,
+	})
 }
 
 type seedResult struct {

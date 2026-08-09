@@ -17,6 +17,7 @@ type Project struct {
 	BudgetMin   float64   `json:"budget_min"`
 	BudgetMax   float64   `json:"budget_max"`
 	PublishScope string   `json:"publish_scope" gorm:"size:20;default:public"` // public/invited
+	Theme       string   `json:"theme" gorm:"size:20"`                        // 项目主题：空=跟随系统, print/dark/light
 	Status      int       `json:"status" gorm:"default:0"`
 	PublishTime *time.Time `json:"publish_time"`
 	Deadline    *time.Time `json:"deadline"`

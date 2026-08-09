@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { request } from '@/utils/request'
+import { setI18nLang, t } from '@/utils/i18n'
 
 export const THEMES = [
   { id: 'print', name: '打印主题', description: '白底黑字，适合截图打印' },
@@ -17,9 +18,11 @@ export const useSettingsStore = defineStore('settings', () => {
   const theme = ref<string>('print')
   const lang = ref<string>('zh-CN')
   const publicConfigs = ref<Record<string, any>>({})
-  const messages = ref<Record<string, string>>({})
   const updateAvailable = ref(false)
   const latestVersion = ref('')
+  const latestVersionNotes = ref('')
+  const latestVersionMandatory = ref(false)
+  const latestUpdateUrl = ref('')
 
   const loadSettings = async () => {
     try {
@@ -30,19 +33,11 @@ export const useSettingsStore = defineStore('settings', () => {
       publicConfigs.value = cfgRes.configs || {}
       theme.value = prefsRes.theme || publicConfigs.value['theme.default'] || 'print'
       lang.value = prefsRes.lang || 'zh-CN'
+      setI18nLang(lang.value)
       applyTheme(theme.value)
-      await loadMessages()
     } catch {
+      setI18nLang('zh-CN')
       applyTheme('print')
-    }
-  }
-
-  const loadMessages = async () => {
-    try {
-      const res = await request.get(`/api/v1/i18n/${lang.value}`)
-      messages.value = res.messages || {}
-    } catch {
-      messages.value = {}
     }
   }
 
@@ -58,12 +53,12 @@ export const useSettingsStore = defineStore('settings', () => {
 
   const setLang = async (l: string) => {
     lang.value = l
+    setI18nLang(l)
     try {
       await request.put('/api/v1/config/user/prefs', { lang: l })
     } catch {
       // 请求失败仅本地生效
     }
-    await loadMessages()
   }
 
   const applyTheme = (t: string) => {
@@ -111,14 +106,21 @@ export const useSettingsStore = defineStore('settings', () => {
       const res = await request.get('/api/v1/version/check?current=1.0.0&platform=h5')
       updateAvailable.value = !!res.update_available
       latestVersion.value = res.version || ''
+      latestVersionNotes.value = res.release_notes || ''
+      latestVersionMandatory.value = !!res.mandatory
+      latestUpdateUrl.value = res.update_url || ''
       return res
     } catch {
       return null
     }
   }
 
+  // t() 辅助函数，供模板使用
+  const $t = (key: string, params?: Record<string, string | number>) => t(key, params)
+
   return {
-    theme, lang, publicConfigs, messages, updateAvailable, latestVersion,
-    loadSettings, setTheme, setLang, checkVersion, applyTheme,
+    theme, lang, publicConfigs, updateAvailable, latestVersion,
+    latestVersionNotes, latestVersionMandatory, latestUpdateUrl,
+    loadSettings, setTheme, setLang, checkVersion, applyTheme, $t,
   }
 })

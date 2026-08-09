@@ -37,6 +37,7 @@ func setupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 
 	r.Use(middleware.CORS())
 	r.Use(middleware.Logger())
+	r.Use(handler.MonitorMiddleware())
 
 	api := r.Group("/api/v1")
 	{
@@ -125,7 +126,7 @@ func setupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 			auth.PUT("/project/:id/theme", handler.SetProjectTheme)
 			auth.GET("/i18n/:lang", handler.I18nMessages)
 			auth.GET("/platform/links", handler.PlatformLinks)
-			auth.GET("/version/check", handler.VersionCheck)
+			auth.GET("/version/check", handler.VersionRateLimit(), handler.VersionCheck)
 			auth.GET("/version/latest", handler.VersionLatest)
 		}
 
@@ -151,6 +152,7 @@ func setupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 			admin.DELETE("/admin/config/delete/:key", handler.AdminDeleteConfig)
 			admin.POST("/admin/version/publish", handler.AdminPublishVersion)
 			admin.GET("/admin/version/list", handler.AdminListVersions)
+			admin.GET("/admin/monitor/stats", handler.MonitorStats)
 		}
 	}
 

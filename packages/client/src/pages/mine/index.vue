@@ -1,30 +1,30 @@
 <template>
   <view class="container">
     <view class="user-card" v-if="userStore.user">
-      <text class="user-name">{{ userStore.user.company_name || '未填写公司名称' }}</text>
+      <text class="user-name">{{ userStore.user.company_name || $t('mine.company') }}</text>
       <text class="user-phone">{{ userStore.user.phone }}</text>
-      <text class="user-score">信用分：{{ userStore.user.credit_score }}</text>
+      <text class="user-score">{{ $t('mine.creditScore') }}：{{ userStore.user.credit_score }}</text>
     </view>
 
     <view class="menu-list">
       <view class="menu-item" @tap="goTo('/pages/order/list')">
-        <text>我的订单</text>
+        <text>{{ $t('mine.myOrders') }}</text>
         <text class="arrow">></text>
       </view>
       <view class="menu-item" @tap="goTo('/pages/project/list')">
-        <text>我发布的项目</text>
+        <text>{{ $t('mine.myProjects') }}</text>
         <text class="arrow">></text>
       </view>
       <view class="menu-item" @tap="showThemePicker">
-        <text>主题（当前：{{ themeName }}）</text>
+        <text>{{ $t('mine.theme') }}（{{ themeName }}）</text>
         <text class="arrow">></text>
       </view>
       <view class="menu-item" @tap="showLangPicker">
-        <text>语言（当前：{{ langName }}）</text>
+        <text>{{ $t('mine.lang') }}（{{ langName }}）</text>
         <text class="arrow">></text>
       </view>
       <view class="menu-item" @tap="logout">
-        <text>退出登录</text>
+        <text>{{ $t('mine.logout') }}</text>
         <text class="arrow">></text>
       </view>
     </view>
@@ -38,6 +38,8 @@ import { useSettingsStore, THEMES, LANGS } from '@/store/settings'
 
 const userStore = useUserStore()
 const settingsStore = useSettingsStore()
+
+const $t = settingsStore.$t
 
 const themeName = computed(() => THEMES.find(t => t.id === settingsStore.theme)?.name || settingsStore.theme)
 const langName = computed(() => LANGS.find(l => l.id === settingsStore.lang)?.name || settingsStore.lang)

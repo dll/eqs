@@ -36,11 +36,9 @@ describe('settings store', () => {
     mocks.request.get
       .mockResolvedValueOnce({ configs: { 'theme.default': 'light' } })
       .mockResolvedValueOnce({ theme: 'dark', lang: 'en-US' })
-      .mockResolvedValueOnce({ messages: { 'nav.home': 'Home' } })
     await store.loadSettings()
     expect(store.theme).toBe('dark')
     expect(store.lang).toBe('en-US')
-    expect(store.messages['nav.home']).toBe('Home')
   })
 
   it('setTheme 应用 CSS 变量并同步后端', async () => {
@@ -51,13 +49,11 @@ describe('settings store', () => {
     expect(mocks.request.put).toHaveBeenCalledWith('/api/v1/config/user/prefs', { theme: 'dark' })
   })
 
-  it('setLang 更新语言并重新加载文案', async () => {
+  it('setLang 更新语言并同步后端', async () => {
     const store = useSettingsStore()
     mocks.request.put.mockResolvedValue({})
-    mocks.request.get.mockResolvedValue({ messages: { 'nav.home': '首页' } })
     await store.setLang('zh-CN')
     expect(store.lang).toBe('zh-CN')
-    expect(store.messages['nav.home']).toBe('首页')
   })
 
   it('checkVersion 检测新版本', async () => {
