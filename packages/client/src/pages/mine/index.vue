@@ -36,12 +36,15 @@ import { computed } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { useUserStore } from '@/store/user'
 import { useSettingsStore, THEMES, LANGS } from '@/store/settings'
-import { useI18n, usePageTitle } from '@/utils/i18n'
+import { useI18n, usePageTitle, applyTabBarI18n } from '@/utils/i18n'
 
 const userStore = useUserStore()
 const settingsStore = useSettingsStore()
 const { $t } = useI18n()
 usePageTitle('page.mine', { onShow })
+onShow(() => {
+  applyTabBarI18n()
+})
 
 const themeName = computed(() => $t('theme.' + settingsStore.theme))
 const langName = computed(() => $t('lang.' + settingsStore.lang))

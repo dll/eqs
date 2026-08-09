@@ -36,12 +36,30 @@ const TAB_ITEMS = [
   { index: 3, text: 'nav.mine' },
 ]
 
+// tabBar 页面路径（与 pages.json 一致）
+const TAB_PAGES = ['pages/index/index', 'pages/project/list', 'pages/order/list', 'pages/mine/index']
+
+// 判断当前是否处于 tabBar 页面，避免在非 tabBar 页面调用 setTabBarItem 报错
+function isTabBarPage(): boolean {
+  try {
+    const pages = getCurrentPages()
+    const current = pages[pages.length - 1] as any
+    if (!current) return false
+    const route: string = current.$page?.route || current.route || ''
+    return TAB_PAGES.some((p) => route === p || route.endsWith('/' + p))
+  } catch {
+    return false
+  }
+}
+
 export function applyTabBarI18n() {
+  if (!isTabBarPage()) return
   try {
     TAB_ITEMS.forEach((item) => uni.setTabBarItem({ index: item.index, text: t(item.text) }))
   } catch {
     // 运行环境不支持时忽略
   }
+  uni.showTabBar?.({})
 }
 
 export function applyNavTitle(titleKey: string) {

@@ -33,7 +33,7 @@
 import { ref } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { request } from '@/utils/request'
-import { useI18n, usePageTitle } from '@/utils/i18n'
+import { useI18n, usePageTitle, applyTabBarI18n } from '@/utils/i18n'
 import { toWan, toTypeKey } from '@/lib/service'
 
 const { $t } = useI18n()
@@ -57,6 +57,7 @@ const goToProjectDetail = (id: number) => {
 }
 
 onShow(() => {
+  applyTabBarI18n()
   loadProjects()
 })
 

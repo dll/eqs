@@ -28,7 +28,7 @@
 import { ref } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { request } from '@/utils/request'
-import { useI18n, usePageTitle } from '@/utils/i18n'
+import { useI18n, usePageTitle, applyTabBarI18n } from '@/utils/i18n'
 
 const { $t } = useI18n()
 usePageTitle('page.orderList', { onShow })
@@ -46,6 +46,7 @@ const loadOrders = async () => {
 }
 
 onShow(() => {
+  applyTabBarI18n()
   loadOrders()
 })
 
