@@ -5,6 +5,7 @@ interface RequestOptions {
   url: string
   method?: 'GET' | 'POST' | 'PUT' | 'DELETE'
   data?: any
+  silent401?: boolean // 401 时不跳转登录（用于启动时的可选请求）
 }
 
 let token = uni.getStorageSync('token')
@@ -22,16 +23,20 @@ export const clearToken = () => {
 const handler = (options: RequestOptions) =>
   new Promise<any>((resolve, reject) => {
     uni.request({
-      ...options,
       url: BASE_URL + options.url,
+      method: options.method || 'GET',
+      data: options.data,
       header: { 'Content-Type': 'application/json', Authorization: token ? `Bearer ${token}` : '' },
       success: (res: any) => {
         const data = res.data || {}
         if (res.statusCode >= 400) {
-          uni.showToast({ title: data.message || '请求失败', icon: 'none' })
           if (res.statusCode === 401) {
             clearToken()
-            uni.reLaunch({ url: '/pages/login/index' })
+            if (!options.silent401) {
+              uni.reLaunch({ url: '/pages/login/index' })
+            }
+          } else {
+            uni.showToast({ title: data.message || '请求失败', icon: 'none' })
           }
           reject(data)
           return
@@ -46,8 +51,10 @@ const handler = (options: RequestOptions) =>
   })
 
 export const request = {
-  get: (url: string) => handler({ url, method: 'GET' }),
-  post: (url: string, data?: any) => handler({ url, method: 'POST', data }),
+  get: (url: string, opts?: { silent401?: boolean }) =>
+    handler({ url, method: 'GET', ...opts }),
+  post: (url: string, data?: any, opts?: { silent401?: boolean }) =>
+    handler({ url, method: 'POST', data, ...opts }),
   put: (url: string, data?: any) => handler({ url, method: 'PUT', data }),
   delete: (url: string) => handler({ url, method: 'DELETE' }),
 }

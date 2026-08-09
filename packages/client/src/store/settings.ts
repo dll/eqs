@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { request } from '@/utils/request'
-import { setI18nLang, t } from '@/utils/i18n'
+import { setI18nLang } from '@/utils/i18n'
 
 export const THEMES = [
   { id: 'print', name: '打印主题', description: '白底黑字，适合截图打印' },
@@ -27,8 +27,8 @@ export const useSettingsStore = defineStore('settings', () => {
   const loadSettings = async () => {
     try {
       const [cfgRes, prefsRes] = await Promise.all([
-        request.get('/api/v1/config/public').catch(() => ({ configs: {} })),
-        request.get('/api/v1/config/user/prefs').catch(() => ({ theme: 'print', lang: 'zh-CN' })),
+        request.get('/api/v1/config/public', { silent401: true }).catch(() => ({ configs: {} })),
+        request.get('/api/v1/config/user/prefs', { silent401: true }).catch(() => ({ theme: 'print', lang: 'zh-CN' })),
       ])
       publicConfigs.value = cfgRes.configs || {}
       theme.value = prefsRes.theme || publicConfigs.value['theme.default'] || 'print'
@@ -103,7 +103,7 @@ export const useSettingsStore = defineStore('settings', () => {
 
   const checkVersion = async () => {
     try {
-      const res = await request.get('/api/v1/version/check?current=1.0.0&platform=h5')
+      const res = await request.get('/api/v1/version/check?current=1.0.0&platform=h5', { silent401: true })
       updateAvailable.value = !!res.update_available
       latestVersion.value = res.version || ''
       latestVersionNotes.value = res.release_notes || ''
