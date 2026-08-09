@@ -2,45 +2,50 @@
   <view class="container">
     <view class="form">
       <view class="form-item">
-        <text class="label">服务类型</text>
+        <text class="label">{{ $t('project.type') }}</text>
         <picker :range="projectTypes" @change="onTypeChange">
-          <view class="picker">{{ form.projectType || '请选择服务类型' }}</view>
+          <view class="picker">{{ form.projectType || $t('project.selectType') }}</view>
         </picker>
       </view>
 
       <view class="form-item">
-        <text class="label">项目名称</text>
-        <input class="input" v-model="form.title" placeholder="请输入项目名称" />
+        <text class="label">{{ $t('project.name') }}</text>
+        <input class="input" v-model="form.title" :placeholder="$t('project.namePlaceholder')" />
       </view>
 
       <view class="form-item">
-        <text class="label">预算范围（元）</text>
+        <text class="label">{{ $t('project.budgetRange') }}</text>
         <view class="budget-row">
-          <input class="input budget-input" v-model="form.budgetMin" placeholder="最低" type="digit" />
+          <input class="input budget-input" v-model="form.budgetMin" :placeholder="$t('project.budgetMin')" type="digit" />
           <text class="budget-sep">-</text>
-          <input class="input budget-input" v-model="form.budgetMax" placeholder="最高" type="digit" />
+          <input class="input budget-input" v-model="form.budgetMax" :placeholder="$t('project.budgetMax')" type="digit" />
         </view>
       </view>
 
       <view class="form-item">
-        <text class="label">项目地点</text>
-        <input class="input" v-model="form.address" placeholder="请输入工程地址" />
+        <text class="label">{{ $t('project.location') }}</text>
+        <input class="input" v-model="form.address" :placeholder="$t('project.addressPlaceholder')" />
       </view>
 
       <view class="form-item">
-        <text class="label">项目描述</text>
-        <textarea class="textarea" v-model="form.description" placeholder="请输入项目描述" />
+        <text class="label">{{ $t('project.desc') }}</text>
+        <textarea class="textarea" v-model="form.description" :placeholder="$t('project.descPlaceholder')" />
       </view>
 
-      <button class="submit-btn" @tap="submit">发布项目</button>
+      <button class="submit-btn" @tap="submit">{{ $t('project.create') }}</button>
     </view>
   </view>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import { onLoad } from '@dcloudio/uni-app'
 import { request } from '@/utils/request'
+import { useI18n, usePageTitle } from '@/utils/i18n'
 import { PROJECT_TYPES, toTypeCode } from '@/lib/service'
+
+const { $t } = useI18n()
+usePageTitle('page.projectCreate', { onLoad })
 
 const projectTypes = PROJECT_TYPES
 
@@ -59,7 +64,7 @@ const onTypeChange = (e: any) => {
 
 const submit = async () => {
   if (!form.value.projectType || !form.value.title) {
-    uni.showToast({ title: '请填写必要信息', icon: 'none' })
+    uni.showToast({ title: $t('project.required'), icon: 'none' })
     return
   }
   try {
@@ -73,10 +78,72 @@ const submit = async () => {
       description: form.value.description,
       publish_scope: 'public',
     })
-    uni.showToast({ title: '发布成功', icon: 'success' })
+    uni.showToast({ title: $t('project.publishSuccess'), icon: 'success' })
     setTimeout(() => uni.navigateBack(), 1500)
   } catch {
     // request 已提示
   }
 }
 </script>
+
+<style scoped>
+.container {
+  padding: 20rpx;
+}
+
+.form-item {
+  margin-bottom: 30rpx;
+}
+
+.label {
+  display: block;
+  font-size: 28rpx;
+  color: var(--text-color);
+  margin-bottom: 12rpx;
+}
+
+.picker {
+  background: var(--input-bg);
+  padding: 24rpx 30rpx;
+  border-radius: 10rpx;
+  font-size: 30rpx;
+  color: var(--text-color);
+}
+
+.input {
+  background: var(--input-bg);
+  padding: 24rpx 30rpx;
+  border-radius: 10rpx;
+  font-size: 30rpx;
+}
+
+.budget-row {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+}
+
+.budget-input {
+  flex: 1;
+}
+
+.budget-sep {
+  color: var(--muted-color);
+}
+
+.textarea {
+  background: var(--input-bg);
+  padding: 24rpx 30rpx;
+  border-radius: 10rpx;
+  font-size: 30rpx;
+  width: auto;
+  min-height: 160rpx;
+}
+
+.submit-btn {
+  background: var(--primary-color);
+  color: #fff;
+  margin-top: 40rpx;
+  border-radius: 10rpx;
+}
+</style>

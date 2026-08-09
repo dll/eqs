@@ -1,26 +1,36 @@
 <template>
   <view class="container">
     <view class="filter-bar">
-      <view :class="['filter-item', activeType === '' ? 'active' : '']" @tap="filterByType('')">全部</view>
-      <view :class="['filter-item', activeType === '造价' ? 'active' : '']" @tap="filterByType('造价')">造价</view>
-      <view :class="['filter-item', activeType === '监理' ? 'active' : '']" @tap="filterByType('监理')">监理</view>
-      <view :class="['filter-item', activeType === '地勘' ? 'active' : '']" @tap="filterByType('地勘')">地勘</view>
-      <view :class="['filter-item', activeType === '设计' ? 'active' : '']" @tap="filterByType('设计')">设计</view>
+      <view :class="['filter-item', activeType === '' ? 'active' : '']" @tap="filterByType('')">{{ $t('common.all') }}</view>
+      <view :class="['filter-item', activeType === 'cost' ? 'active' : '']" @tap="filterByType('cost')">{{ $t('project.cost') }}</view>
+      <view :class="['filter-item', activeType === 'supervision' ? 'active' : '']" @tap="filterByType('supervision')">{{ $t('project.supervision') }}</view>
+      <view :class="['filter-item', activeType === 'geotech' ? 'active' : '']" @tap="filterByType('geotech')">{{ $t('project.geotech') }}</view>
+      <view :class="['filter-item', activeType === 'design' ? 'active' : '']" @tap="filterByType('design')">{{ $t('project.design') }}</view>
     </view>
 
     <view class="provider-list">
       <view class="provider-card" v-for="p in providers" :key="p.id" @tap="goToDetail(p.id)">
         <view class="provider-info">
           <text class="provider-name">{{ p.company_name }}</text>
-          <text class="provider-score">信用分：{{ p.credit_score }}</text>
+          <text class="provider-score">{{ $t('provider.creditScorePrefix', { score: p.credit_score }) }}</text>
         </view>
       </view>
+    </view>
+
+    <view class="empty" v-if="providers.length === 0">
+      <text>{{ $t('common.empty') }}</text>
     </view>
   </view>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import { onShow } from '@dcloudio/uni-app'
+import { request } from '@/utils/request'
+import { useI18n, usePageTitle } from '@/utils/i18n'
+
+const { $t } = useI18n()
+usePageTitle('page.providerList', { onShow })
 
 const activeType = ref('')
 interface ProviderInfo {
@@ -29,6 +39,19 @@ interface ProviderInfo {
   credit_score: number
 }
 const providers = ref<ProviderInfo[]>([])
+
+onShow(() => {
+  loadProviders()
+})
+
+const loadProviders = async () => {
+  try {
+    const res = await request.get('/api/v1/provider/list', { silent401: true }).catch(() => ({ providers: [] }))
+    providers.value = res.providers || []
+  } catch {
+    // request 已提示
+  }
+}
 
 const filterByType = (type: string) => {
   activeType.value = type
@@ -82,5 +105,11 @@ const goToDetail = (id: number) => {
 .provider-score {
   font-size: 26rpx;
   color: var(--primary-color);
+}
+
+.empty {
+  text-align: center;
+  padding: 100rpx 0;
+  color: var(--muted-color);
 }
 </style>

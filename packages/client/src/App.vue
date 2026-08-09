@@ -3,6 +3,9 @@ import { onLaunch } from '@dcloudio/uni-app'
 import { ref } from 'vue'
 import { useUserStore } from '@/store/user'
 import { useSettingsStore } from '@/store/settings'
+import { useI18n, applyTabBarI18n } from '@/utils/i18n'
+
+const { $t } = useI18n()
 
 const showUpdateDialog = ref(false)
 const updateInfo = ref({ version: '', notes: '', mandatory: false, url: '' })
@@ -12,6 +15,7 @@ onLaunch(async () => {
   const settingsStore = useSettingsStore()
   await userStore.loadUser()
   await settingsStore.loadSettings()
+  applyTabBarI18n()
   const res = await settingsStore.checkVersion()
   if (res?.update_available) {
     updateInfo.value = {
@@ -136,12 +140,12 @@ page {
     <!-- 版本更新弹窗 -->
     <view class="update-mask" v-if="showUpdateDialog" @tap="updateInfo.mandatory ? null : dismissUpdate()">
       <view class="update-card" @tap.stop>
-        <text class="update-title">{{ updateInfo.mandatory ? '版本强制更新' : '发现新版本' }}</text>
+        <text class="update-title">{{ updateInfo.mandatory ? $t('version.mandatoryTitle') : $t('version.update') }}</text>
         <text class="update-version">v{{ updateInfo.version }}</text>
         <text class="update-notes" v-if="updateInfo.notes">{{ updateInfo.notes }}</text>
         <view class="update-actions">
-          <view class="update-btn primary" @tap="doUpdate">立即更新</view>
-          <view class="update-btn secondary" v-if="!updateInfo.mandatory" @tap="dismissUpdate">稍后再说</view>
+          <view class="update-btn primary" @tap="doUpdate">{{ $t('version.updateNow') }}</view>
+          <view class="update-btn secondary" v-if="!updateInfo.mandatory" @tap="dismissUpdate">{{ $t('version.updateLater') }}</view>
         </view>
       </view>
     </view>

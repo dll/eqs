@@ -1,27 +1,27 @@
 <template>
   <view class="container">
     <view class="search-bar">
-      <input class="search-input" placeholder="搜索服务、项目..." />
+      <input class="search-input" :placeholder="$t('home.searchPlaceholder')" />
     </view>
 
     <view class="categories">
       <view class="category-item" v-for="cat in categories" :key="cat.id" @tap="goToProjectList(cat.type)">
         <image class="category-icon" :src="cat.icon" mode="aspectFit" />
-        <text class="category-name">{{ cat.name }}</text>
+        <text class="category-name">{{ $t(cat.nameKey) }}</text>
       </view>
     </view>
 
     <view class="section">
       <view class="section-header">
-        <text class="section-title">推荐项目</text>
-        <text class="section-more" @tap="goToProjectList()">查看更多</text>
+        <text class="section-title">{{ $t('home.recommended') }}</text>
+        <text class="section-more" @tap="goToProjectList()">{{ $t('home.viewMore') }}</text>
       </view>
       <view class="project-list">
         <view class="project-card" v-for="project in projects" :key="project.id" @tap="goToProjectDetail(project.id)">
           <view class="project-info">
             <text class="project-title">{{ project.title }}</text>
-            <text class="project-type">{{ project.project_type }}</text>
-            <text class="project-budget">预算：{{ project.budget_min }}-{{ project.budget_max }}万</text>
+            <text class="project-type">{{ toTypeKey(project.project_type) }}</text>
+            <text class="project-budget">{{ $t('home.budget', { min: toWan(project.budget_min), max: toWan(project.budget_max) }) }}</text>
           </view>
         </view>
       </view>
@@ -33,12 +33,17 @@
 import { ref } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { request } from '@/utils/request'
+import { useI18n, usePageTitle } from '@/utils/i18n'
+import { toWan, toTypeKey } from '@/lib/service'
+
+const { $t } = useI18n()
+usePageTitle('page.home', { onShow })
 
 const categories = ref([
-  { id: 1, name: '造价咨询', type: '造价', icon: '/static/category/price.png' },
-  { id: 2, name: '工程监理', type: '监理', icon: '/static/category/supervise.png' },
-  { id: 3, name: '地质勘察', type: '地勘', icon: '/static/category/survey.png' },
-  { id: 4, name: '工程设计', type: '设计', icon: '/static/category/design.png' },
+  { id: 1, nameKey: 'category.cost', type: 'cost', icon: '/static/category/price.png' },
+  { id: 2, nameKey: 'category.supervision', type: 'supervision', icon: '/static/category/supervise.png' },
+  { id: 3, nameKey: 'category.geotech', type: 'geotech', icon: '/static/category/survey.png' },
+  { id: 4, nameKey: 'category.design', type: 'design', icon: '/static/category/design.png' },
 ])
 
 const projects = ref<any[]>([])
@@ -51,14 +56,18 @@ const goToProjectDetail = (id: number) => {
   uni.navigateTo({ url: `/pages/project/detail?id=${id}` })
 }
 
-onShow(async () => {
+onShow(() => {
+  loadProjects()
+})
+
+const loadProjects = async () => {
   try {
     const res = await request.get('/api/v1/project/list')
     projects.value = (res.projects || []).filter((p: any) => p.status === 1).slice(0, 5)
   } catch {
     // request 已提示
   }
-})
+}
 </script>
 
 <style scoped>

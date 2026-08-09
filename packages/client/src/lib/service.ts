@@ -15,6 +15,17 @@ export const CODE_NAME: Record<string, string> = {
   design: '工程设计',
 }
 
+// 内部 code 对应的 i18n key（供页面 $t 使用）
+export const CODE_I18N: Record<string, string> = {
+  cost: 'category.cost',
+  supervision: 'category.supervision',
+  geotech: 'category.geotech',
+  design: 'category.design',
+}
+
+// code -> i18n key
+export const toTypeKey = (code: string): string => CODE_I18N[code] || 'category.cost'
+
 // 人民币：后端金额单位为元，前端展示习惯用万元
 export const toWan = (yuan: number): number => +(yuan / 10000).toFixed(2)
 export const yuanToWan = (yuan: number): number | '' => (yuan ? +((yuan / 10000).toFixed(2)) : '')

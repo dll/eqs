@@ -1,11 +1,11 @@
 <template>
   <view class="container">
     <view class="filter-bar">
-      <view :class="['filter-item', activeType === '' ? 'active' : '']" @tap="filterByType('')">全部</view>
-      <view :class="['filter-item', activeType === '造价' ? 'active' : '']" @tap="filterByType('造价')">造价</view>
-      <view :class="['filter-item', activeType === '监理' ? 'active' : '']" @tap="filterByType('监理')">监理</view>
-      <view :class="['filter-item', activeType === '地勘' ? 'active' : '']" @tap="filterByType('地勘')">地勘</view>
-      <view :class="['filter-item', activeType === '设计' ? 'active' : '']" @tap="filterByType('设计')">设计</view>
+      <view :class="['filter-item', activeType === '' ? 'active' : '']" @tap="filterByType('')">{{ $t('common.all') }}</view>
+      <view :class="['filter-item', activeType === 'cost' ? 'active' : '']" @tap="filterByType('cost')">{{ $t('project.cost') }}</view>
+      <view :class="['filter-item', activeType === 'supervision' ? 'active' : '']" @tap="filterByType('supervision')">{{ $t('project.supervision') }}</view>
+      <view :class="['filter-item', activeType === 'geotech' ? 'active' : '']" @tap="filterByType('geotech')">{{ $t('project.geotech') }}</view>
+      <view :class="['filter-item', activeType === 'design' ? 'active' : '']" @tap="filterByType('design')">{{ $t('project.design') }}</view>
     </view>
 
     <view class="project-list">
@@ -15,9 +15,9 @@
           <text class="project-status">{{ statusText(project.status) }}</text>
         </view>
         <view class="project-info">
-          <text class="info-item">类型：{{ toTypeName(project.service_type) }}</text>
-          <text class="info-item">发布者：{{ project.user?.company_name || '业主' }}</text>
-          <text class="info-item">预算：{{ formatPriceWan(project.budget_min) }} - {{ formatPriceWan(project.budget_max) }}</text>
+          <text class="info-item">{{ $t('project.typePrefix') }}{{ toTypeLabel(project.service_type) }}</text>
+          <text class="info-item">{{ $t('project.publisher') }}:{{ project.user?.company_name || $t('project.owner') }}</text>
+          <text class="info-item">{{ $t('project.budget') }}:{{ formatPriceWan(project.budget_min) }} - {{ formatPriceWan(project.budget_max) }}</text>
         </view>
         <view class="project-footer">
           <text class="publish-time">{{ project.publish_time }}</text>
@@ -26,7 +26,7 @@
     </view>
 
     <view class="empty" v-if="projects.length === 0">
-      <text>暂无项目</text>
+      <text>{{ $t('common.empty') }}</text>
     </view>
   </view>
 </template>
@@ -35,7 +35,11 @@
 import { ref } from 'vue'
 import { onLoad, onShow } from '@dcloudio/uni-app'
 import { request } from '@/utils/request'
+import { useI18n, usePageTitle } from '@/utils/i18n'
 import { toTypeName, formatPriceWan } from '@/lib/service'
+
+const { $t } = useI18n()
+usePageTitle('page.projectList', { onShow })
 
 const activeType = ref('')
 const projects = ref<any[]>([])
@@ -54,10 +58,7 @@ onShow(() => {
 const loadProjects = async () => {
   loading.value = true
   try {
-    const typeMap: Record<string, string> = { 造价: 'cost', 监理: 'supervision', 地勘: 'geotech', 设计: 'design' }
-    const params = activeType.value
-      ? `?service_type=${typeMap[activeType.value] || activeType.value}`
-      : ''
+    const params = activeType.value ? `?service_type=${activeType.value}` : ''
     const res = await request.get(`/api/v1/project/list${params}`)
     projects.value = res.projects || []
   } finally {
@@ -74,11 +75,13 @@ const goToDetail = (id: number) => {
   uni.navigateTo({ url: `/pages/project/detail?id=${id}` })
 }
 
+const toTypeLabel = (code: string) => $t('project.' + code) || toTypeName(code)
+
 const statusText = (status: number) => {
   const map: Record<number, string> = {
-    0: '草稿', 1: '已发布', 2: '已接单', 3: '进行中', 4: '已完成'
+    0: $t('project.draft'), 1: $t('project.published'), 2: $t('project.assigned'), 3: $t('project.inProgress'), 4: $t('project.completed')
   }
-  return map[status] || '未知'
+  return map[status] || $t('order.unknown')
 }
 </script>
 

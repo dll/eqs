@@ -1,23 +1,23 @@
 <template>
   <div>
     <el-card>
-      <template #header>资质审核</template>
+      <template #header>{{ $t('audit.title') }}</template>
       <el-table :data="auditList" style="width: 100%">
-        <el-table-column prop="id" label="ID" width="80" />
-        <el-table-column prop="supplier_id" label="服务方ID" width="90" />
-        <el-table-column prop="qualification_type" label="资质类型" width="140" />
-        <el-table-column prop="certificate_no" label="证书编号" />
-        <el-table-column prop="level" label="等级" width="80" />
-        <el-table-column prop="verification_status" label="状态" width="100">
+        <el-table-column prop="id" :label="$t('audit.id')" width="80" />
+        <el-table-column prop="supplier_id" :label="$t('audit.supplierId')" width="90" />
+        <el-table-column prop="qualification_type" :label="$t('audit.qualType')" width="140" />
+        <el-table-column prop="certificate_no" :label="$t('audit.certNo')" />
+        <el-table-column prop="level" :label="$t('audit.level')" width="80" />
+        <el-table-column prop="verification_status" :label="$t('audit.status')" width="100">
           <template #default="{ row }">
             <el-tag :type="statusType(row.verification_status)">{{ statusText(row.verification_status) }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="180">
+        <el-table-column :label="$t('audit.actions')" width="180">
           <template #default="{ row }">
             <template v-if="row.verification_status === 'pending'">
-              <el-button type="success" size="small" @click="review(row, true)">通过</el-button>
-              <el-button type="danger" size="small" @click="review(row, false)">拒绝</el-button>
+              <el-button type="success" size="small" @click="review(row, true)">{{ $t('common.approve') }}</el-button>
+              <el-button type="danger" size="small" @click="review(row, false)">{{ $t('common.reject') }}</el-button>
             </template>
           </template>
         </el-table-column>
@@ -30,6 +30,9 @@
 import { ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { api } from '@/utils/request'
+import { useI18n } from '@/utils/i18n'
+
+const { $t } = useI18n()
 
 const auditList = ref<any[]>([])
 
@@ -47,7 +50,7 @@ onMounted(load)
 const review = async (row: any, verified: boolean) => {
   try {
     await api.post(`/api/v1/qualification/${row.id}/review`, { verified })
-    ElMessage.success(verified ? '已通过' : '已拒绝')
+    ElMessage.success(verified ? $t('common.passed') : $t('common.rejected'))
     load()
   } catch {
     // interceptor 已提示
@@ -55,7 +58,12 @@ const review = async (row: any, verified: boolean) => {
 }
 
 const statusText = (status: string) => {
-  const map: Record<string, string> = { pending: '待审核', approved: '已通过', rejected: '已拒绝', expired: '已过期' }
+  const map: Record<string, string> = {
+    pending: $t('audit.status.pending'),
+    approved: $t('audit.status.approved'),
+    rejected: $t('audit.status.rejected'),
+    expired: $t('audit.status.expired'),
+  }
   return map[status] || status
 }
 

@@ -1,43 +1,43 @@
 <template>
   <view class="container" v-if="order">
     <view class="info-card">
-      <text class="order-title">订单 #{{ order.id }}</text>
-      <text class="order-item">金额：¥{{ order.amount }}</text>
-      <text class="order-item">状态：{{ statusText(order.status) }}</text>
-      <text class="order-item" v-if="order.project">项目：{{ order.project.title }}</text>
-      <text class="order-item" v-if="order.signed_at">签约时间：{{ order.signed_at }}</text>
+      <text class="order-title">{{ $t('order.orderNo', { id: order.id }) }}</text>
+      <text class="order-item">{{ $t('order.amountPrefix', { amount: order.amount }) }}</text>
+      <text class="order-item">{{ $t('order.statusPrefix') }}{{ statusText(order.status) }}</text>
+      <text class="order-item" v-if="order.project">{{ $t('order.projectPrefix', { title: order.project.title }) }}</text>
+      <text class="order-item" v-if="order.signed_at">{{ $t('order.signedAtPrefix', { time: order.signed_at }) }}</text>
     </view>
 
     <view class="contract-card" v-if="contract">
-      <text class="card-title">合同</text>
-      <text class="contract-no">合同号：{{ contract.contract_no }}</text>
-      <text class="contract-status">状态：{{ contract.status }}</text>
-      <button v-if="contract.status === 'draft'" class="mini-btn" @tap="signContract">签署合同</button>
+      <text class="card-title">{{ $t('order.contract') }}</text>
+      <text class="contract-no">{{ $t('order.contractNoPrefix', { no: contract.contract_no }) }}</text>
+      <text class="contract-status">{{ $t('order.contract.status', { status: contractStatusText(contract.status) }) }}</text>
+      <button v-if="contract.status === 'draft'" class="mini-btn" @tap="signContract">{{ $t('order.contract.sign') }}</button>
     </view>
 
     <view class="milestone-card">
-      <text class="card-title">付款节点</text>
+      <text class="card-title">{{ $t('order.milestones') }}</text>
       <view class="milestone-item" v-for="ms in milestones" :key="ms.id">
         <view class="ms-head">
           <text class="ms-name">{{ ms.name }}</text>
           <text class="ms-ratio">{{ ms.ratio }}%</text>
         </view>
-        <text class="ms-detail">金额 ¥{{ ms.amount }} · {{ ms.status }}</text>
+        <text class="ms-detail">{{ $t('order.milestone.amount', { amount: ms.amount }) }} · {{ milestoneStatusText(ms.status) }}</text>
         <view class="ms-actions" v-if="ms.status === 'pending'">
-          <button class="mini-btn" @tap="deliver(ms)">上传交付</button>
-          <button class="mini-btn primary" @tap="settle(ms)">结算</button>
+          <button class="mini-btn" @tap="deliver(ms)">{{ $t('order.milestone.deliver') }}</button>
+          <button class="mini-btn primary" @tap="settle(ms)">{{ $t('order.milestone.settle') }}</button>
         </view>
         <view class="ms-actions" v-if="ms.status === 'submitted'">
-          <button class="mini-btn primary" @tap="accept(ms, true)">验收通过</button>
-          <button class="mini-btn" @tap="accept(ms, false)">驳回</button>
+          <button class="mini-btn primary" @tap="accept(ms, true)">{{ $t('order.milestone.accept') }}</button>
+          <button class="mini-btn" @tap="accept(ms, false)">{{ $t('order.milestone.reject') }}</button>
         </view>
-        <button v-if="ms.status === 'accepted'" class="mini-btn" @tap="settle(ms)">提交结算</button>
+        <button v-if="ms.status === 'accepted'" class="mini-btn" @tap="settle(ms)">{{ $t('order.milestone.submitSettle') }}</button>
       </view>
     </view>
 
     <view class="actions-card">
-      <button class="action-btn" @tap="openDispute">发起争议</button>
-      <button class="action-btn" @tap="goPay">资金明细</button>
+      <button class="action-btn" @tap="openDispute">{{ $t('order.dispute') }}</button>
+      <button class="action-btn" @tap="goPay">{{ $t('order.pay') }}</button>
     </view>
   </view>
 </template>
@@ -46,7 +46,10 @@
 import { ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { request } from '@/utils/request'
+import { useI18n, usePageTitle } from '@/utils/i18n'
 
+const { $t } = useI18n()
+usePageTitle('page.orderDetail', { onLoad })
 const order = ref<any>(null)
 const contract = ref<any>(null)
 const milestones = ref<any[]>([])
@@ -70,19 +73,35 @@ const loadOrder = async (id: string) => {
 
 const statusText = (status: any) => {
   const m: Record<number, string> = {
-    0: '待签约', 1: '进行中', 2: '待验收', 3: '已完成', 4: '纠纷中'
+    0: $t('order.pending'), 1: $t('order.inProgress'), 2: $t('order.toAccept'), 3: $t('order.completed'), 4: $t('order.dispute')
   }
-  if (typeof status === 'string') {
-    const cm: Record<string, string> = { draft: '草稿', signing: '签署中', signed: '已签署', voided: '已作废' }
-    return cm[status] || status
+  return m[status] || $t('order.unknown')
+}
+
+const contractStatusText = (status: string) => {
+  const cm: Record<string, string> = {
+    draft: $t('order.contract.draft'),
+    signing: $t('order.contract.signing'),
+    signed: $t('order.contract.signed'),
+    voided: $t('order.contract.voided'),
   }
-  return m[status] || '未知'
+  return cm[status] || status
+}
+
+const milestoneStatusText = (status: string) => {
+  const mm: Record<string, string> = {
+    pending: $t('order.milestone.pending'),
+    submitted: $t('order.milestone.submitted'),
+    accepted: $t('order.milestone.accepted'),
+    settled: $t('order.milestone.settled'),
+  }
+  return mm[status] || status
 }
 
 const signContract = async () => {
   try {
     await request.post(`/api/v1/contract/${contract.value.id}/sign`)
-    uni.showToast({ title: '签署完成', icon: 'success' })
+    uni.showToast({ title: $t('order.signSuccess'), icon: 'success' })
     loadOrder(order.value.id)
   } catch {
     // request 已提示
@@ -90,13 +109,13 @@ const signContract = async () => {
 }
 
 const deliver = async (ms: any) => {
-  uni.showToast({ title: '请通过文件页面上传', icon: 'none' })
+  uni.showToast({ title: $t('order.deliverToast'), icon: 'none' })
 }
 
 const settle = async (ms: any) => {
   try {
     await request.post(`/api/v1/milestone/${ms.id}/settle`)
-    uni.showToast({ title: '结算指令已提交', icon: 'success' })
+    uni.showToast({ title: $t('order.settleSubmitted'), icon: 'success' })
     loadOrder(order.value?.id)
   } catch {
     // request 已提示
@@ -105,8 +124,8 @@ const settle = async (ms: any) => {
 
 const accept = async (ms: any, ok: boolean) => {
   try {
-    await request.post(`/api/v1/milestone/${ms.id}/accept`, { accept: ok, comment: ok ? '验收通过' : '驳回' })
-    uni.showToast({ title: ok ? '验收通过' : '已驳回', icon: 'success' })
+    await request.post(`/api/v1/milestone/${ms.id}/accept`, { accept: ok, comment: ok ? $t('order.acceptPassed') : $t('order.acceptRejected') })
+    uni.showToast({ title: ok ? $t('order.acceptPassed') : $t('order.acceptRejected'), icon: 'success' })
     loadOrder(order.value?.id)
   } catch {
     // request 已提示
@@ -114,11 +133,11 @@ const accept = async (ms: any, ok: boolean) => {
 }
 
 const openDispute = () => {
-  uni.showToast({ title: '争议处理详见详情', icon: 'none' })
+  uni.showToast({ title: $t('order.disputeToast'), icon: 'none' })
 }
 
 const goPay = () => {
-  uni.showToast({ title: '资金明细为记账流水', icon: 'none' })
+  uni.showToast({ title: $t('order.payToast'), icon: 'none' })
 }
 </script>
 

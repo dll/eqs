@@ -1,16 +1,16 @@
 <template>
   <div>
     <el-card>
-      <template #header>信用评分（评价联动）</template>
+      <template #header>{{ $t('credit.title') }}</template>
       <el-table :data="users" style="width: 100%">
-        <el-table-column prop="id" label="ID" width="80" />
-        <el-table-column prop="company_name" label="公司名称" />
-        <el-table-column prop="credit_score" label="信用分" width="100">
+        <el-table-column prop="id" :label="$t('credit.id')" width="80" />
+        <el-table-column prop="company_name" :label="$t('credit.company')" />
+        <el-table-column prop="credit_score" :label="$t('credit.score')" width="100">
           <template #default="{ row }">
             <el-tag :type="scoreType(row.credit_score)">{{ row.credit_score }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="等级" width="100">
+        <el-table-column :label="$t('credit.level')" width="100">
           <template #default="{ row }">
             <el-tag :type="levelType(row.credit_score)">{{ levelText(row.credit_score) }}</el-tag>
           </template>
@@ -23,6 +23,9 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { api } from '@/utils/request'
+import { useI18n } from '@/utils/i18n'
+
+const { $t } = useI18n()
 
 const users = ref<any[]>([])
 

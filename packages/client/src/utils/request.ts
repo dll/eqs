@@ -1,4 +1,6 @@
 // BASE_URL：开发联调走本地后端（走 vite proxy），生产由环境注入
+import { t } from '@/utils/i18n'
+
 const BASE_URL = ''
 
 interface RequestOptions {
@@ -36,7 +38,7 @@ const handler = (options: RequestOptions) =>
               uni.reLaunch({ url: '/pages/login/index' })
             }
           } else {
-            uni.showToast({ title: data.message || '请求失败', icon: 'none' })
+            uni.showToast({ title: data.message || t('error.requestFailed'), icon: 'none' })
           }
           reject(data)
           return
@@ -44,7 +46,7 @@ const handler = (options: RequestOptions) =>
         resolve(data)
       },
       fail: (err: any) => {
-        uni.showToast({ title: '网络异常', icon: 'none' })
+        uni.showToast({ title: t('error.network'), icon: 'none' })
         reject(err)
       },
     })

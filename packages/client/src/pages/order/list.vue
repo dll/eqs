@@ -1,25 +1,25 @@
 <template>
   <view class="container">
     <view class="filter-bar">
-      <view :class="['filter-item', activeStatus === -1 ? 'active' : '']" @tap="filterByStatus(-1)">全部</view>
-      <view :class="['filter-item', activeStatus === 0 ? 'active' : '']" @tap="filterByStatus(0)">待签约</view>
-      <view :class="['filter-item', activeStatus === 1 ? 'active' : '']" @tap="filterByStatus(1)">进行中</view>
-      <view :class="['filter-item', activeStatus === 2 ? 'active' : '']" @tap="filterByStatus(2)">待验收</view>
-      <view :class="['filter-item', activeStatus === 3 ? 'active' : '']" @tap="filterByStatus(3)">已完成</view>
+      <view :class="['filter-item', activeStatus === -1 ? 'active' : '']" @tap="filterByStatus(-1)">{{ $t('common.all') }}</view>
+      <view :class="['filter-item', activeStatus === 0 ? 'active' : '']" @tap="filterByStatus(0)">{{ $t('order.pending') }}</view>
+      <view :class="['filter-item', activeStatus === 1 ? 'active' : '']" @tap="filterByStatus(1)">{{ $t('order.inProgress') }}</view>
+      <view :class="['filter-item', activeStatus === 2 ? 'active' : '']" @tap="filterByStatus(2)">{{ $t('order.toAccept') }}</view>
+      <view :class="['filter-item', activeStatus === 3 ? 'active' : '']" @tap="filterByStatus(3)">{{ $t('order.completed') }}</view>
     </view>
 
     <view class="order-list">
       <view class="order-card" v-for="order in orders" :key="order.id" @tap="goToDetail(order.id)">
         <view class="order-info">
-          <text class="order-title">订单 #{{ order.id }} · {{ order.project?.title || '项目' }}</text>
-          <text class="order-amount">金额：¥{{ order.amount }}</text>
-          <text class="order-status">状态：{{ statusText(order.status) }}</text>
+          <text class="order-title">{{ $t('order.orderNo', { id: order.id }) }} · {{ order.project?.title || $t('order.project') }}</text>
+          <text class="order-amount">{{ $t('order.amountPrefix', { amount: order.amount }) }}</text>
+          <text class="order-status">{{ $t('order.statusPrefix') }}{{ statusText(order.status) }}</text>
         </view>
       </view>
     </view>
 
     <view class="empty" v-if="orders.length === 0">
-      <text>暂无订单</text>
+      <text>{{ $t('common.empty') }}</text>
     </view>
   </view>
 </template>
@@ -28,7 +28,10 @@
 import { ref } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { request } from '@/utils/request'
+import { useI18n, usePageTitle } from '@/utils/i18n'
 
+const { $t } = useI18n()
+usePageTitle('page.orderList', { onShow })
 const activeStatus = ref(-1)
 const orders = ref<any[]>([])
 
@@ -57,9 +60,9 @@ const goToDetail = (id: number) => {
 
 const statusText = (status: number) => {
   const map: Record<number, string> = {
-    0: '待签约', 1: '进行中', 2: '待验收', 3: '已完成', 4: '纠纷中'
+    0: $t('order.pending'), 1: $t('order.inProgress'), 2: $t('order.toAccept'), 3: $t('order.completed'), 4: $t('order.dispute')
   }
-  return map[status] || '未知'
+  return map[status] || $t('order.unknown')
 }
 </script>
 

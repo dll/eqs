@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { request } from '@/utils/request'
-import { setI18nLang } from '@/utils/i18n'
+import { setI18nLang, applyTabBarI18n } from '@/utils/i18n'
 
 export const THEMES = [
   { id: 'print', name: '打印主题', description: '白底黑字，适合截图打印' },
@@ -54,6 +54,7 @@ export const useSettingsStore = defineStore('settings', () => {
   const setLang = async (l: string) => {
     lang.value = l
     setI18nLang(l)
+    applyTabBarI18n()
     try {
       await request.put('/api/v1/config/user/prefs', { lang: l })
     } catch {

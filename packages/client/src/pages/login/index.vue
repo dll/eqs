@@ -27,14 +27,16 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import { onLoad } from '@dcloudio/uni-app'
 import { useUserStore } from '@/store/user'
 import { useSettingsStore } from '@/store/settings'
-import { useI18n } from '@/utils/i18n'
+import { useI18n, usePageTitle } from '@/utils/i18n'
 import { request } from '@/utils/request'
 
 const userStore = useUserStore()
 const settingsStore = useSettingsStore()
 const { $t } = useI18n()
+usePageTitle('page.login', { onLoad })
 
 const form = ref({
   phone: '',

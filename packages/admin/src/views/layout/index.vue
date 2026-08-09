@@ -44,7 +44,7 @@
 
     <el-container>
       <el-header class="header">
-        <span>{{ route.meta.title }}</span>
+        <span>{{ $t('menu.' + route.meta.titleKey) }}</span>
         <div>
           <el-select :model-value="lang" size="small" style="width: 100px; margin-right: 12px" @change="onLangChange">
             <el-option label="中文" value="zh-CN" />

@@ -3,7 +3,7 @@
     <view class="user-card" v-if="userStore.user">
       <text class="user-name">{{ userStore.user.company_name || $t('mine.company') }}</text>
       <text class="user-phone">{{ userStore.user.phone }}</text>
-      <text class="user-score">{{ $t('mine.creditScore') }}：{{ userStore.user.credit_score }}</text>
+      <text class="user-score">{{ $t('mine.creditScore') }}:{{ userStore.user.credit_score }}</text>
     </view>
 
     <view class="menu-list">
@@ -16,11 +16,11 @@
         <text class="arrow">></text>
       </view>
       <view class="menu-item" @tap="showThemePicker">
-        <text>{{ $t('mine.theme') }}（{{ themeName }}）</text>
+        <text>{{ $t('mine.themeCurrent', { name: themeName }) }}</text>
         <text class="arrow">></text>
       </view>
       <view class="menu-item" @tap="showLangPicker">
-        <text>{{ $t('mine.lang') }}（{{ langName }}）</text>
+        <text>{{ $t('mine.langCurrent', { name: langName }) }}</text>
         <text class="arrow">></text>
       </view>
       <view class="menu-item" @tap="logout">
@@ -33,16 +33,18 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { onShow } from '@dcloudio/uni-app'
 import { useUserStore } from '@/store/user'
 import { useSettingsStore, THEMES, LANGS } from '@/store/settings'
-import { useI18n } from '@/utils/i18n'
+import { useI18n, usePageTitle } from '@/utils/i18n'
 
 const userStore = useUserStore()
 const settingsStore = useSettingsStore()
 const { $t } = useI18n()
+usePageTitle('page.mine', { onShow })
 
-const themeName = computed(() => THEMES.find(t => t.id === settingsStore.theme)?.name || settingsStore.theme)
-const langName = computed(() => LANGS.find(l => l.id === settingsStore.lang)?.name || settingsStore.lang)
+const themeName = computed(() => $t('theme.' + settingsStore.theme))
+const langName = computed(() => $t('lang.' + settingsStore.lang))
 
 const goTo = (url: string) => {
   uni.navigateTo({ url })
@@ -50,7 +52,7 @@ const goTo = (url: string) => {
 
 const showThemePicker = () => {
   uni.showActionSheet({
-    itemList: THEMES.map(t => t.name),
+    itemList: THEMES.map(x => $t('theme.' + x.id)),
     success: (res: any) => {
       const theme = THEMES[res.tapIndex]
       if (theme) settingsStore.setTheme(theme.id)
@@ -60,7 +62,7 @@ const showThemePicker = () => {
 
 const showLangPicker = () => {
   uni.showActionSheet({
-    itemList: LANGS.map(l => l.name),
+    itemList: LANGS.map(l => $t('lang.' + l.id)),
     success: (res: any) => {
       const lang = LANGS[res.tapIndex]
       if (lang) settingsStore.setLang(lang.id)

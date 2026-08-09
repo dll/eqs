@@ -23,7 +23,7 @@
           </view>
           <view :class="['theme-option', projectTheme === '' ? 'active' : '']" @tap="setProjectTheme('')">
             <text class="theme-name">{{ $t('common.all') }}</text>
-            <text class="theme-desc">跟随系统</text>
+            <text class="theme-desc">{{ $t('project.themeFollow') }}</text>
           </view>
         </view>
       </view>
@@ -65,9 +65,11 @@ import { onLoad, onUnload } from '@dcloudio/uni-app'
 import { request } from '@/utils/request'
 import { useUserStore } from '@/store/user'
 import { useSettingsStore, THEMES } from '@/store/settings'
-import { useI18n } from '@/utils/i18n'
+import { useI18n, usePageTitle } from '@/utils/i18n'
 
 const project = ref<any>(null)
+usePageTitle('page.projectDetail', { onLoad })
+
 const userStore = useUserStore()
 const settingsStore = useSettingsStore()
 const { $t } = useI18n()
@@ -159,7 +161,7 @@ const submitBid = async () => {
 }
 
 const contact = () => {
-  uni.showToast({ title: '暂未开放站内信', icon: 'none' })
+  uni.showToast({ title: $t('project.contactClose'), icon: 'none' })
 }
 </script>
 

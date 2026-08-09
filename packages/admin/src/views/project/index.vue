@@ -3,18 +3,18 @@
     <el-card>
       <template #header>
         <div class="card-header">
-          <span>项目管理</span>
+          <span>{{ $t('project.title') }}</span>
         </div>
       </template>
       <el-table :data="projects" style="width: 100%">
-        <el-table-column prop="id" label="ID" width="80" />
-        <el-table-column prop="title" label="项目名称" />
-        <el-table-column prop="service_type" label="类型" width="120" />
-        <el-table-column prop="user_id" label="业主ID" width="80" />
-        <el-table-column label="预算" width="150">
+        <el-table-column prop="id" :label="$t('project.id')" width="80" />
+        <el-table-column prop="title" :label="$t('project.name')" />
+        <el-table-column prop="service_type" :label="$t('project.type')" width="120" />
+        <el-table-column prop="user_id" :label="$t('project.ownerId')" width="80" />
+        <el-table-column :label="$t('project.budget')" width="150">
           <template #default="{ row }">¥{{ row.budget_min }} - ¥{{ row.budget_max }}</template>
         </el-table-column>
-        <el-table-column prop="status" label="状态" width="100">
+        <el-table-column prop="status" :label="$t('project.status')" width="100">
           <template #default="{ row }">
             <el-tag>{{ statusText(row.status) }}</el-tag>
           </template>
@@ -27,6 +27,9 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { api } from '@/utils/request'
+import { useI18n } from '@/utils/i18n'
+
+const { $t } = useI18n()
 
 const projects = ref<any[]>([])
 
@@ -43,9 +46,9 @@ onMounted(load)
 
 const statusText = (status: number) => {
   const map: Record<number, string> = {
-    0: '草稿', 1: '已发布', 2: '已接单', 3: '进行中', 4: '已完成'
+    0: $t('project.status.draft'), 1: $t('project.status.published'), 2: $t('project.status.assigned'), 3: $t('project.status.inProgress'), 4: $t('project.status.completed')
   }
-  return map[status] || '未知'
+  return map[status] || $t('project.status.unknown')
 }
 </script>
 
