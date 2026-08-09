@@ -29,10 +29,12 @@
 import { ref } from 'vue'
 import { useUserStore } from '@/store/user'
 import { useSettingsStore } from '@/store/settings'
+import { useI18n } from '@/utils/i18n'
 import { request } from '@/utils/request'
 
 const userStore = useUserStore()
 const settingsStore = useSettingsStore()
+const { $t } = useI18n()
 
 const form = ref({
   phone: '',
@@ -44,12 +46,12 @@ const countdown = ref(0)
 
 const sendCode = async () => {
   if (!form.value.phone) {
-    uni.showToast({ title: settingsStore.$t('login.phoneRequired'), icon: 'none' })
+    uni.showToast({ title: $t('login.phoneRequired'), icon: 'none' })
     return
   }
   try {
     await request.post('/api/v1/sms/send', { phone: form.value.phone })
-    uni.showToast({ title: settingsStore.$t('login.codeSent'), icon: 'success' })
+    uni.showToast({ title: $t('login.codeSent'), icon: 'success' })
     countdown.value = 60
     const timer = setInterval(() => {
       countdown.value--
@@ -62,7 +64,7 @@ const sendCode = async () => {
 
 const login = async () => {
   if (!form.value.phone || !form.value.code) {
-    uni.showToast({ title: settingsStore.$t('login.fillAll'), icon: 'none' })
+    uni.showToast({ title: $t('login.fillAll'), icon: 'none' })
     return
   }
   await userStore.login(form.value.phone, form.value.code, form.value.userType)

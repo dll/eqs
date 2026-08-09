@@ -13,13 +13,13 @@
         <text class="card-title">{{ $t('mine.theme') }}</text>
         <view class="theme-options">
           <view
-            v-for="t in THEMES"
-            :key="t.id"
-            :class="['theme-option', projectTheme === t.id ? 'active' : '']"
-            @tap="setProjectTheme(t.id)"
+            v-for="item in THEMES"
+            :key="item.id"
+            :class="['theme-option', projectTheme === item.id ? 'active' : '']"
+            @tap="setProjectTheme(item.id)"
           >
-            <text class="theme-name">{{ t.name }}</text>
-            <text class="theme-desc">{{ t.description }}</text>
+            <text class="theme-name">{{ item.name }}</text>
+            <text class="theme-desc">{{ item.description }}</text>
           </view>
           <view :class="['theme-option', projectTheme === '' ? 'active' : '']" @tap="setProjectTheme('')">
             <text class="theme-name">{{ $t('common.all') }}</text>
@@ -65,13 +65,13 @@ import { onLoad } from '@dcloudio/uni-app'
 import { request } from '@/utils/request'
 import { useUserStore } from '@/store/user'
 import { useSettingsStore, THEMES } from '@/store/settings'
+import { useI18n } from '@/utils/i18n'
 
 const project = ref<any>(null)
 const userStore = useUserStore()
 const settingsStore = useSettingsStore()
+const { $t } = useI18n()
 const projectTheme = ref('')
-
-const $t = settingsStore.$t
 
 const steps = ref([
   { label: $t('project.published'), done: true },

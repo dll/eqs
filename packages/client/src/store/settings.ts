@@ -115,12 +115,9 @@ export const useSettingsStore = defineStore('settings', () => {
     }
   }
 
-  // t() 辅助函数，供模板使用
-  const $t = (key: string, params?: Record<string, string | number>) => t(key, params)
-
   return {
     theme, lang, publicConfigs, updateAvailable, latestVersion,
     latestVersionNotes, latestVersionMandatory, latestUpdateUrl,
-    loadSettings, setTheme, setLang, checkVersion, applyTheme, $t,
+    loadSettings, setTheme, setLang, checkVersion, applyTheme,
   }
 })

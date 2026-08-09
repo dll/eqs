@@ -22,3 +22,8 @@ export function t(key: string, params?: Record<string, string | number>): string
   }
   return text
 }
+
+// Vue composable — 在 <script setup> 中使用
+export function useI18n() {
+  return { t, $t: t }
+}

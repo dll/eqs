@@ -35,11 +35,11 @@
 import { computed } from 'vue'
 import { useUserStore } from '@/store/user'
 import { useSettingsStore, THEMES, LANGS } from '@/store/settings'
+import { useI18n } from '@/utils/i18n'
 
 const userStore = useUserStore()
 const settingsStore = useSettingsStore()
-
-const $t = settingsStore.$t
+const { $t } = useI18n()
 
 const themeName = computed(() => THEMES.find(t => t.id === settingsStore.theme)?.name || settingsStore.theme)
 const langName = computed(() => LANGS.find(l => l.id === settingsStore.lang)?.name || settingsStore.lang)
