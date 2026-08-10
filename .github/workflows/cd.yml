@@ -102,15 +102,15 @@ jobs:
           name: server-binary
           path: server-binary
 
-      - name: Upload binary via scp to temp
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.CVM_HOST }}
-          username: ${{ secrets.CVM_USERNAME }}
-          key: ${{ secrets.CVM_SSH_KEY }}
-          source: "server-binary/*"
-          target: "/tmp/eqs-server-new"
-          strip_components: 1
+      - name: Upload binary via native scp
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "${{ secrets.CVM_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.CVM_HOST }} >> ~/.ssh/known_hosts 2>/dev/null
+          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ${{ secrets.CVM_USERNAME }}@${{ secrets.CVM_HOST }} "mkdir -p /tmp/eqs-server-new"
+          scp -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no server-binary/server ${{ secrets.CVM_USERNAME }}@${{ secrets.CVM_HOST }}:/tmp/eqs-server-new/server
+          echo "SCP upload done"
 
       - name: Atomic replace and restart
         uses: appleboy/ssh-action@v1.0.3
