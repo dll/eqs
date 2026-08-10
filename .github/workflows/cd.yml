@@ -100,26 +100,30 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: server-binary
-          path: packages/server
+          path: server-binary
 
-      - name: Deploy to Tencent Cloud CVM
+      - name: Upload server binary to CVM
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.CVM_HOST }}
+          username: ${{ secrets.CVM_USERNAME }}
+          key: ${{ secrets.CVM_SSH_KEY }}
+          source: "server-binary/server"
+          target: "/opt/eqs/packages/server"
+          strip_components: 1
+
+      - name: Restart EQS service
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.CVM_HOST }}
           username: ${{ secrets.CVM_USERNAME }}
           key: ${{ secrets.CVM_SSH_KEY }}
           script: |
-            cd /opt/eqs
-            git pull origin main
-            
-            # Build and restart server
-            cd packages/server
-            go build -o server cmd/server/main.go
-            
-            # Restart service
+            chmod +x /opt/eqs/packages/server/server
             sudo systemctl restart eqs-server
-            
-            echo "Server deployed successfully"
+            sleep 3
+            systemctl is-active eqs-server
+            echo "EQS server deployed"
 
   deploy-admin:
     name: Deploy Admin to CVM Nginx

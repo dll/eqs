@@ -9,13 +9,15 @@ WorkingDirectory=/opt/eqs/packages/server
 ExecStart=/opt/eqs/packages/server/server
 Restart=always
 RestartSec=5
-Environment=SERVER_PORT=8080
+Environment=SERVER_PORT=8090
+Environment=DB_DRIVER=mysql
 Environment=DB_HOST=localhost
 Environment=DB_PORT=3306
-Environment=DB_USER=root
+Environment=DB_USER=eqs
 Environment=DB_PASSWORD=${DB_PASSWORD}
 Environment=DB_NAME=eqs
 Environment=REDIS_ADDR=localhost:6379
+Environment=REDIS_PASS=
 Environment=JWT_SECRET=${JWT_SECRET}
 
 [Install]
