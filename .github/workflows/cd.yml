@@ -113,7 +113,7 @@ jobs:
 
       - name: Install coscli
         run: |
-          curl -L https://github.com/tencentyun/coscli/releases/latest/download/coscli-linux -o coscli
+          curl -L https://github.com/tencentyun/coscli/releases/latest/download/coscli-v1.0.8-linux-amd64 -o coscli
           chmod +x coscli
           sudo mv coscli /usr/local/bin/
 
@@ -151,7 +151,7 @@ jobs:
 
       - name: Install coscli
         run: |
-          curl -L https://github.com/tencentyun/coscli/releases/latest/download/coscli-linux -o coscli
+          curl -L https://github.com/tencentyun/coscli/releases/latest/download/coscli-v1.0.8-linux-amd64 -o coscli
           chmod +x coscli
           sudo mv coscli /usr/local/bin/
 
@@ -163,6 +163,7 @@ jobs:
           COS_SECRET_KEY: ${{ secrets.TENCENT_CLOUD_SECRET_KEY }}
           COS_BUCKET: eqs-client-${{ vars.ENV }}
           COS_REGION: ${{ env.TENCENT_CLOUD_REGION }}
+
 
 
 
