@@ -1,26 +1,69 @@
 <template>
   <view class="container">
     <view class="lang-switch">
-      <text class="lang-btn" :class="settingsStore.lang === 'zh-CN' ? 'active' : ''" @tap="settingsStore.setLang('zh-CN')">中文</text>
-      <text class="lang-btn" :class="settingsStore.lang === 'en-US' ? 'active' : ''" @tap="settingsStore.setLang('en-US')">EN</text>
+      <text
+        class="lang-btn"
+        :class="settingsStore.lang === 'zh-CN' ? 'active' : ''"
+        @tap="settingsStore.setLang('zh-CN')"
+      >
+        中文
+      </text>
+      <text
+        class="lang-btn"
+        :class="settingsStore.lang === 'en-US' ? 'active' : ''"
+        @tap="settingsStore.setLang('en-US')"
+      >
+        EN
+      </text>
     </view>
     <view class="form">
       <view class="form-item">
-        <input class="input" v-model="form.phone" :placeholder="$t('login.phone')" type="number" maxlength="11" />
+        <input
+          v-model="form.phone"
+          class="input"
+          :placeholder="$t('login.phone')"
+          type="number"
+          maxlength="11"
+        >
       </view>
       <view class="form-item code-row">
-        <input class="input code-input" v-model="form.code" :placeholder="$t('login.code')" type="number" maxlength="6" />
-        <button class="code-btn" @tap="sendCode" :disabled="countdown > 0">
+        <input
+          v-model="form.code"
+          class="input code-input"
+          :placeholder="$t('login.code')"
+          type="number"
+          maxlength="6"
+        >
+        <button
+          class="code-btn"
+          :disabled="countdown > 0"
+          @tap="sendCode"
+        >
           {{ countdown > 0 ? `${countdown}s` : $t('login.getCode') }}
         </button>
       </view>
       <view class="form-item">
         <view class="role-select">
-          <view :class="['role-item', form.userType === 1 ? 'active' : '']" @tap="form.userType = 1">{{ $t('login.client') }}</view>
-          <view :class="['role-item', form.userType === 2 ? 'active' : '']" @tap="form.userType = 2">{{ $t('login.supplier') }}</view>
+          <view
+            :class="['role-item', form.userType === 1 ? 'active' : '']"
+            @tap="form.userType = 1"
+          >
+            {{ $t('login.client') }}
+          </view>
+          <view
+            :class="['role-item', form.userType === 2 ? 'active' : '']"
+            @tap="form.userType = 2"
+          >
+            {{ $t('login.supplier') }}
+          </view>
         </view>
       </view>
-      <button class="submit-btn" @tap="login">{{ $t('common.login') }}</button>
+      <button
+        class="submit-btn"
+        @tap="login"
+      >
+        {{ $t('common.login') }}
+      </button>
     </view>
   </view>
 </template>

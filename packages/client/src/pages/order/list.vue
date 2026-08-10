@@ -1,24 +1,63 @@
 <template>
   <view class="container">
     <view class="filter-bar">
-      <view :class="['filter-item', activeStatus === -1 ? 'active' : '']" @tap="filterByStatus(-1)">{{ $t('common.all') }}</view>
-      <view :class="['filter-item', activeStatus === 0 ? 'active' : '']" @tap="filterByStatus(0)">{{ $t('order.pending') }}</view>
-      <view :class="['filter-item', activeStatus === 1 ? 'active' : '']" @tap="filterByStatus(1)">{{ $t('order.inProgress') }}</view>
-      <view :class="['filter-item', activeStatus === 2 ? 'active' : '']" @tap="filterByStatus(2)">{{ $t('order.toAccept') }}</view>
-      <view :class="['filter-item', activeStatus === 3 ? 'active' : '']" @tap="filterByStatus(3)">{{ $t('order.completed') }}</view>
+      <view
+        :class="['filter-item', activeStatus === -1 ? 'active' : '']"
+        @tap="filterByStatus(-1)"
+      >
+        {{ $t('common.all') }}
+      </view>
+      <view
+        :class="['filter-item', activeStatus === 0 ? 'active' : '']"
+        @tap="filterByStatus(0)"
+      >
+        {{ $t('order.pending') }}
+      </view>
+      <view
+        :class="['filter-item', activeStatus === 1 ? 'active' : '']"
+        @tap="filterByStatus(1)"
+      >
+        {{ $t('order.inProgress') }}
+      </view>
+      <view
+        :class="['filter-item', activeStatus === 2 ? 'active' : '']"
+        @tap="filterByStatus(2)"
+      >
+        {{ $t('order.toAccept') }}
+      </view>
+      <view
+        :class="['filter-item', activeStatus === 3 ? 'active' : '']"
+        @tap="filterByStatus(3)"
+      >
+        {{ $t('order.completed') }}
+      </view>
     </view>
 
     <view class="order-list">
-      <view class="order-card" v-for="order in orders" :key="order.id" @tap="goToDetail(order.id)">
+      <view
+        v-for="order in orders"
+        :key="order.id"
+        class="order-card"
+        @tap="goToDetail(order.id)"
+      >
         <view class="order-info">
-          <text class="order-title">{{ $t('order.orderNo', { id: order.id }) }} · {{ order.project?.title || $t('order.project') }}</text>
-          <text class="order-amount">{{ $t('order.amountPrefix', { amount: order.amount }) }}</text>
-          <text class="order-status">{{ $t('order.statusPrefix') }}{{ statusText(order.status) }}</text>
+          <text class="order-title">
+            {{ $t('order.orderNo', { id: order.id }) }} · {{ order.project?.title || $t('order.project') }}
+          </text>
+          <text class="order-amount">
+            {{ $t('order.amountPrefix', { amount: order.amount }) }}
+          </text>
+          <text class="order-status">
+            {{ $t('order.statusPrefix') }}{{ statusText(order.status) }}
+          </text>
         </view>
       </view>
     </view>
 
-    <view class="empty" v-if="orders.length === 0">
+    <view
+      v-if="orders.length === 0"
+      class="empty"
+    >
       <text>{{ $t('common.empty') }}</text>
     </view>
   </view>

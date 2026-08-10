@@ -2,7 +2,7 @@
 // 输出：src/static/tab/*.png（home/project/order/mine 各 2 种颜色）
 import { deflateSync } from 'node:zlib'
 import { writeFileSync, mkdirSync } from 'node:fs'
-import { dirname, join } from 'node:path'
+import { join } from 'node:path'
 
 const SIZE = 81
 const OUT = join(import.meta.dirname, '../src/static/tab')

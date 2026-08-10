@@ -1,31 +1,65 @@
 <template>
   <view class="container">
-    <view class="user-card" v-if="userStore.user">
-      <text class="user-name">{{ userStore.user.company_name || $t('mine.company') }}</text>
-      <text class="user-phone">{{ userStore.user.phone }}</text>
-      <text class="user-score">{{ $t('mine.creditScore') }}:{{ userStore.user.credit_score }}</text>
+    <view
+      v-if="userStore.user"
+      class="user-card"
+    >
+      <text class="user-name">
+        {{ userStore.user.company_name || $t('mine.company') }}
+      </text>
+      <text class="user-phone">
+        {{ userStore.user.phone }}
+      </text>
+      <text class="user-score">
+        {{ $t('mine.creditScore') }}:{{ userStore.user.credit_score }}
+      </text>
     </view>
 
     <view class="menu-list">
-      <view class="menu-item" @tap="goTo('/pages/order/list')">
+      <view
+        class="menu-item"
+        @tap="goTo('/pages/order/list')"
+      >
         <text>{{ $t('mine.myOrders') }}</text>
-        <text class="arrow">></text>
+        <text class="arrow">
+          >
+        </text>
       </view>
-      <view class="menu-item" @tap="goTo('/pages/project/list')">
+      <view
+        class="menu-item"
+        @tap="goTo('/pages/project/list')"
+      >
         <text>{{ $t('mine.myProjects') }}</text>
-        <text class="arrow">></text>
+        <text class="arrow">
+          >
+        </text>
       </view>
-      <view class="menu-item" @tap="showThemePicker">
+      <view
+        class="menu-item"
+        @tap="showThemePicker"
+      >
         <text>{{ $t('mine.themeCurrent', { name: themeName }) }}</text>
-        <text class="arrow">></text>
+        <text class="arrow">
+          >
+        </text>
       </view>
-      <view class="menu-item" @tap="showLangPicker">
+      <view
+        class="menu-item"
+        @tap="showLangPicker"
+      >
         <text>{{ $t('mine.langCurrent', { name: langName }) }}</text>
-        <text class="arrow">></text>
+        <text class="arrow">
+          >
+        </text>
       </view>
-      <view class="menu-item" @tap="logout">
+      <view
+        class="menu-item"
+        @tap="logout"
+      >
         <text>{{ $t('mine.logout') }}</text>
-        <text class="arrow">></text>
+        <text class="arrow">
+          >
+        </text>
       </view>
     </view>
   </view>

@@ -1,16 +1,37 @@
 <template>
   <view class="container">
-    <view class="project-info" v-if="project">
+    <view
+      v-if="project"
+      class="project-info"
+    >
       <view class="info-card">
-        <text class="project-title">{{ project.title }}</text>
-        <text class="project-type">{{ $t('project.' + project.project_type) || project.project_type }}</text>
-        <text class="project-budget">{{ $t('project.budget') }}：¥{{ project.budget_min }} - ¥{{ project.budget_max }}</text>
-        <text class="project-status">{{ $t('project.status') }}：{{ statusText(project.status) }}</text>
-        <text class="project-desc" v-if="project.description">{{ project.description }}</text>
+        <text class="project-title">
+          {{ project.title }}
+        </text>
+        <text class="project-type">
+          {{ $t('project.' + project.project_type) || project.project_type }}
+        </text>
+        <text class="project-budget">
+          {{ $t('project.budget') }}：¥{{ project.budget_min }} - ¥{{ project.budget_max }}
+        </text>
+        <text class="project-status">
+          {{ $t('project.status') }}：{{ statusText(project.status) }}
+        </text>
+        <text
+          v-if="project.description"
+          class="project-desc"
+        >
+          {{ project.description }}
+        </text>
       </view>
 
-      <view class="theme-card" v-if="isOwner()">
-        <text class="card-title">{{ $t('mine.theme') }}</text>
+      <view
+        v-if="isOwner()"
+        class="theme-card"
+      >
+        <text class="card-title">
+          {{ $t('mine.theme') }}
+        </text>
         <view class="theme-options">
           <view
             v-for="item in THEMES"
@@ -18,41 +39,100 @@
             :class="['theme-option', projectTheme === item.id ? 'active' : '']"
             @tap="setProjectTheme(item.id)"
           >
-            <text class="theme-name">{{ item.name }}</text>
-            <text class="theme-desc">{{ item.description }}</text>
+            <text class="theme-name">
+              {{ item.name }}
+            </text>
+            <text class="theme-desc">
+              {{ item.description }}
+            </text>
           </view>
-          <view :class="['theme-option', projectTheme === '' ? 'active' : '']" @tap="setProjectTheme('')">
-            <text class="theme-name">{{ $t('common.all') }}</text>
-            <text class="theme-desc">{{ $t('project.themeFollow') }}</text>
+          <view
+            :class="['theme-option', projectTheme === '' ? 'active' : '']"
+            @tap="setProjectTheme('')"
+          >
+            <text class="theme-name">
+              {{ $t('common.all') }}
+            </text>
+            <text class="theme-desc">
+              {{ $t('project.themeFollow') }}
+            </text>
           </view>
         </view>
       </view>
 
       <view class="progress-card">
-        <text class="card-title">{{ $t('project.progress') }}</text>
+        <text class="card-title">
+          {{ $t('project.progress') }}
+        </text>
         <view class="timeline">
-          <view class="timeline-item" v-for="(step, i) in steps" :key="i" :class="step.done ? 'done' : ''">
+          <view
+            v-for="(step, i) in steps"
+            :key="i"
+            class="timeline-item"
+            :class="step.done ? 'done' : ''"
+          >
             <view class="dot" />
-            <text class="step-text">{{ step.label }}</text>
+            <text class="step-text">
+              {{ step.label }}
+            </text>
           </view>
         </view>
       </view>
 
       <view class="action-bar">
-        <button class="action-btn primary" v-if="project.status === 1 && isSupplier()" @tap="applyProject">{{ $t('project.apply') }}</button>
-        <button class="action-btn" @tap="contact">{{ $t('project.contact') }}</button>
+        <button
+          v-if="project.status === 1 && isSupplier()"
+          class="action-btn primary"
+          @tap="applyProject"
+        >
+          {{ $t('project.apply') }}
+        </button>
+        <button
+          class="action-btn"
+          @tap="contact"
+        >
+          {{ $t('project.contact') }}
+        </button>
       </view>
     </view>
 
-    <view class="bid-modal" v-if="showBidModal">
-      <view class="modal-mask" @tap="showBidModal = false" />
+    <view
+      v-if="showBidModal"
+      class="bid-modal"
+    >
+      <view
+        class="modal-mask"
+        @tap="showBidModal = false"
+      />
       <view class="modal-card">
-        <text class="modal-title">{{ $t('project.bidTitle') }}</text>
-        <input class="modal-input" type="digit" v-model.number="bidForm.amount" :placeholder="$t('project.bidAmount')" />
-        <input class="modal-input" type="number" v-model.number="bidForm.service_days" :placeholder="$t('project.bidDays')" />
+        <text class="modal-title">
+          {{ $t('project.bidTitle') }}
+        </text>
+        <input
+          v-model.number="bidForm.amount"
+          class="modal-input"
+          type="digit"
+          :placeholder="$t('project.bidAmount')"
+        >
+        <input
+          v-model.number="bidForm.service_days"
+          class="modal-input"
+          type="number"
+          :placeholder="$t('project.bidDays')"
+        >
         <view class="modal-actions">
-          <button class="modal-btn" @tap="showBidModal = false">{{ $t('common.cancel') }}</button>
-          <button class="modal-btn primary" @tap="submitBid">{{ $t('common.submit') }}</button>
+          <button
+            class="modal-btn"
+            @tap="showBidModal = false"
+          >
+            {{ $t('common.cancel') }}
+          </button>
+          <button
+            class="modal-btn primary"
+            @tap="submitBid"
+          >
+            {{ $t('common.submit') }}
+          </button>
         </view>
       </view>
     </view>

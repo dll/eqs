@@ -1,43 +1,131 @@
 <template>
-  <view class="container" v-if="order">
+  <view
+    v-if="order"
+    class="container"
+  >
     <view class="info-card">
-      <text class="order-title">{{ $t('order.orderNo', { id: order.id }) }}</text>
-      <text class="order-item">{{ $t('order.amountPrefix', { amount: order.amount }) }}</text>
-      <text class="order-item">{{ $t('order.statusPrefix') }}{{ statusText(order.status) }}</text>
-      <text class="order-item" v-if="order.project">{{ $t('order.projectPrefix', { title: order.project.title }) }}</text>
-      <text class="order-item" v-if="order.signed_at">{{ $t('order.signedAtPrefix', { time: order.signed_at }) }}</text>
+      <text class="order-title">
+        {{ $t('order.orderNo', { id: order.id }) }}
+      </text>
+      <text class="order-item">
+        {{ $t('order.amountPrefix', { amount: order.amount }) }}
+      </text>
+      <text class="order-item">
+        {{ $t('order.statusPrefix') }}{{ statusText(order.status) }}
+      </text>
+      <text
+        v-if="order.project"
+        class="order-item"
+      >
+        {{ $t('order.projectPrefix', { title: order.project.title }) }}
+      </text>
+      <text
+        v-if="order.signed_at"
+        class="order-item"
+      >
+        {{ $t('order.signedAtPrefix', { time: order.signed_at }) }}
+      </text>
     </view>
 
-    <view class="contract-card" v-if="contract">
-      <text class="card-title">{{ $t('order.contract') }}</text>
-      <text class="contract-no">{{ $t('order.contractNoPrefix', { no: contract.contract_no }) }}</text>
-      <text class="contract-status">{{ $t('order.contract.status', { status: contractStatusText(contract.status) }) }}</text>
-      <button v-if="contract.status === 'draft'" class="mini-btn" @tap="signContract">{{ $t('order.contract.sign') }}</button>
+    <view
+      v-if="contract"
+      class="contract-card"
+    >
+      <text class="card-title">
+        {{ $t('order.contract') }}
+      </text>
+      <text class="contract-no">
+        {{ $t('order.contractNoPrefix', { no: contract.contract_no }) }}
+      </text>
+      <text class="contract-status">
+        {{ $t('order.contract.status', { status: contractStatusText(contract.status) }) }}
+      </text>
+      <button
+        v-if="contract.status === 'draft'"
+        class="mini-btn"
+        @tap="signContract"
+      >
+        {{ $t('order.contract.sign') }}
+      </button>
     </view>
 
     <view class="milestone-card">
-      <text class="card-title">{{ $t('order.milestones') }}</text>
-      <view class="milestone-item" v-for="ms in milestones" :key="ms.id">
+      <text class="card-title">
+        {{ $t('order.milestones') }}
+      </text>
+      <view
+        v-for="ms in milestones"
+        :key="ms.id"
+        class="milestone-item"
+      >
         <view class="ms-head">
-          <text class="ms-name">{{ ms.name }}</text>
-          <text class="ms-ratio">{{ ms.ratio }}%</text>
+          <text class="ms-name">
+            {{ ms.name }}
+          </text>
+          <text class="ms-ratio">
+            {{ ms.ratio }}%
+          </text>
         </view>
-        <text class="ms-detail">{{ $t('order.milestone.amount', { amount: ms.amount }) }} · {{ milestoneStatusText(ms.status) }}</text>
-        <view class="ms-actions" v-if="ms.status === 'pending'">
-          <button class="mini-btn" @tap="deliver(ms)">{{ $t('order.milestone.deliver') }}</button>
-          <button class="mini-btn primary" @tap="settle(ms)">{{ $t('order.milestone.settle') }}</button>
+        <text class="ms-detail">
+          {{ $t('order.milestone.amount', { amount: ms.amount }) }} · {{ milestoneStatusText(ms.status) }}
+        </text>
+        <view
+          v-if="ms.status === 'pending'"
+          class="ms-actions"
+        >
+          <button
+            class="mini-btn"
+            @tap="deliver(ms)"
+          >
+            {{ $t('order.milestone.deliver') }}
+          </button>
+          <button
+            class="mini-btn primary"
+            @tap="settle(ms)"
+          >
+            {{ $t('order.milestone.settle') }}
+          </button>
         </view>
-        <view class="ms-actions" v-if="ms.status === 'submitted'">
-          <button class="mini-btn primary" @tap="accept(ms, true)">{{ $t('order.milestone.accept') }}</button>
-          <button class="mini-btn" @tap="accept(ms, false)">{{ $t('order.milestone.reject') }}</button>
+        <view
+          v-if="ms.status === 'submitted'"
+          class="ms-actions"
+        >
+          <button
+            class="mini-btn primary"
+            @tap="accept(ms, true)"
+          >
+            {{ $t('order.milestone.accept') }}
+          </button>
+          <button
+            class="mini-btn"
+            @tap="accept(ms, false)"
+          >
+            {{ $t('order.milestone.reject') }}
+          </button>
         </view>
-        <button v-if="ms.status === 'accepted'" class="mini-btn" @tap="settle(ms)">{{ $t('order.milestone.submitSettle') }}</button>
+        <button
+          v-if="ms.status === 'accepted'"
+          class="mini-btn"
+          @tap="settle(ms)"
+        >
+          {{ $t('order.milestone.submitSettle') }}
+        </button>
       </view>
     </view>
 
     <view class="actions-card">
-      <button class="action-btn" @tap="openDispute">{{ $t('order.dispute') }}</button>
-      <button class="action-btn" @tap="goPay">{{ $t('order.pay') }}</button>
+      <button
+        class="action-btn"
+        @tap="openDispute"
+      >
+        {{ $t('order.dispute') }}
+      </button>
+      <button
+        class="action-btn"
+        @tap="goPay"
+      >
+        {{ $t('order.pay') }}
+      </button>
     </view>
   </view>
 </template>
@@ -108,7 +196,7 @@ const signContract = async () => {
   }
 }
 
-const deliver = async (ms: any) => {
+const deliver = async (_ms: any) => {
   uni.showToast({ title: $t('order.deliverToast'), icon: 'none' })
 }
 

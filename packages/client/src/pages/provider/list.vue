@@ -1,23 +1,60 @@
 <template>
   <view class="container">
     <view class="filter-bar">
-      <view :class="['filter-item', activeType === '' ? 'active' : '']" @tap="filterByType('')">{{ $t('common.all') }}</view>
-      <view :class="['filter-item', activeType === 'cost' ? 'active' : '']" @tap="filterByType('cost')">{{ $t('project.cost') }}</view>
-      <view :class="['filter-item', activeType === 'supervision' ? 'active' : '']" @tap="filterByType('supervision')">{{ $t('project.supervision') }}</view>
-      <view :class="['filter-item', activeType === 'geotech' ? 'active' : '']" @tap="filterByType('geotech')">{{ $t('project.geotech') }}</view>
-      <view :class="['filter-item', activeType === 'design' ? 'active' : '']" @tap="filterByType('design')">{{ $t('project.design') }}</view>
+      <view
+        :class="['filter-item', activeType === '' ? 'active' : '']"
+        @tap="filterByType('')"
+      >
+        {{ $t('common.all') }}
+      </view>
+      <view
+        :class="['filter-item', activeType === 'cost' ? 'active' : '']"
+        @tap="filterByType('cost')"
+      >
+        {{ $t('project.cost') }}
+      </view>
+      <view
+        :class="['filter-item', activeType === 'supervision' ? 'active' : '']"
+        @tap="filterByType('supervision')"
+      >
+        {{ $t('project.supervision') }}
+      </view>
+      <view
+        :class="['filter-item', activeType === 'geotech' ? 'active' : '']"
+        @tap="filterByType('geotech')"
+      >
+        {{ $t('project.geotech') }}
+      </view>
+      <view
+        :class="['filter-item', activeType === 'design' ? 'active' : '']"
+        @tap="filterByType('design')"
+      >
+        {{ $t('project.design') }}
+      </view>
     </view>
 
     <view class="provider-list">
-      <view class="provider-card" v-for="p in providers" :key="p.id" @tap="goToDetail(p.id)">
+      <view
+        v-for="p in providers"
+        :key="p.id"
+        class="provider-card"
+        @tap="goToDetail(p.id)"
+      >
         <view class="provider-info">
-          <text class="provider-name">{{ p.company_name }}</text>
-          <text class="provider-score">{{ $t('provider.creditScorePrefix', { score: p.credit_score }) }}</text>
+          <text class="provider-name">
+            {{ p.company_name }}
+          </text>
+          <text class="provider-score">
+            {{ $t('provider.creditScorePrefix', { score: p.credit_score }) }}
+          </text>
         </view>
       </view>
     </view>
 
-    <view class="empty" v-if="providers.length === 0">
+    <view
+      v-if="providers.length === 0"
+      class="empty"
+    >
       <text>{{ $t('common.empty') }}</text>
     </view>
   </view>

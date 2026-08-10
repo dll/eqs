@@ -2,37 +2,81 @@
   <view class="container">
     <view class="form">
       <view class="form-item">
-        <text class="label">{{ $t('project.type') }}</text>
-        <picker :range="projectTypes" @change="onTypeChange">
-          <view class="picker">{{ form.projectType || $t('project.selectType') }}</view>
+        <text class="label">
+          {{ $t('project.type') }}
+        </text>
+        <picker
+          :range="projectTypes"
+          @change="onTypeChange"
+        >
+          <view class="picker">
+            {{ form.projectType || $t('project.selectType') }}
+          </view>
         </picker>
       </view>
 
       <view class="form-item">
-        <text class="label">{{ $t('project.name') }}</text>
-        <input class="input" v-model="form.title" :placeholder="$t('project.namePlaceholder')" />
+        <text class="label">
+          {{ $t('project.name') }}
+        </text>
+        <input
+          v-model="form.title"
+          class="input"
+          :placeholder="$t('project.namePlaceholder')"
+        >
       </view>
 
       <view class="form-item">
-        <text class="label">{{ $t('project.budgetRange') }}</text>
+        <text class="label">
+          {{ $t('project.budgetRange') }}
+        </text>
         <view class="budget-row">
-          <input class="input budget-input" v-model="form.budgetMin" :placeholder="$t('project.budgetMin')" type="digit" />
-          <text class="budget-sep">-</text>
-          <input class="input budget-input" v-model="form.budgetMax" :placeholder="$t('project.budgetMax')" type="digit" />
+          <input
+            v-model="form.budgetMin"
+            class="input budget-input"
+            :placeholder="$t('project.budgetMin')"
+            type="digit"
+          >
+          <text class="budget-sep">
+            -
+          </text>
+          <input
+            v-model="form.budgetMax"
+            class="input budget-input"
+            :placeholder="$t('project.budgetMax')"
+            type="digit"
+          >
         </view>
       </view>
 
       <view class="form-item">
-        <text class="label">{{ $t('project.location') }}</text>
-        <input class="input" v-model="form.address" :placeholder="$t('project.addressPlaceholder')" />
+        <text class="label">
+          {{ $t('project.location') }}
+        </text>
+        <input
+          v-model="form.address"
+          class="input"
+          :placeholder="$t('project.addressPlaceholder')"
+        >
       </view>
 
       <view class="form-item">
-        <text class="label">{{ $t('project.desc') }}</text>
-        <textarea class="textarea" v-model="form.description" :placeholder="$t('project.descPlaceholder')" />
+        <text class="label">
+          {{ $t('project.desc') }}
+        </text>
+        <textarea
+          v-model="form.description"
+          class="textarea"
+          :placeholder="$t('project.descPlaceholder')"
+        />
       </view>
 
-      <button class="submit-btn" @tap="submit">{{ $t('project.create') }}</button>
+      <button
+        class="submit-btn"
+        @tap="submit"
+      >
+        {{ $t('project.create') }}
+      </button>
     </view>
   </view>
 </template>

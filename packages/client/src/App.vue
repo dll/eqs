@@ -48,6 +48,52 @@ const dismissUpdate = () => {
 }
 </script>
 
+<template>
+  <view>
+    <slot />
+
+    <!-- 版本更新弹窗 -->
+    <view
+      v-if="showUpdateDialog"
+      class="update-mask"
+      @tap="updateInfo.mandatory ? null : dismissUpdate()"
+    >
+      <view
+        class="update-card"
+        @tap.stop
+      >
+        <text class="update-title">
+          {{ updateInfo.mandatory ? $t('version.mandatoryTitle') : $t('version.update') }}
+        </text>
+        <text class="update-version">
+          v{{ updateInfo.version }}
+        </text>
+        <text
+          v-if="updateInfo.notes"
+          class="update-notes"
+        >
+          {{ updateInfo.notes }}
+        </text>
+        <view class="update-actions">
+          <view
+            class="update-btn primary"
+            @tap="doUpdate"
+          >
+            {{ $t('version.updateNow') }}
+          </view>
+          <view
+            v-if="!updateInfo.mandatory"
+            class="update-btn secondary"
+            @tap="dismissUpdate"
+          >
+            {{ $t('version.updateLater') }}
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+</template>
+
 <style>
 page {
   background-color: var(--bg-color, #f5f5f5);
@@ -132,22 +178,3 @@ page {
   color: #333;
 }
 </style>
-
-<template>
-  <view>
-    <slot />
-
-    <!-- 版本更新弹窗 -->
-    <view class="update-mask" v-if="showUpdateDialog" @tap="updateInfo.mandatory ? null : dismissUpdate()">
-      <view class="update-card" @tap.stop>
-        <text class="update-title">{{ updateInfo.mandatory ? $t('version.mandatoryTitle') : $t('version.update') }}</text>
-        <text class="update-version">v{{ updateInfo.version }}</text>
-        <text class="update-notes" v-if="updateInfo.notes">{{ updateInfo.notes }}</text>
-        <view class="update-actions">
-          <view class="update-btn primary" @tap="doUpdate">{{ $t('version.updateNow') }}</view>
-          <view class="update-btn secondary" v-if="!updateInfo.mandatory" @tap="dismissUpdate">{{ $t('version.updateLater') }}</view>
-        </view>
-      </view>
-    </view>
-  </view>
-</template>

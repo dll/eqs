@@ -1,27 +1,59 @@
 <template>
   <view class="container">
     <view class="search-bar">
-      <input class="search-input" :placeholder="$t('home.searchPlaceholder')" />
+      <input
+        class="search-input"
+        :placeholder="$t('home.searchPlaceholder')"
+      >
     </view>
 
     <view class="categories">
-      <view class="category-item" v-for="cat in categories" :key="cat.id" @tap="goToProjectList(cat.type)">
-        <image class="category-icon" :src="cat.icon" mode="aspectFit" />
-        <text class="category-name">{{ $t(cat.nameKey) }}</text>
+      <view
+        v-for="cat in categories"
+        :key="cat.id"
+        class="category-item"
+        @tap="goToProjectList(cat.type)"
+      >
+        <image
+          class="category-icon"
+          :src="cat.icon"
+          mode="aspectFit"
+        />
+        <text class="category-name">
+          {{ $t(cat.nameKey) }}
+        </text>
       </view>
     </view>
 
     <view class="section">
       <view class="section-header">
-        <text class="section-title">{{ $t('home.recommended') }}</text>
-        <text class="section-more" @tap="goToProjectList()">{{ $t('home.viewMore') }}</text>
+        <text class="section-title">
+          {{ $t('home.recommended') }}
+        </text>
+        <text
+          class="section-more"
+          @tap="goToProjectList()"
+        >
+          {{ $t('home.viewMore') }}
+        </text>
       </view>
       <view class="project-list">
-        <view class="project-card" v-for="project in projects" :key="project.id" @tap="goToProjectDetail(project.id)">
+        <view
+          v-for="project in projects"
+          :key="project.id"
+          class="project-card"
+          @tap="goToProjectDetail(project.id)"
+        >
           <view class="project-info">
-            <text class="project-title">{{ project.title }}</text>
-            <text class="project-type">{{ toTypeKey(project.project_type) }}</text>
-            <text class="project-budget">{{ $t('home.budget', { min: toWan(project.budget_min), max: toWan(project.budget_max) }) }}</text>
+            <text class="project-title">
+              {{ project.title }}
+            </text>
+            <text class="project-type">
+              {{ toTypeKey(project.project_type) }}
+            </text>
+            <text class="project-budget">
+              {{ $t('home.budget', { min: toWan(project.budget_min), max: toWan(project.budget_max) }) }}
+            </text>
           </view>
         </view>
       </view>

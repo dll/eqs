@@ -12,6 +12,10 @@ packages/server/server
 packages/server/tmp/
 packages/server/cover
 
+# SQLite runtime database
+packages/server/*.db
+packages/server/*.db-*
+
 # IDE
 .vscode/
 .idea/

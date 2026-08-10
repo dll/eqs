@@ -1,31 +1,76 @@
 <template>
   <view class="container">
     <view class="filter-bar">
-      <view :class="['filter-item', activeType === '' ? 'active' : '']" @tap="filterByType('')">{{ $t('common.all') }}</view>
-      <view :class="['filter-item', activeType === 'cost' ? 'active' : '']" @tap="filterByType('cost')">{{ $t('project.cost') }}</view>
-      <view :class="['filter-item', activeType === 'supervision' ? 'active' : '']" @tap="filterByType('supervision')">{{ $t('project.supervision') }}</view>
-      <view :class="['filter-item', activeType === 'geotech' ? 'active' : '']" @tap="filterByType('geotech')">{{ $t('project.geotech') }}</view>
-      <view :class="['filter-item', activeType === 'design' ? 'active' : '']" @tap="filterByType('design')">{{ $t('project.design') }}</view>
+      <view
+        :class="['filter-item', activeType === '' ? 'active' : '']"
+        @tap="filterByType('')"
+      >
+        {{ $t('common.all') }}
+      </view>
+      <view
+        :class="['filter-item', activeType === 'cost' ? 'active' : '']"
+        @tap="filterByType('cost')"
+      >
+        {{ $t('project.cost') }}
+      </view>
+      <view
+        :class="['filter-item', activeType === 'supervision' ? 'active' : '']"
+        @tap="filterByType('supervision')"
+      >
+        {{ $t('project.supervision') }}
+      </view>
+      <view
+        :class="['filter-item', activeType === 'geotech' ? 'active' : '']"
+        @tap="filterByType('geotech')"
+      >
+        {{ $t('project.geotech') }}
+      </view>
+      <view
+        :class="['filter-item', activeType === 'design' ? 'active' : '']"
+        @tap="filterByType('design')"
+      >
+        {{ $t('project.design') }}
+      </view>
     </view>
 
     <view class="project-list">
-      <view class="project-card" v-for="project in projects" :key="project.id" @tap="goToDetail(project.id)">
+      <view
+        v-for="project in projects"
+        :key="project.id"
+        class="project-card"
+        @tap="goToDetail(project.id)"
+      >
         <view class="project-header">
-          <text class="project-title">{{ project.title }}</text>
-          <text class="project-status">{{ statusText(project.status) }}</text>
+          <text class="project-title">
+            {{ project.title }}
+          </text>
+          <text class="project-status">
+            {{ statusText(project.status) }}
+          </text>
         </view>
         <view class="project-info">
-          <text class="info-item">{{ $t('project.typePrefix') }}{{ toTypeLabel(project.service_type) }}</text>
-          <text class="info-item">{{ $t('project.publisher') }}:{{ project.user?.company_name || $t('project.owner') }}</text>
-          <text class="info-item">{{ $t('project.budget') }}:{{ formatPriceWan(project.budget_min) }} - {{ formatPriceWan(project.budget_max) }}</text>
+          <text class="info-item">
+            {{ $t('project.typePrefix') }}{{ toTypeLabel(project.service_type) }}
+          </text>
+          <text class="info-item">
+            {{ $t('project.publisher') }}:{{ project.user?.company_name || $t('project.owner') }}
+          </text>
+          <text class="info-item">
+            {{ $t('project.budget') }}:{{ formatPriceWan(project.budget_min) }} - {{ formatPriceWan(project.budget_max) }}
+          </text>
         </view>
         <view class="project-footer">
-          <text class="publish-time">{{ project.publish_time }}</text>
+          <text class="publish-time">
+            {{ project.publish_time }}
+          </text>
         </view>
       </view>
     </view>
 
-    <view class="empty" v-if="projects.length === 0">
+    <view
+      v-if="projects.length === 0"
+      class="empty"
+    >
       <text>{{ $t('common.empty') }}</text>
     </view>
   </view>

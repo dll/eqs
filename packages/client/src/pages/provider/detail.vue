@@ -1,9 +1,16 @@
 <template>
   <view class="container">
-    <view class="provider-info" v-if="provider">
+    <view
+      v-if="provider"
+      class="provider-info"
+    >
       <view class="info-card">
-        <text class="provider-name">{{ provider.company_name }}</text>
-        <text class="provider-score">{{ $t('provider.creditScorePrefix', { score: provider.credit_score }) }}</text>
+        <text class="provider-name">
+          {{ provider.company_name }}
+        </text>
+        <text class="provider-score">
+          {{ $t('provider.creditScorePrefix', { score: provider.credit_score }) }}
+        </text>
       </view>
     </view>
   </view>
@@ -12,7 +19,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
-import { request } from '@/utils/request'
 import { useI18n, usePageTitle } from '@/utils/i18n'
 
 const { $t } = useI18n()

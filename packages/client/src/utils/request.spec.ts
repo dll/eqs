@@ -3,13 +3,9 @@ import { setToken, clearToken, request } from './request'
 
 // 捕获 uni.request 的调用配置，让测试可注入成功/失败
 let lastOptions: any = null
-let mockResolve: (res: any) => void = () => {}
-let mockReject = (_err: any) => {}
 
 beforeEach(() => {
   lastOptions = null
-  mockResolve = () => {}
-  mockReject = () => {}
   const uniAny: any = (globalThis as any).uni
   uniAny.request = (opts: any) => {
     lastOptions = opts
