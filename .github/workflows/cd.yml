@@ -23,7 +23,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'pnpm'
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -144,7 +143,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'pnpm'
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -171,4 +169,5 @@ jobs:
           COS_SECRET_KEY: ${{ secrets.TENCENT_CLOUD_SECRET_KEY }}
           COS_BUCKET: eqs-client-${{ vars.ENV }}
           COS_REGION: ${{ env.TENCENT_CLOUD_REGION }}
+
 
