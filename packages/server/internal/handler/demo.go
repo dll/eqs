@@ -26,12 +26,13 @@ func DemoCleanHandler(c *gin.Context) {
 
 func DemoToggleHandler(c *gin.Context) {
 	var req struct {
-		Enable bool `json:"enable" binding:"required"`
+		Enable *bool `json:"enable"`
 	}
-	if err := c.ShouldBindJSON(&req); err != nil {
+	if err := c.ShouldBindJSON(&req); err != nil || req.Enable == nil {
 		badRequest(c, "参数错误")
 		return
 	}
+	enable := *req.Enable
 
 	// 持久化到 system_configs 表
 	var cfg model.SystemConfig
@@ -40,7 +41,7 @@ func DemoToggleHandler(c *gin.Context) {
 	if err != nil {
 		cfg = model.SystemConfig{
 			ConfigKey:   "demo.enabled",
-			ConfigValue: fmt.Sprintf("%v", req.Enable),
+			ConfigValue: fmt.Sprintf("%v", enable),
 			ValueType:   "bool",
 			Description: "演示数据开关",
 			IsPublic:    false,
@@ -48,17 +49,17 @@ func DemoToggleHandler(c *gin.Context) {
 		}
 		model.DB.Create(&cfg)
 	} else {
-		cfg.ConfigValue = fmt.Sprintf("%v", req.Enable)
+		cfg.ConfigValue = fmt.Sprintf("%v", enable)
 		cfg.UpdatedAt = now
 		model.DB.Save(&cfg)
 	}
 
 	status := "disabled"
-	if req.Enable {
+	if enable {
 		status = "enabled"
 	}
-	WriteAudit(c, "admin.demo.toggle", "system", 0, gin.H{"enabled": req.Enable})
-	ok(c, gin.H{"message": "演示模式已" + status, "demo_mode": req.Enable})
+	WriteAudit(c, "admin.demo.toggle", "system", 0, gin.H{"enabled": enable})
+	ok(c, gin.H{"message": "演示模式已" + status, "demo_mode": enable})
 }
 
 func DemoStatusHandler(c *gin.Context) {

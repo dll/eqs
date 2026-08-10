@@ -10,6 +10,7 @@ build/
 # Go
 packages/server/server
 packages/server/tmp/
+packages/server/cover
 
 # IDE
 .vscode/

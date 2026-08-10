@@ -7,6 +7,7 @@
     "dev:mp-weixin": "uni dev --platform mp-weixin",
     "build:h5": "uni build --platform h5",
     "build:mp-weixin": "uni build --platform mp-weixin",
+    "build:app": "uni build --platform app",
     "dev": "uni dev --platform h5",
     "build": "uni build --platform h5",
     "test": "vitest run",
@@ -16,6 +17,7 @@
   },
   "dependencies": {
     "@dcloudio/uni-app": "3.0.0-5020320260806002",
+    "@dcloudio/uni-app-plus": "3.0.0-5020320260806002",
     "@dcloudio/uni-components": "3.0.0-5020320260806002",
     "@dcloudio/uni-h5": "3.0.0-5020320260806002",
     "@dcloudio/uni-mp-weixin": "3.0.0-5020320260806002",
