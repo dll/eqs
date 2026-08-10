@@ -57,6 +57,9 @@ func setupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 		api.GET("/platform/links", handler.PlatformLinks)
 		api.GET("/version/check", handler.VersionRateLimit(), handler.VersionCheck)
 		api.GET("/version/latest", handler.VersionLatest)
+		// V8 服务超市（公开浏览）
+		api.GET("/provider/list", handler.ListProviders)
+		api.GET("/provider/:id", handler.GetProvider)
 
 		// Protected routes
 		auth := api.Group("")
@@ -118,6 +121,7 @@ func setupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 
 			// File（文件与批注）
 			auth.POST("/file/upload", handler.UploadFile)
+			auth.GET("/file/:id/download", handler.DownloadFile)
 			auth.GET("/project/:id/files", handler.ListFiles)
 			auth.POST("/annotation/add", handler.AddAnnotation)
 			auth.GET("/annotation/list/:id", handler.ListAnnotations)
@@ -126,6 +130,13 @@ func setupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 			// Review
 			auth.POST("/review/submit", handler.SubmitReview)
 			auth.GET("/user/:id/reviews", handler.GetUserReviews)
+
+			// Message / Notification（V8 补齐）
+			auth.POST("/message/send", handler.SendMessage)
+			auth.GET("/message/list", handler.ListMessages)
+			auth.PUT("/message/read/:id", handler.MarkMessageRead)
+			auth.GET("/notification/list", handler.ListNotifications)
+			auth.PUT("/notification/read/:id", handler.MarkNotificationRead)
 			// V7 用户偏好（需登录）
 			auth.GET("/config/user/prefs", handler.GetUserPrefs)
 			auth.PUT("/config/user/prefs", handler.UpdateUserPrefs)

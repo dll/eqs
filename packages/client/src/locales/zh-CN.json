@@ -171,5 +171,6 @@
   "provider.detail": "服务商详情",
   "provider.creditScore": "信用分",
   "provider.creditScorePrefix": "信用分：{score}",
-  "provider.sample": "示例服务商"
+  "provider.sample": "示例服务商",
+  "provider.qualifications": "资质证书"
 }

@@ -12,6 +12,7 @@ const router = createRouter({
       path: '/',
       component: () => import('@/views/layout/index.vue'),
       redirect: '/dashboard',
+      meta: { requiresAuth: true },
       children: [
         { path: 'dashboard', name: 'Dashboard', component: () => import('@/views/dashboard/index.vue'), meta: { titleKey: 'dashboard' } },
         { path: 'audit', name: 'Audit', component: () => import('@/views/audit/index.vue'), meta: { titleKey: 'audit' } },
@@ -24,7 +25,19 @@ const router = createRouter({
         { path: 'settings', name: 'Settings', component: () => import('@/views/settings/index.vue'), meta: { titleKey: 'settings' } },
       ],
     },
+    { path: '/:pathMatch(.*)*', redirect: '/dashboard' },
   ],
+})
+
+router.beforeEach((to) => {
+  const token = localStorage.getItem('token')
+  if (to.meta.requiresAuth && !token) {
+    return { path: '/login', query: { redirect: to.fullPath } }
+  }
+  if (to.path === '/login' && token) {
+    return { path: '/dashboard' }
+  }
+  return true
 })
 
 export default router

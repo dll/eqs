@@ -83,7 +83,9 @@ onShow(() => {
 
 const loadProviders = async () => {
   try {
-    const res = await request.get('/api/v1/provider/list', { silent401: true }).catch(() => ({ providers: [] }))
+    const type = activeType.value
+    const params = type ? `?type=${type}` : ''
+    const res = await request.get(`/api/v1/provider/list${params}`, { silent401: true }).catch(() => ({ providers: [] }))
     providers.value = res.providers || []
   } catch {
     // request 已提示
@@ -92,6 +94,7 @@ const loadProviders = async () => {
 
 const filterByType = (type: string) => {
   activeType.value = type
+  loadProviders()
 }
 
 const goToDetail = (id: number) => {
