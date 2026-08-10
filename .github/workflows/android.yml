@@ -1,0 +1,68 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: eqs-android-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    if: hashFiles('apps/android/**') != ''
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install pnpm
+        run: npm install -g pnpm
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Build App resources
+        working-directory: packages/client
+        run: pnpm --filter @eqs/client build:app
+
+      - name: Copy resources into native project
+        run: |
+          mkdir -p apps/android/app/src/main/assets/apps
+          rm -rf apps/android/app/src/main/assets/apps/*
+          cp -r packages/client/dist/build/app/* apps/android/app/src/main/assets/apps/
+
+      - name: Restore signing keystore
+        run: echo "$ANDROID_SIGN" | base64 -d > apps/android/eqs-release.jks
+        env:
+          ANDROID_SIGN: ${{ secrets.ANDROID_SIGN_BASE64 }}
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Build signed APK
+        working-directory: apps/android
+        run: ./gradlew assembleRelease
+        env:
+          ANDROID_KEYSTORE_PWD: ${{ secrets.ANDROID_KEYSTORE_PWD }}
+          ANDROID_ALIAS: ${{ secrets.ANDROID_ALIAS }}
+          ANDROID_ALIAS_PWD: ${{ secrets.ANDROID_ALIAS_PWD }}
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: eqs-release
+          path: apps/android/app/build/outputs/apk/release/*.apk
+
+      - name: Upload app resources
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-resources
+          path: packages/client/dist/build/app

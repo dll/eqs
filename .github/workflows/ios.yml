@@ -1,24 +1,28 @@
-name: iOS Manual Build
+name: iOS Build
 
 on:
   workflow_dispatch:
     inputs:
-      ipa_method:
-        description: '导出方式（ad-hoc 测试 / app-store 发版）'
+      version_type:
+        description: 'iOS 版本类型'
         required: true
-        default: 'ad-hoc'
+        default: 'init'
         type: choice
         options:
-          - ad-hoc
-          - app-store
+          - init
+          - release
 
 concurrency:
   group: eqs-ios-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  BUNDLE_ID: ${{ secrets.IOS_BUNDLE_ID }}
+  P12_PASS: ${{ secrets.IOS_P12_PASSWORD }}
+
 jobs:
   ios:
-    name: Build iOS App Resources + IPA
+    name: Build iOS (${{ inputs.version_type }})
     runs-on: macos-latest
     steps:
       - name: Checkout code
@@ -46,21 +50,25 @@ jobs:
           path: packages/client/dist/build/app
           if-no-files-found: error
 
-      - name: Fastlane - Sign & Export IPA
+      - name: Fastlane - Sign and Export IPA
         if: hashFiles('apps/ios/**') != ''
         run: |
-          echo "${{ secrets.IOS_P12_BASE64 }}" | base64 -d > cert.p12
-          echo "${{ secrets.IOS_PROVISION_BASE64 }}" | base64 -d > app.mobileprovision
-          IPA_METHOD=${{ inputs.ipa_method }} \
+          if [ "${{ inputs.version_type }}" = "init" ]; then
+            echo "${{ secrets.IOS_DEV_P12_BASE64 }}" | base64 -d > cert.p12
+            echo "${{ secrets.IOS_DEV_PROVISION_BASE64 }}" | base64 -d > app.mobileprovision
+            IPA_METHOD="ad-hoc"
+          else
+            echo "${{ secrets.IOS_DIST_P12_BASE64 }}" | base64 -d > cert.p12
+            echo "${{ secrets.IOS_DIST_PROVISION_BASE64 }}" | base64 -d > app.mobileprovision
+            IPA_METHOD="app-store"
+          fi
+          IPA_METHOD="$IPA_METHOD" \
           bundle exec fastlane build_ipa cert:cert.p12 provision:app.mobileprovision
-        env:
-          P12_PASS: ${{ secrets.IOS_P12_PASSWORD }}
-          BUNDLE_ID: ${{ secrets.IOS_BUNDLE_ID }}
 
       - name: Upload IPA
         if: hashFiles('apps/ios/**') != ''
         uses: actions/upload-artifact@v4
         with:
-          name: ios-ipa
+          name: ios-ipa-${{ inputs.version_type }}
           path: build/ipa/*.ipa
           if-no-files-found: warn
