@@ -359,23 +359,26 @@ jobs:
 
 ### 8.1 后端与 Web 自动部署（cd.yml，push 自动）
 
-部署目标：腾讯云 CVM（`129.211.223.113`），生产域名 **`eqs-chzu.tech`**，nginx 同域反代（`deploy/nginx/prod.conf`）。
+部署目标：腾讯云 CVM（`129.211.223.113`，与 wxx 同机，已安装 MySQL 8.0 + Redis 7.0 + nginx + Caddy），生产域名 **`eqs-chzu.tech`**。
 
-| Job | 目标 | 内容 |
-|-----|------|------|
-| `deploy-server` | CVM | `git pull` → `go build`（CGO_ENABLED=1）→ 重启 `eqs-server` |
-| `deploy-admin` | CVM nginx | scp `admin-dist/*` → `/opt/eqs/packages/admin/dist` → `nginx -s reload` |
-| `deploy-client` | CVM nginx | scp `client-h5/*` → `/opt/eqs/packages/client/dist/build/h5` → `nginx -s reload` |
+**链路**：`eqs-chzu.tech:443(Caddy 自动 HTTPS)` → `nginx:8091` → 按路径分发：
 
-**访问路径（同域）**：
-
-| 入口 | URL | 说明 |
+| 入口 | URL | 分发 |
 |------|-----|------|
-| 管理后台 | `http://eqs-chzu.tech/admin` | base `/admin/`，nginx alias 到 admin/dist |
-| 用户 H5 | `http://eqs-chzu.tech/h5` | base `/h5/`（hash 路由），nginx alias 到 `dist/build/h5` |
-| API | `http://eqs-chzu.tech/api/v1/*` | nginx 反代 → 后端 `127.0.0.1:8080` |
+| 管理后台 | `https://eqs-chzu.tech/admin` | nginx alias → `/opt/eqs/packages/admin/dist` |
+| 用户 H5 | `https://eqs-chzu.tech/h5` | nginx alias → `/opt/eqs/packages/client/dist/build/h5` |
+| API | `https://eqs-chzu.tech/api/*` | nginx 反代 → 后端 `127.0.0.1:8090` |
 
-> 前端走**相对路径** `/api/...`（`request.ts` baseURL 为空），同域反代，无需 CORS、无需 `VITE_API_BASE_URL`。
+> - Caddy（`deploy/caddy/eqs-chzu.tech.conf`）：为域名自动签 Let's Encrypt 证书并转发到 nginx:8091，与 wxx 的 80/443 共存。
+> - nginx（`deploy/nginx/eqs-cvm.conf`）：监听 8091，避免与 Caddy 的 80/443 冲突。
+> - 后端：MySQL（库 `eqs`，用户 `eqs`）自动建表；Redis 缓存；systemd `eqs-server` 监听 8090（wxx 占用 8080，EQS 错开）。
+> - 前端走**相对路径** `/api/...`（`request.ts` baseURL 为空），同域反代，无需 CORS、无需 `VITE_API_BASE_URL`。
+
+| CD Job | 内容 |
+|--------|------|
+| `deploy-server` | scp server 二进制 → `/opt/eqs/packages/server/server` → `systemctl restart eqs-server` |
+| `deploy-admin` | scp `admin-dist/*` → `/opt/eqs/packages/admin/dist` → `nginx -s reload` |
+| `deploy-client` | scp `client-h5/*` → `/opt/eqs/packages/client/dist/build/h5` → `nginx -s reload` |
 
 ### 8.2 移动端分发
 
@@ -444,6 +447,10 @@ git push origin main --tags
 8. **部署凭据前置**：CD 的 `deploy-server` / `deploy-admin` / `deploy-client` 依赖 CVM 三件套 Secrets（HOST/USERNAME/SSH_KEY）。未配置时 job 直接失败（`missing server host`），配置完整才跑通。
 9. **ad-hoc 必须预登记 UDID**，否则 init 基座真机无法安装。
 10. **Android/iOS 离线 SDK**：仓库未维护原生工程时，android job 自动跳过、iOS 仅产出 App 资源——补齐工程后 push/手动即自动出 APK/IPA。
+11. **Caddy 与 nginx 分工**：服务器 80/443 被 wxx 的 Caddy 占用；EQS 的 nginx 必须监听独立端口（8091），由 Caddy 将域名转发到 8091——勿让 nginx 抢 80/443。
+12. **DNS 必须提前生效**：Caddy 自动签 HTTPS 证书依赖域名 A 记录（`eqs-chzu.tech`、`www.eqs-chzu.tech` → `129.211.223.113`）；DNS 未生效时 Let's Encrypt 报 `no valid A records found`，证书签发失败。
+13. **端口错开**：wxx 占用 8080，EQS 后端用 8090（systemd 配置），勿复用 8080。
+14. **MySQL 用户**：生产用专用用户 `eqs@localhost`（非 root），数据库 `eqs`（utf8mb4），systemd 通过 `DB_PASSWORD` 注入（用真实密码替换占位符）。
 
 ---
 
