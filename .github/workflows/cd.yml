@@ -57,7 +57,7 @@ jobs:
 
       - name: Build server binary
         run: |
-          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o server cmd/server/main.go
+          CGO_ENABLED=1 go build -o server cmd/server/main.go
         working-directory: packages/server
 
       - name: Upload server binary
@@ -161,7 +161,7 @@ jobs:
 
       - name: Deploy to Tencent Cloud COS
         run: |
-          coscli sync packages/client/dist/h5/ cos://eqs-client-${{ vars.ENV }} -delete
+          coscli sync packages/client/dist/build/h5/ cos://eqs-client-${{ vars.ENV }} -delete
         env:
           COS_SECRET_ID: ${{ secrets.TENCENT_CLOUD_SECRET_ID }}
           COS_SECRET_KEY: ${{ secrets.TENCENT_CLOUD_SECRET_KEY }}

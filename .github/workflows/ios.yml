@@ -1,0 +1,66 @@
+name: iOS Manual Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      ipa_method:
+        description: '导出方式（ad-hoc 测试 / app-store 发版）'
+        required: true
+        default: 'ad-hoc'
+        type: choice
+        options:
+          - ad-hoc
+          - app-store
+
+concurrency:
+  group: eqs-ios-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ios:
+    name: Build iOS App Resources + IPA
+    runs-on: macos-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install pnpm
+        run: npm install -g pnpm
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Build App resources
+        run: pnpm --filter @eqs/client build:app
+
+      - name: Upload App resources
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-resources
+          path: packages/client/dist/build/app
+          if-no-files-found: error
+
+      - name: Fastlane - Sign & Export IPA
+        if: hashFiles('apps/ios/**') != ''
+        run: |
+          echo "${{ secrets.IOS_P12_BASE64 }}" | base64 -d > cert.p12
+          echo "${{ secrets.IOS_PROVISION_BASE64 }}" | base64 -d > app.mobileprovision
+          IPA_METHOD=${{ inputs.ipa_method }} \
+          bundle exec fastlane build_ipa cert:cert.p12 provision:app.mobileprovision
+        env:
+          P12_PASS: ${{ secrets.IOS_P12_PASSWORD }}
+          BUNDLE_ID: ${{ secrets.IOS_BUNDLE_ID }}
+
+      - name: Upload IPA
+        if: hashFiles('apps/ios/**') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-ipa
+          path: build/ipa/*.ipa
+          if-no-files-found: warn
