@@ -50,9 +50,9 @@ jobs:
         run: pnpm install
 
       - name: Build server binary
+        working-directory: packages/server
         run: |
           CGO_ENABLED=1 go build -o server
-        working-directory: packages/server
 
       - name: Build admin
         run: pnpm --filter @eqs/admin build
