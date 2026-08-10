@@ -52,7 +52,7 @@ jobs:
       - name: Build server binary
         working-directory: packages/server
         run: |
-          CGO_ENABLED=1 go build -o server
+          CGO_ENABLED=1 go build -o server cmd/server/main.go
 
       - name: Build admin
         run: pnpm --filter @eqs/admin build
