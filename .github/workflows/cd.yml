@@ -102,31 +102,27 @@ jobs:
           name: server-binary
           path: server-binary
 
-      - name: Upload binary via native scp
+      - name: Compress binary
+        run: |
+          gzip -9 -c server-binary/server > server-binary/server.gz
+          ls -lh server-binary/server.gz
+
+      - name: Upload compressed binary and restart
         run: |
           mkdir -p ~/.ssh
           printf '%s\n' "${{ secrets.CVM_SSH_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H ${{ secrets.CVM_HOST }} >> ~/.ssh/known_hosts 2>/dev/null
-          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ${{ secrets.CVM_USERNAME }}@${{ secrets.CVM_HOST }} "mkdir -p /tmp/eqs-server-new"
-          scp -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no server-binary/server ${{ secrets.CVM_USERNAME }}@${{ secrets.CVM_HOST }}:/tmp/eqs-server-new/server
-          echo "SCP upload done"
-
-      - name: Atomic replace and restart
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.CVM_HOST }}
-          username: ${{ secrets.CVM_USERNAME }}
-          key: ${{ secrets.CVM_SSH_KEY }}
-          script: |
-            set -e
-            chmod +x /tmp/eqs-server-new/server
-            sudo systemctl stop eqs-server || true
-            mv -f /tmp/eqs-server-new/server /opt/eqs/packages/server/server
-            sudo systemctl start eqs-server
-            sleep 3
-            systemctl is-active eqs-server
-            echo "EQS server deployed"
+          scp -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no server-binary/server.gz ${{ secrets.CVM_USERNAME }}@${{ secrets.CVM_HOST }}:/tmp/eqs-server-new.gz
+          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ${{ secrets.CVM_USERNAME }}@${{ secrets.CVM_HOST }} "set -e; \
+            gzip -d -f /tmp/eqs-server-new.gz; \
+            chmod +x /tmp/eqs-server-new; \
+            sudo systemctl stop eqs-server || true; \
+            mv -f /tmp/eqs-server-new /opt/eqs/packages/server/server; \
+            sudo systemctl start eqs-server; \
+            sleep 3; \
+            systemctl is-active eqs-server"
+          echo "EQS server deployed"
 
   deploy-admin:
     name: Deploy Admin to CVM Nginx
