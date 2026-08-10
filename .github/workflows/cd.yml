@@ -102,25 +102,28 @@ jobs:
           name: server-binary
           path: server-binary
 
-      - name: Upload server binary to CVM
+      - name: Upload binary via scp to temp
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.CVM_HOST }}
           username: ${{ secrets.CVM_USERNAME }}
           key: ${{ secrets.CVM_SSH_KEY }}
           source: "server-binary/server"
-          target: "/opt/eqs/packages/server"
+          target: "/tmp/eqs-server-new"
           strip_components: 1
 
-      - name: Restart EQS service
+      - name: Atomic replace and restart
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.CVM_HOST }}
           username: ${{ secrets.CVM_USERNAME }}
           key: ${{ secrets.CVM_SSH_KEY }}
           script: |
-            chmod +x /opt/eqs/packages/server/server
-            sudo systemctl restart eqs-server
+            set -e
+            chmod +x /tmp/eqs-server-new/server
+            sudo systemctl stop eqs-server || true
+            mv -f /tmp/eqs-server-new/server /opt/eqs/packages/server/server
+            sudo systemctl start eqs-server
             sleep 3
             systemctl is-active eqs-server
             echo "EQS server deployed"
