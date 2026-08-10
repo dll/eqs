@@ -108,7 +108,7 @@ jobs:
           host: ${{ secrets.CVM_HOST }}
           username: ${{ secrets.CVM_USERNAME }}
           key: ${{ secrets.CVM_SSH_KEY }}
-          source: "server-binary/server"
+          source: "server-binary/*"
           target: "/tmp/eqs-server-new"
           strip_components: 1
 
