@@ -115,6 +115,7 @@ jobs:
           ssh-keyscan -H ${{ secrets.CVM_HOST }} >> ~/.ssh/known_hosts 2>/dev/null
           scp -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no server-binary/server.gz ${{ secrets.CVM_USERNAME }}@${{ secrets.CVM_HOST }}:/tmp/eqs-server-new.gz
           ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ${{ secrets.CVM_USERNAME }}@${{ secrets.CVM_HOST }} "set -e; \
+            rm -rf /tmp/eqs-server-new; \
             gzip -d -f /tmp/eqs-server-new.gz; \
             chmod +x /tmp/eqs-server-new; \
             sudo systemctl stop eqs-server || true; \
