@@ -16,7 +16,8 @@
       }
     },
     "router": {
-      "mode": "hash"
+      "mode": "hash",
+      "base": "/h5/"
     }
   },
   "mp-weixin": {

@@ -28,12 +28,12 @@ eqs/
 
 | 端 | CI 构建命令 | 产物 | 交付形态 |
 |----|-------------|------|----------|
-| 用户端 H5 | `uni build --platform h5` | `dist/build/h5` | COS 静态托管 + nginx |
+| 用户端 H5 | `uni build --platform h5` | `dist/build/h5` | nginx 同域（/h5） |
 | 微信小程序 | `uni build --platform mp-weixin` | `dist/build/mp-weixin` | 微信开发者工具上传体验版 |
 | Android APK | `uni build --platform app` → 离线 SDK gradle 打包 | `*.apk` | GitHub Artifact / 分发链接 |
 | iOS init 基座 | `uni build --platform app` → 离线 SDK xcodebuild | `*.ipa`（调试基座） | 真机安装（自定义基座） |
 | iOS release | 同上 + Distribution 签名 | `*.ipa`（App Store 版） | TestFlight / 上架 |
-| 管理后台 | `pnpm --filter @eqs/admin build` | `dist/` | COS 静态托管 |
+| 管理后台 | `pnpm --filter @eqs/admin build` | `dist/` | nginx 同域（/admin） |
 
 ### 1.3 触发策略
 
@@ -110,8 +110,8 @@ git push origin main --tags
    +----------v-----------+              +------------v------------+
    | CI (ubuntu)          |              | CD (ubuntu)             |
    | 后端 vet+test+build  |              | CVM: server 部署       |
-   | admin build          |              | COS: admin H5 部署     |
-   | client H5            |              | COS: client H5 部署    |
+   | admin build          |              | CVM: admin→nginx       |
+   | client H5            |              | CVM: H5→nginx         |
    | client mp-weixin     |              +-------------------------+
    | client app 资源      |
    | Android APK 打包签名 |
@@ -181,17 +181,15 @@ git push -u origin main
 | `CVM_HOST` | CVM 公网 IP | ✅ **已配**（129.211.223.113） |
 | `CVM_USERNAME` | SSH 用户名 | ✅ **已配**（root） |
 | `CVM_SSH_KEY` | SSH 私钥内容 | ✅ **已配**（`~/.ssh/wxx_deploy.pem`） |
-| `TENCENT_CLOUD_SECRET_ID` | 腾讯云 API 密钥 ID | ⏳ 待获取 |
-| `TENCENT_CLOUD_SECRET_KEY` | 腾讯云 API 密钥 Key | ⏳ 待获取 |
+
+> 路线 A（nginx 同域部署）**不需要**腾讯云 API 密钥/COS 凭据；部署走 SSH（CVM 三件套）。
 
 **Variables（Actions variables）**
 
 | 变量名 | 内容 | 必填 |
 |--------|------|------|
-| `ENV` | 环境标识（如 `prod`），决定 COS bucket 名 `eqs-admin-prod` | ⏳ 待设置 |
-| `VITE_API_BASE_URL` | admin 构建时后端 API 地址 | ⏳ 待设置 |
-
-> **获取腾讯云 API 密钥**：腾讯云控制台 → 右上角头像 → 访问管理 (CAM) → 访问密钥 → API 密钥管理 → 新建密钥（SecretKey 仅显示一次）。
+| `ENV` | 环境标识（如 `prod`），用于后端运行环境标记 | 按需 |
+| `VITE_API_BASE_URL` | **当前架构不使用**（admin 走相对路径 `/api` 同域反代）；若未来切 COS 独立部署才需配置 | 不填 |
 
 ---
 
@@ -361,11 +359,23 @@ jobs:
 
 ### 8.1 后端与 Web 自动部署（cd.yml，push 自动）
 
+部署目标：腾讯云 CVM（`129.211.223.113`），生产域名 **`eqs-chzu.tech`**，nginx 同域反代（`deploy/nginx/prod.conf`）。
+
 | Job | 目标 | 内容 |
 |-----|------|------|
 | `deploy-server` | CVM | `git pull` → `go build`（CGO_ENABLED=1）→ 重启 `eqs-server` |
-| `deploy-admin` | COS | `coscli sync` → `eqs-admin-${ENV}` |
-| `deploy-client` | COS | `coscli sync` → `eqs-client-${ENV}`（相机源 `dist/build/h5`） |
+| `deploy-admin` | CVM nginx | scp `admin-dist/*` → `/opt/eqs/packages/admin/dist` → `nginx -s reload` |
+| `deploy-client` | CVM nginx | scp `client-h5/*` → `/opt/eqs/packages/client/dist/build/h5` → `nginx -s reload` |
+
+**访问路径（同域）**：
+
+| 入口 | URL | 说明 |
+|------|-----|------|
+| 管理后台 | `http://eqs-chzu.tech/admin` | base `/admin/`，nginx alias 到 admin/dist |
+| 用户 H5 | `http://eqs-chzu.tech/h5` | base `/h5/`（hash 路由），nginx alias 到 `dist/build/h5` |
+| API | `http://eqs-chzu.tech/api/v1/*` | nginx 反代 → 后端 `127.0.0.1:8080` |
+
+> 前端走**相对路径** `/api/...`（`request.ts` baseURL 为空），同域反代，无需 CORS、无需 `VITE_API_BASE_URL`。
 
 ### 8.2 移动端分发
 
@@ -403,7 +413,7 @@ git push origin main --tags
 发布前确认：
 
 1. ✅ CI（ci.yml）通过——各端 lint / test / build 全绿
-2. ✅ CD（cd.yml）已部署——CVM / COS Secrets 已配置
+2. ✅ CD（cd.yml）已部署——CVM 三件套（HOST/USERNAME/SSH_KEY）Secrets 已配置
 3. ✅ Android/iOS 签名 Secrets 已配置（如出实包）
 4. ✅ `release.yml` 构建的 server 二进制可运行（CGO 静态）
 
@@ -429,9 +439,9 @@ git push origin main --tags
 3. **普通 uni-app ≠ uni-app x**：`uni build -p app` 产出 App 资源，依赖离线 SDK 原生工程（`apps/android`、`apps/ios`）二次打包成 APK/IPA。
 4. **Go CGO 关键**：server 依赖 `github.com/mattn/go-sqlite3`（CGO）；cd.yml 与 Dockerfile 须 `CGO_ENABLED=1`（已修正）。
 5. **pnpm monorepo**：CI 用 `pnpm/action-setup@v4` 安装（勿用 `setup-node` 的 `cache: pnpm`——pnpm 未装会直接报错；勿用 `npm install -g pnpm`，独立 step 的 PATH 不可靠）。
-6. **COS 路径**：client 产物真实路径为 `packages/client/dist/build/h5/`（cd.yml 已修正，勿回改）。
-7. **coscli 资产名**：下载地址必须用实际资产名 `coscli-v1.0.8-linux-amd64`（`coscli-linux` 不存在，会 404 导致部署失败）。
-8. **部署凭据前置**：CD 的 `deploy-server` / `deploy-admin` / `deploy-client` 依赖 Secrets（CVM_HOST/USERNAME/SSH_KEY、腾讯云 ID/KEY）与 Variables（ENV）。未配置时 job 直接失败（`missing server host`），配置完整才跑通。
+6. **H5 产物路径**：client 产物真实路径为 `packages/client/dist/build/h5/`，nginx 与 cd.yml 均指向该目录（勿回改成 `dist/h5`）。
+7. **子路径 base 必须配**：admin 构建用 `base: '/admin/'`、H5 用 manifest `h5.router.base: '/h5/'`，否则 nginx 子路径下资源 404（已配置）。
+8. **部署凭据前置**：CD 的 `deploy-server` / `deploy-admin` / `deploy-client` 依赖 CVM 三件套 Secrets（HOST/USERNAME/SSH_KEY）。未配置时 job 直接失败（`missing server host`），配置完整才跑通。
 9. **ad-hoc 必须预登记 UDID**，否则 init 基座真机无法安装。
 10. **Android/iOS 离线 SDK**：仓库未维护原生工程时，android job 自动跳过、iOS 仅产出 App 资源——补齐工程后 push/手动即自动出 APK/IPA。
 

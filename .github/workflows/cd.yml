@@ -4,11 +4,6 @@ on:
   push:
     branches: [main]
 
-env:
-  TENCENT_CLOUD_SECRET_ID: ${{ secrets.TENCENT_CLOUD_SECRET_ID }}
-  TENCENT_CLOUD_SECRET_KEY: ${{ secrets.TENCENT_CLOUD_SECRET_KEY }}
-  TENCENT_CLOUD_REGION: ap-guangzhou
-
 jobs:
   build-admin:
     name: Build Admin
@@ -40,6 +35,35 @@ jobs:
         with:
           name: admin-dist
           path: packages/admin/dist
+
+  build-client:
+    name: Build Client H5
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Build client H5
+        run: pnpm --filter @eqs/client build:h5
+
+      - name: Upload client H5
+        uses: actions/upload-artifact@v4
+        with:
+          name: client-h5
+          path: packages/client/dist/build/h5
 
   build-server:
     name: Build Server
@@ -98,71 +122,66 @@ jobs:
             echo "Server deployed successfully"
 
   deploy-admin:
-    name: Deploy Admin to COS
+    name: Deploy Admin to CVM Nginx
     runs-on: ubuntu-latest
     needs: [build-admin]
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
       - name: Download admin dist
         uses: actions/download-artifact@v4
         with:
           name: admin-dist
-          path: packages/admin/dist
+          path: admin-dist
 
-      - name: Install coscli
-        run: |
-          curl -L https://github.com/tencentyun/coscli/releases/latest/download/coscli-v1.0.8-linux-amd64 -o coscli
-          chmod +x coscli
-          sudo mv coscli /usr/local/bin/
+      - name: Upload admin to nginx
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.CVM_HOST }}
+          username: ${{ secrets.CVM_USERNAME }}
+          key: ${{ secrets.CVM_SSH_KEY }}
+          source: "admin-dist/*"
+          target: "/opt/eqs/packages/admin/dist"
+          strip_components: 1
 
-      - name: Deploy to Tencent Cloud COS
-        run: |
-          coscli sync packages/admin/dist/ cos://eqs-admin-${{ vars.ENV }} --delete
-        env:
-          COS_SECRET_ID: ${{ secrets.TENCENT_CLOUD_SECRET_ID }}
-          COS_SECRET_KEY: ${{ secrets.TENCENT_CLOUD_SECRET_KEY }}
-          COS_BUCKET: eqs-admin-${{ vars.ENV }}
-          COS_REGION: ${{ env.TENCENT_CLOUD_REGION }}
+      - name: Reload nginx
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.CVM_HOST }}
+          username: ${{ secrets.CVM_USERNAME }}
+          key: ${{ secrets.CVM_SSH_KEY }}
+          script: |
+            sudo nginx -t && sudo nginx -s reload
+            echo "Admin deployed to nginx"
 
   deploy-client:
-    name: Deploy Client to COS
+    name: Deploy Client H5 to CVM Nginx
     runs-on: ubuntu-latest
+    needs: [build-client]
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Download client H5
+        uses: actions/download-artifact@v4
         with:
-          node-version: '20'
+          name: client-h5
+          path: client-h5
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+      - name: Upload client H5 to nginx
+        uses: appleboy/scp-action@v0.1.7
         with:
-          version: 9
+          host: ${{ secrets.CVM_HOST }}
+          username: ${{ secrets.CVM_USERNAME }}
+          key: ${{ secrets.CVM_SSH_KEY }}
+          source: "client-h5/*"
+          target: "/opt/eqs/packages/client/dist/build/h5"
+          strip_components: 1
 
-      - name: Install dependencies
-        run: pnpm install
-
-      - name: Build client H5
-        run: pnpm --filter @eqs/client build:h5
-
-      - name: Install coscli
-        run: |
-          curl -L https://github.com/tencentyun/coscli/releases/latest/download/coscli-v1.0.8-linux-amd64 -o coscli
-          chmod +x coscli
-          sudo mv coscli /usr/local/bin/
-
-      - name: Deploy to Tencent Cloud COS
-        run: |
-          coscli sync packages/client/dist/build/h5/ cos://eqs-client-${{ vars.ENV }} -delete
-        env:
-          COS_SECRET_ID: ${{ secrets.TENCENT_CLOUD_SECRET_ID }}
-          COS_SECRET_KEY: ${{ secrets.TENCENT_CLOUD_SECRET_KEY }}
-          COS_BUCKET: eqs-client-${{ vars.ENV }}
-          COS_REGION: ${{ env.TENCENT_CLOUD_REGION }}
+      - name: Reload nginx
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.CVM_HOST }}
+          username: ${{ secrets.CVM_USERNAME }}
+          key: ${{ secrets.CVM_SSH_KEY }}
+          script: |
+            sudo nginx -t && sudo nginx -s reload
+            echo "Client H5 deployed to nginx"
 
 
 
