@@ -12,7 +12,6 @@ concurrency:
 jobs:
   apk:
     runs-on: ubuntu-latest
-    if: hashFiles('apps/android/**') != ''
     steps:
       - uses: actions/checkout@v4
 
@@ -32,23 +31,33 @@ jobs:
         working-directory: packages/client
         run: pnpm --filter @eqs/client build:app
 
+      - name: Upload app resources
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-resources
+          path: packages/client/dist/build/app
+
       - name: Copy resources into native project
+        if: hashFiles('apps/android/**') != ''
         run: |
           mkdir -p apps/android/app/src/main/assets/apps
           rm -rf apps/android/app/src/main/assets/apps/*
           cp -r packages/client/dist/build/app/* apps/android/app/src/main/assets/apps/
 
       - name: Restore signing keystore
+        if: hashFiles('apps/android/**') != ''
         run: echo "$ANDROID_SIGN" | base64 -d > apps/android/eqs-release.jks
         env:
           ANDROID_SIGN: ${{ secrets.ANDROID_SIGN_BASE64 }}
 
       - uses: actions/setup-java@v4
+        if: hashFiles('apps/android/**') != ''
         with:
           distribution: temurin
           java-version: '17'
 
       - name: Build signed APK
+        if: hashFiles('apps/android/**') != ''
         working-directory: apps/android
         run: ./gradlew assembleRelease
         env:
@@ -57,14 +66,8 @@ jobs:
           ANDROID_ALIAS_PWD: ${{ secrets.ANDROID_ALIAS_PWD }}
 
       - name: Upload APK
+        if: hashFiles('apps/android/**') != ''
         uses: actions/upload-artifact@v4
         with:
           name: eqs-release
           path: apps/android/app/build/outputs/apk/release/*.apk
-
-      - name: Upload app resources
-        uses: actions/upload-artifact@v4
-        with:
-          name: app-resources
-          path: packages/client/dist/build/app
-

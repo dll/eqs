@@ -10,14 +10,14 @@ describe('admin request 封装', () => {
     localStorage.setItem('token', 'admin-1')
     const req = request as any
     const cfg = await req.interceptors.request.handlers[0].fulfilled({
-      headers: {}, url: '/x', method: 'get',
+      headers: {} as Record<string, string>, url: '/x', method: 'get',
     })
     expect(cfg.headers.Authorization).toBe('Bearer admin-1')
   })
 
   it('无 token 不注入', async () => {
     const req = request as any
-    const cfg = await req.interceptors.request.handlers[0].fulfilled({ headers: {}, url: '/y' })
+    const cfg = await req.interceptors.request.handlers[0].fulfilled({ headers: {} as Record<string, string>, url: '/y' })
     expect(cfg.headers.Authorization).toBeUndefined()
   })
 
