@@ -192,5 +192,15 @@
   "settings.typeJson": "JSON",
   "settings.updateUrl": "更新地址",
   "settings.placeholderVersion": "如 1.1.0",
-  "settings.forceUpdate": "强制更新"
+  "settings.forceUpdate": "强制更新",
+  "dispute.actions": "操作",
+  "dispute.assignExpert": "指派专家",
+  "dispute.close": "结案",
+  "dispute.disputeId": "争议ID",
+  "dispute.expertUserId": "专家用户ID",
+  "dispute.expertRequired": "请输入专家用户ID",
+  "dispute.expertAssigned": "专家已指派",
+  "dispute.closed": "争议已结案",
+  "dispute.settleAmount": "结算金额",
+  "common.confirm": "确认"
 }

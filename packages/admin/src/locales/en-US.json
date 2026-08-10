@@ -192,5 +192,15 @@
   "settings.typeJson": "JSON",
   "settings.updateUrl": "Update URL",
   "settings.placeholderVersion": "e.g. 1.1.0",
-  "settings.forceUpdate": "Force Update"
+  "settings.forceUpdate": "Force Update",
+  "dispute.actions": "Actions",
+  "dispute.assignExpert": "Assign Expert",
+  "dispute.close": "Close",
+  "dispute.disputeId": "Dispute ID",
+  "dispute.expertUserId": "Expert User ID",
+  "dispute.expertRequired": "Please input expert user ID",
+  "dispute.expertAssigned": "Expert assigned",
+  "dispute.closed": "Dispute closed",
+  "dispute.settleAmount": "Settle Amount",
+  "common.confirm": "Confirm"
 }
