@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"testing"
 
+	"github.com/eqs/server/internal/config"
 	"github.com/eqs/server/internal/model"
 	"github.com/gin-gonic/gin"
 )
@@ -96,8 +97,9 @@ func TestCreatePayment_WechatNoSign(t *testing.T) {
 	order := model.Order{ProjectID: projectID, SupplierID: 2, Amount: 100, Status: 1}
 	model.DB.Create(&order)
 
-	// 模拟真实通道配置（环境变量）
+	// 模拟真实通道配置（环境变量）；config.Get() 单例缓存需重置，否则读到先前用例的旧值
 	t.Setenv("PAYMENT_PROVIDER", "wechat")
+	config.ResetCache()
 	defer t.Setenv("PAYMENT_PROVIDER", "mock")
 
 	w := doJSONFull(t, r, "POST", "/api/v1/pay/create", map[string]interface{}{

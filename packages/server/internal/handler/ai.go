@@ -21,6 +21,9 @@ type AIProvider struct {
 	Endpoint string
 }
 
+// aiHTTPClient 复用连接池与超时，避免每次调用新建 http.Client 丢弃 keep-alive
+var aiHTTPClient = &http.Client{Timeout: 20 * time.Second}
+
 func loadAIProvider() *AIProvider {
 	return &AIProvider{
 		APIKey:   getEnvStr("ZHIPU_API_KEY"),
@@ -46,9 +49,9 @@ type AIAnalysis struct {
 
 // ProjectAnalysisItem 单项目分析
 type ProjectAnalysisItem struct {
-	ProjectID uint        `json:"project_id"`
-	Title     string      `json:"title"`
-	Analysis  AIAnalysis  `json:"analysis"`
+	ProjectID uint       `json:"project_id"`
+	Title     string     `json:"title"`
+	Analysis  AIAnalysis `json:"analysis"`
 }
 
 // AIAnalyzeAllProjects 全量项目 AI 分析
@@ -227,8 +230,7 @@ func callAIModel(ai *AIProvider, prompt string) (string, error) {
 	}
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", "Bearer "+ai.APIKey)
-	client := &http.Client{Timeout: 20 * time.Second}
-	resp, err := client.Do(req)
+	resp, err := aiHTTPClient.Do(req)
 	if err != nil {
 		return "", err
 	}

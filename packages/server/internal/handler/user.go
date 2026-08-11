@@ -111,3 +111,37 @@ func GetUserReviews(c *gin.Context) {
 	model.DB.Where("reviewee_id = ?", userID).Order("created_at DESC").Find(&reviews)
 	ok(c, gin.H{"reviews": reviews, "count": len(reviews)})
 }
+
+// ListProjectReviews 按项目查看评价（项目甲方/服务方/管理员可见）
+func ListProjectReviews(c *gin.Context) {
+	projectID, err := parseUint(c.Param("id"))
+	if err != nil {
+		badRequest(c, "项目ID无效")
+		return
+	}
+	userID := c.GetUint("user_id")
+
+	var project model.Project
+	if err := model.DB.First(&project, projectID).Error; err != nil {
+		notFound(c, "项目不存在")
+		return
+	}
+	// 权限：管理员、项目创建者、该项目订单服务方
+	if !isAdmin(c) && project.UserID != userID {
+		var cnt int64
+		model.DB.Model(&model.Order{}).Where("project_id = ? AND supplier_id = ?", projectID, userID).Count(&cnt)
+		if cnt == 0 {
+			forbidden(c, "无权查看该项目评价")
+			return
+		}
+	}
+
+	// 找到项目关联订单的所有评价
+	var orderIDs []uint
+	model.DB.Model(&model.Order{}).Where("project_id = ?", projectID).Pluck("id", &orderIDs)
+	var reviews []model.Review
+	if len(orderIDs) > 0 {
+		model.DB.Where("order_id IN ?", orderIDs).Order("created_at DESC").Find(&reviews)
+	}
+	ok(c, gin.H{"reviews": reviews, "count": len(reviews)})
+}

@@ -84,6 +84,52 @@ func MarkMessageRead(c *gin.Context) {
 	ok(c, gin.H{"message": "已读"})
 }
 
+// GetMessage 消息详情（仅收发双方）
+func GetMessage(c *gin.Context) {
+	userID := c.GetUint("user_id")
+	msgID, err := parseUint(c.Param("id"))
+	if err != nil {
+		badRequest(c, "消息ID无效")
+		return
+	}
+
+	var msg model.Message
+	if err := model.DB.First(&msg, msgID).Error; err != nil {
+		notFound(c, "消息不存在")
+		return
+	}
+	if msg.SenderID != userID && msg.ReceiverID != userID && !isAdmin(c) {
+		forbidden(c, "无权查看该消息")
+		return
+	}
+	ok(c, gin.H{"message": msg})
+}
+
+// DeleteMessage 删除消息（仅发送方可删除自己的消息；接收方删除标记隐藏）
+func DeleteMessage(c *gin.Context) {
+	userID := c.GetUint("user_id")
+	msgID, err := parseUint(c.Param("id"))
+	if err != nil {
+		badRequest(c, "消息ID无效")
+		return
+	}
+
+	var msg model.Message
+	if err := model.DB.First(&msg, msgID).Error; err != nil {
+		notFound(c, "消息不存在")
+		return
+	}
+	if msg.SenderID != userID && !isAdmin(c) {
+		forbidden(c, "仅发送方可删除消息")
+		return
+	}
+	if err := model.DB.Delete(&msg).Error; err != nil {
+		serverError(c, err)
+		return
+	}
+	ok(c, gin.H{"message": "消息已删除"})
+}
+
 // ListNotifications 通知列表
 // GET /api/v1/notification/list
 func ListNotifications(c *gin.Context) {

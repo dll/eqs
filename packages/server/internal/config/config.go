@@ -38,6 +38,9 @@ type Config struct {
 	// CORS 信任来源白名单（生产环境生效；逗号分隔，默认信任 eqs-chzu.tech 及 www）
 	CORSAllowedOrigins []string
 
+	// UploadDir 本地文件上传目录（资质扫描件等附件；相对工作目录或绝对路径）
+	UploadDir string
+
 	// 中国国产 AI 模型
 	BaiduAPIKey    string
 	BaiduSecretKey string
@@ -77,6 +80,9 @@ func Load() *Config {
 
 		// CORS 白名单：CORS_ALLOW_ORIGINS 逗号分隔；未配置时默认信任生产域名
 		CORSAllowedOrigins: parseOrigins(getEnv("CORS_ALLOW_ORIGINS", "https://eqs-chzu.tech,https://www.eqs-chzu.tech")),
+
+		// 本地上传目录（资质扫描件附件；相对工作目录或绝对路径）
+		UploadDir: getEnv("UPLOAD_DIR", "uploads/qualifications"),
 
 		BaiduAPIKey:    getEnv("BAIDU_API_KEY", ""),
 		BaiduSecretKey: getEnv("BAIDU_SECRET_KEY", ""),

@@ -64,6 +64,57 @@ func CreateDispute(c *gin.Context) {
 	ok(c, gin.H{"dispute": dispute, "message": "争议已发起，相关款项已冻结"})
 }
 
+// UpdateDispute 补充/更新争议信息（发起人可补充分歧点与诉求；证据阶段）
+func UpdateDispute(c *gin.Context) {
+	disputeID, err := parseUint(c.Param("id"))
+	if err != nil {
+		badRequest(c, "争议ID无效")
+		return
+	}
+	userID := c.GetUint("user_id")
+
+	var req struct {
+		Reason string `json:"reason"`
+		Claim  string `json:"claim"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		badRequest(c, "参数错误")
+		return
+	}
+
+	var dispute model.Dispute
+	if err := model.DB.First(&dispute, disputeID).Error; err != nil {
+		notFound(c, "争议不存在")
+		return
+	}
+	if dispute.InitiatorID != userID && !isAdmin(c) {
+		forbidden(c, "仅发起人可更新争议")
+		return
+	}
+	if dispute.Status == "closed" {
+		badRequest(c, "争议已结案，不可修改")
+		return
+	}
+
+	updates := map[string]interface{}{}
+	if req.Reason != "" {
+		updates["reason"] = req.Reason
+	}
+	if req.Claim != "" {
+		updates["claim"] = req.Claim
+	}
+	if len(updates) == 0 {
+		badRequest(c, "没有可更新的字段")
+		return
+	}
+	if err := model.DB.Model(&dispute).Updates(updates).Error; err != nil {
+		serverError(c, err)
+		return
+	}
+	WriteAudit(c, "dispute.update", "dispute", disputeID, gin.H{})
+	ok(c, gin.H{"message": "争议信息已更新"})
+}
+
 // UploadDisputeEvidence 上传争议证据（文件+哈希）
 func UploadDisputeEvidence(c *gin.Context) {
 	disputeID, err := parseUint(c.Param("id"))

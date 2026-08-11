@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"net/url"
 	"slices"
 	"strings"
 
@@ -54,23 +55,24 @@ func isSameOrigin(origin, host string) bool {
 	return o != "" && o == h
 }
 
-// originHost 从 URL 或 host[:port] 中提取小写主机名（兼容 IPv6 [::1]:port）
+// originHost 从 URL 或 host[:port] 中提取小写主机名（兼容无 scheme、IPv6 括号形式）
 func originHost(s string) string {
 	s = strings.TrimSpace(s)
 	if s == "" {
 		return ""
 	}
-	if i := strings.Index(s, "://"); i >= 0 {
-		s = s[i+3:]
+	u, err := url.Parse(s)
+	if err != nil {
+		return ""
 	}
+	if host := u.Hostname(); host != "" {
+		return strings.ToLower(host)
+	}
+	// url.Parse 对 host[:port]（无 scheme）会解析失败或放入 Path，回退直接按端口剥离
 	if i := strings.IndexAny(s, "/?"); i >= 0 {
 		s = s[:i]
 	}
-	if strings.HasPrefix(s, "[") {
-		if i := strings.Index(s, "]"); i >= 0 {
-			s = s[1:i]
-		}
-	} else if i := strings.LastIndex(s, ":"); i >= 0 {
+	if i := strings.LastIndex(s, ":"); i >= 0 {
 		s = s[:i]
 	}
 	return strings.ToLower(s)

@@ -3,7 +3,7 @@ package model
 import "time"
 
 // SupplierQualification 服务方资质
-// verification_method: OCR/manual/external
+// verification_method: OCR/manual/external/ai
 // verification_status: pending/approved/rejected/expired
 type SupplierQualification struct {
 	ID                 uint       `json:"id" gorm:"primaryKey"`
@@ -12,11 +12,15 @@ type SupplierQualification struct {
 	CertificateNo      EncryptedString `json:"certificate_no"` // P1-09：透明加密，列中存密文
 	Level              string     `json:"level" gorm:"size:50"`
 	Scope              string     `json:"scope" gorm:"size:200"`
+	// V6：资质必要补充字段
+	IssuingAuthority   string     `json:"issuing_authority" gorm:"size:100"` // 发证机关
+	IssueDate          *time.Time `json:"issue_date"`                         // 签发日期
 	ValidFrom          *time.Time `json:"valid_from"`
 	ValidTo            *time.Time `json:"valid_to"`
 	VerificationMethod string     `json:"verification_method" gorm:"size:20;default:manual"`
 	VerificationStatus string     `json:"verification_status" gorm:"size:20;default:pending"`
-	EvidenceFileID     uint       `json:"evidence_file_id"`
+	EvidenceFileID     uint       `json:"evidence_file_id"` // 扫描件附件（登记于 project_files）
+	ReviewComment      string     `json:"review_comment" gorm:"size:500"` // 审核意见/驳回原因
 	ReviewedBy         uint       `json:"reviewed_by"`
 	ReviewedAt         *time.Time `json:"reviewed_at"`
 	CreatedAt          time.Time  `json:"created_at"`

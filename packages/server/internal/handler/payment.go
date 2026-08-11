@@ -41,7 +41,7 @@ func CreatePayment(c *gin.Context) {
 	if channel == "" {
 		channel = "mock"
 	}
-	if channel == "wechat" && config.Load().PaymentProvider != "mock" {
+	if channel == "wechat" && config.Get().PaymentProvider != "mock" {
 		// 真实通道尚未签约时不允许直接调用
 		badRequest(c, "支付通道未就绪")
 		return
@@ -71,13 +71,13 @@ func CreatePayment(c *gin.Context) {
 	}
 
 	txn := model.PaymentTransaction{
-		UserID:               order.SupplierID,
-		OrderID:              order.ID,
-		Amount:               req.Amount,
-		Type:                 "payment",
-		Channel:              channel,
+		UserID:                order.SupplierID,
+		OrderID:               order.ID,
+		Amount:                req.Amount,
+		Type:                  "payment",
+		Channel:               channel,
 		ExternalTransactionID: txnID,
-		Status:               0,
+		Status:                0,
 	}
 	if err := model.DB.Create(&txn).Error; err != nil {
 		serverError(c, err)
@@ -106,7 +106,7 @@ func PaymentNotify(c *gin.Context) {
 	}
 
 	// P0-03：回调验签（HMAC-SHA256，需配置 PaymentNotifySecret）
-	cfg := config.Load()
+	cfg := config.Get()
 	if cfg.PaymentNotifySecret == "" {
 		if cfg.IsProduction() {
 			serverError(c, fmt.Errorf("支付回调密钥未配置"))
@@ -165,7 +165,6 @@ func verifyCallbackSign(secret, txid string, orderID uint, amount float64, resul
 	return hmac.Equal([]byte(expect), []byte(sign))
 }
 
-
 func SettleMilestone(c *gin.Context) {
 	milestoneID, err := parseUint(c.Param("id"))
 	if err != nil {
@@ -199,14 +198,14 @@ func SettleMilestone(c *gin.Context) {
 	var order model.Order
 	model.DB.First(&order, ms.OrderID)
 	txn := model.PaymentTransaction{
-		UserID:               order.SupplierID,
-		OrderID:              ms.OrderID,
-		MilestoneID:          milestoneID,
-		Amount:               ms.Amount,
-		Type:                 "settlement",
-		Channel:              "mock",
+		UserID:                order.SupplierID,
+		OrderID:               ms.OrderID,
+		MilestoneID:           milestoneID,
+		Amount:                ms.Amount,
+		Type:                  "settlement",
+		Channel:               "mock",
 		ExternalTransactionID: txnID,
-		Status:               1,
+		Status:                1,
 	}
 	if err := model.DB.Create(&txn).Error; err != nil {
 		serverError(c, err)

@@ -10,16 +10,16 @@ import (
 
 // ProjectProgressItem 甘特图/看板项目项
 type ProjectProgressItem struct {
-	ID           uint    `json:"id"`
-	Title        string  `json:"title"`
-	ServiceType  string  `json:"service_type"`
-	Status       int     `json:"status"`
-	StatusText   string  `json:"status_text"`
-	StartDate    *string `json:"start_date"`  // yyyy-MM-dd（发布/创建）
-	EndDate      *string `json:"end_date"`    // 预计完成（deadline）
-	Progress     int     `json:"progress"`    // 0-100
-	OrderCount   int64   `json:"order_count"`
-	Milestones   []MilestoneBar `json:"milestones"`
+	ID          uint           `json:"id"`
+	Title       string         `json:"title"`
+	ServiceType string         `json:"service_type"`
+	Status      int            `json:"status"`
+	StatusText  string         `json:"status_text"`
+	StartDate   *string        `json:"start_date"` // yyyy-MM-dd（发布/创建）
+	EndDate     *string        `json:"end_date"`   // 预计完成（deadline）
+	Progress    int            `json:"progress"`   // 0-100
+	OrderCount  int64          `json:"order_count"`
+	Milestones  []MilestoneBar `json:"milestones"`
 }
 
 // MilestoneBar 甘特图里程碑条
@@ -44,6 +44,14 @@ func fmtDate(t *time.Time) *string {
 	}
 	s := t.Format("2006-01-02")
 	return &s
+}
+
+// fmtDateStr 日期格式化（nil 安全），返回字符串而非指针；AI 提示词等场景使用
+func fmtDateStr(t *time.Time) string {
+	if t == nil {
+		return "未填写"
+	}
+	return t.Format("2006-01-02")
 }
 
 // ListProjectProgress 全部项目进度（管理员/项目创建者可见）

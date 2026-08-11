@@ -121,6 +121,46 @@ func AdminListUsers(c *gin.Context) {
 	ok(c, gin.H{"users": dto, "count": len(dto)})
 }
 
+// AdminUpdateUserStatus 后台启用/禁用用户
+// PUT /api/v1/admin/users/:id/status  { "status": 1|0 }
+func AdminUpdateUserStatus(c *gin.Context) {
+	userID, err := parseUint(c.Param("id"))
+	if err != nil {
+		badRequest(c, "用户ID无效")
+		return
+	}
+	// 防止管理员禁用自己
+	operatorID := c.GetUint("user_id")
+	if userID == operatorID {
+		badRequest(c, "不能操作当前登录账号")
+		return
+	}
+
+	var req struct {
+		Status int `json:"status" binding:"required"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		badRequest(c, "参数错误")
+		return
+	}
+	if req.Status != 0 && req.Status != 1 {
+		badRequest(c, "状态仅支持 0=禁用 1=启用")
+		return
+	}
+
+	var user model.User
+	if err := model.DB.First(&user, userID).Error; err != nil {
+		notFound(c, "用户不存在")
+		return
+	}
+	if err := model.DB.Model(&user).Update("status", req.Status).Error; err != nil {
+		serverError(c, err)
+		return
+	}
+	WriteAudit(c, "user.status", "user", userID, gin.H{"status": req.Status, "operator_id": operatorID})
+	ok(c, gin.H{"message": "用户状态已更新", "status": req.Status})
+}
+
 // AdminListOrders 后台全量订单列表
 func AdminListOrders(c *gin.Context) {
 	var orders []model.Order

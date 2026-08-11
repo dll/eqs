@@ -115,6 +115,95 @@ func GetProject(c *gin.Context) {
 	ok(c, gin.H{"project": project})
 }
 
+// UpdateProject 编辑项目（仅发布者本人，草稿/已发布可改；有订单后仅可改描述等非关键字段）
+func UpdateProject(c *gin.Context) {
+	userID := c.GetUint("user_id")
+	id, err := parseUint(c.Param("id"))
+	if err != nil {
+		badRequest(c, "项目ID无效")
+		return
+	}
+
+	var project model.Project
+	if err := model.DB.First(&project, id).Error; err != nil {
+		notFound(c, "项目不存在")
+		return
+	}
+	if project.UserID != userID && !isAdmin(c) {
+		forbidden(c, "仅发布者可编辑项目")
+		return
+	}
+
+	var req CreateProjectRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		badRequest(c, "参数错误")
+		return
+	}
+
+	// 已进入报价/订单的项目不允许改预算与类型（防竞拍串通）
+	locked := project.Status >= 2
+	updates := map[string]interface{}{}
+	updates["title"] = req.Title
+	updates["description"] = req.Description
+	updates["address"] = req.Address
+	if !locked {
+		updates["project_type"] = req.ProjectType
+		updates["service_type"] = req.ServiceType
+		updates["budget_min"] = req.BudgetMin
+		updates["budget_max"] = req.BudgetMax
+	}
+	if req.Deadline != "" {
+		if t, err := time.Parse(time.RFC3339, req.Deadline); err == nil {
+			updates["deadline"] = t
+		}
+	}
+
+	if err := model.DB.Model(&project).Updates(updates).Error; err != nil {
+		serverError(c, err)
+		return
+	}
+	WriteAudit(c, "project.update", "project", project.ID, gin.H{"locked": locked})
+	ok(c, gin.H{"message": "项目已更新", "locked": locked})
+}
+
+// DeleteProject 下架/删除项目（仅发布者本人；已有报价或订单时禁止删除，仅可下架）
+func DeleteProject(c *gin.Context) {
+	userID := c.GetUint("user_id")
+	id, err := parseUint(c.Param("id"))
+	if err != nil {
+		badRequest(c, "项目ID无效")
+		return
+	}
+
+	var project model.Project
+	if err := model.DB.First(&project, id).Error; err != nil {
+		notFound(c, "项目不存在")
+		return
+	}
+	if project.UserID != userID && !isAdmin(c) {
+		forbidden(c, "仅发布者可删除项目")
+		return
+	}
+
+	// 存在报价或订单：不允许物理删除，改为下架状态
+	var bidCount, orderCount int64
+	model.DB.Model(&model.Bid{}).Where("project_id = ?", id).Count(&bidCount)
+	model.DB.Model(&model.Order{}).Where("project_id = ?", id).Count(&orderCount)
+	if bidCount > 0 || orderCount > 0 {
+		model.DB.Model(&project).Update("status", 5) // 5 = 已下架
+		WriteAudit(c, "project.offline", "project", id, gin.H{"bids": bidCount, "orders": orderCount})
+		ok(c, gin.H{"message": "项目已有业务往来，已下架处理", "offline": true})
+		return
+	}
+
+	if err := model.DB.Delete(&project).Error; err != nil {
+		serverError(c, err)
+		return
+	}
+	WriteAudit(c, "project.delete", "project", id, gin.H{})
+	ok(c, gin.H{"message": "项目已删除", "offline": false})
+}
+
 // GetRecommendations 基于地区、资质和信用推荐服务方
 func GetRecommendations(c *gin.Context) {
 	id := c.Param("id")

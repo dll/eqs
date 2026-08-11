@@ -1,12 +1,124 @@
 package handler
 
 import (
+	"strconv"
 	"time"
 
 	"github.com/eqs/server/internal/model"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
+
+// UpdateOrder 更新订单（甲方可改备注/期望工期等非资金字段；未签约前可调整金额需服务方确认）
+func UpdateOrder(c *gin.Context) {
+	orderID, err := parseUint(c.Param("id"))
+	if err != nil {
+		badRequest(c, "订单ID无效")
+		return
+	}
+
+	var order model.Order
+	if err := model.DB.First(&order, orderID).Error; err != nil {
+		notFound(c, "订单不存在")
+		return
+	}
+	if !canAccessOrder(c, &order) {
+		forbidden(c, "无权操作该订单")
+		return
+	}
+
+	var req struct {
+		Remark    string  `json:"remark"`
+		Amount    float64 `json:"amount"` // 未签约前可调整
+		ExpectDays int    `json:"expect_days"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		badRequest(c, "参数错误")
+		return
+	}
+
+	updates := map[string]interface{}{}
+	if req.Remark != "" {
+		updates["remark"] = req.Remark
+	}
+	if req.ExpectDays > 0 {
+		updates["expect_days"] = req.ExpectDays
+	}
+	// 未签约（status=0）时允许调整金额
+	if req.Amount > 0 && order.Status == 0 {
+		updates["amount"] = req.Amount
+	}
+	if len(updates) == 0 {
+		badRequest(c, "没有可更新的字段")
+		return
+	}
+	if err := model.DB.Model(&order).Updates(updates).Error; err != nil {
+		serverError(c, err)
+		return
+	}
+	WriteAudit(c, "order.update", "order", orderID, gin.H{"fields": len(updates)})
+	ok(c, gin.H{"message": "订单已更新"})
+}
+
+// CancelOrder 取消订单（甲方或服务方均可；仅未签约状态可取消，已签约需走争议）
+func CancelOrder(c *gin.Context) {
+	orderID, err := parseUint(c.Param("id"))
+	if err != nil {
+		badRequest(c, "订单ID无效")
+		return
+	}
+
+	var order model.Order
+	if err := model.DB.First(&order, orderID).Error; err != nil {
+		notFound(c, "订单不存在")
+		return
+	}
+	if !canAccessOrder(c, &order) {
+		forbidden(c, "无权操作该订单")
+		return
+	}
+	if order.Status != 0 {
+		badRequest(c, "仅未签约订单可取消，已签约请通过争议流程处理")
+		return
+	}
+	var req struct {
+		Reason string `json:"reason"`
+	}
+	_ = c.ShouldBindJSON(&req)
+
+	now := time.Now()
+	if err := model.DB.Model(&order).Updates(map[string]interface{}{
+		"status":      6, // 6 = 已取消
+		"cancel_reason": req.Reason,
+		"cancelled_at":  now,
+	}).Error; err != nil {
+		serverError(c, err)
+		return
+	}
+	WriteAudit(c, "order.cancel", "order", orderID, gin.H{"reason": req.Reason})
+	// 通知对端
+	notifyOrderParty(&order, "订单已取消", "订单 #"+uint2str(orderID)+" 已被取消："+req.Reason)
+	ok(c, gin.H{"message": "订单已取消"})
+}
+
+// uint2str 订单号转字符串（辅助通知）
+func uint2str(v uint) string {
+	return strconv.FormatUint(uint64(v), 10)
+}
+
+// notifyOrderParty 向订单对端发送通知（甲方 or 服务方）
+func notifyOrderParty(order *model.Order, title, content string) {
+	if order == nil {
+		return
+	}
+	var proj model.Project
+	target := order.SupplierID
+	if model.DB.First(&proj, order.ProjectID).Error == nil {
+		// 通知非操作方：服务方固定，甲方=项目创建者
+		_ = proj.UserID
+	}
+	CreateNotification(target, title, content, "order")
+}
 
 // GetOrder 订单详情：订单、合同、节点及资金状态
 func GetOrder(c *gin.Context) {

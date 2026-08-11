@@ -15,6 +15,9 @@ import (
 // 启动时读取 migrations/*.sql，按文件名版本顺序应用未执行的迁移，记录到 schema_migrations 表。
 // 相比 AutoMigrate，提供：版本记录、顺序控制、可回滚基点。
 
+// migrationDir 迁移 SQL 目录（相对服务器运行目录 packages/server）
+const migrationDir = "migrations"
+
 // SchemaMigration 迁移版本记录（CreatedAt 由 gorm 自动填充，作为应用时间）
 type SchemaMigration struct {
 	Version   string    `gorm:"primaryKey;size:50" json:"version"`
@@ -22,28 +25,14 @@ type SchemaMigration struct {
 }
 
 // ApplyMigrations 应用未执行的迁移（幂等）
-// dir：migrations 目录路径；为空时用默认路径
-func ApplyMigrations(db *gorm.DB, dir string) error {
+func ApplyMigrations(db *gorm.DB) error {
 	// 确保版本表存在
 	if err := db.AutoMigrate(&SchemaMigration{}); err != nil {
 		return err
 	}
 
-	if dir == "" {
-		// 默认：尝试常见路径
-		for _, p := range []string{"migrations", "packages/server/migrations"} {
-			if _, err := os.Stat(p); err == nil {
-				dir = p
-				break
-			}
-		}
-	}
-	if dir == "" {
-		return nil // 无迁移目录
-	}
-
 	// 读取所有 .sql 文件并排序
-	files, err := filepath.Glob(filepath.Join(dir, "*.sql"))
+	files, err := filepath.Glob(filepath.Join(migrationDir, "*.sql"))
 	if err != nil {
 		return err
 	}

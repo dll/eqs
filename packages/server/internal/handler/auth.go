@@ -32,8 +32,8 @@ type UserInfoRequest struct {
 // 公共注册允许的角色（甲方/服务方）；管理员(3)/专家(4)必须受控创建，禁止自注册
 var publicRoles = map[int]bool{1: true, 2: true}
 
-const smsFreqLimit = 60 * time.Second   // 发送间隔
-const smsFailLockLimit = 5              // 连续失败锁定次数
+const smsFreqLimit = 60 * time.Second // 发送间隔
+const smsFailLockLimit = 5            // 连续失败锁定次数
 
 // SendSMS 发送验证码；生产环境真实发送（未接SMS时禁用），非生产固定 123456
 func SendSMS(c *gin.Context) {
@@ -43,7 +43,7 @@ func SendSMS(c *gin.Context) {
 		return
 	}
 
-	cfg := config.Load()
+	cfg := config.Get()
 
 	// 频控：60 秒内不允许重复发送
 	if model.RDB != nil {
@@ -86,7 +86,7 @@ func SendSMS(c *gin.Context) {
 
 // verifySMS 校验验证码；生产环境仅演示手机号允许固定测试码（受控例外），其余必须真实验证码
 func verifySMS(phone, code string) bool {
-	cfg := config.Load()
+	cfg := config.Get()
 
 	// 非生产环境允许固定测试码；生产仅演示手机号允许（受控降级，便于演示验收）
 	if code == "123456" {
@@ -148,7 +148,7 @@ func PhoneLogin(c *gin.Context) {
 		return
 	}
 
-	cfg := config.Load()
+	cfg := config.Get()
 	user, isNew, err := findOrCreateUser(req.Phone, req.UserType, "")
 	if err != nil {
 		serverError(c, err)
@@ -180,7 +180,7 @@ func WxLogin(c *gin.Context) {
 	}
 
 	openid := fmt.Sprintf("openid_%s", req.Code)
-	cfg := config.Load()
+	cfg := config.Get()
 	user, isNew, err := findOrCreateUser("", req.UserType, openid)
 	if err != nil {
 		serverError(c, err)

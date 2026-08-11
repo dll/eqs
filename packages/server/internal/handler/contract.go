@@ -96,7 +96,7 @@ func SignContract(c *gin.Context) {
 
 	now := time.Now()
 	if err := model.DB.Model(&contract).Updates(map[string]interface{}{
-		"status":   "signed",
+		"status":    "signed",
 		"signed_at": now,
 	}).Error; err != nil {
 		serverError(c, err)
@@ -130,7 +130,7 @@ func SignNotify(c *gin.Context) {
 	}
 
 	// P0-04：回调验签（HMAC-SHA256，需配置 ESignAPIKey）
-	cfg := config.Load()
+	cfg := config.Get()
 	if cfg.ESignAPIKey == "" {
 		if cfg.IsProduction() {
 			serverError(c, fmt.Errorf("电子签回调密钥未配置"))
@@ -170,7 +170,6 @@ func SignNotify(c *gin.Context) {
 
 	ok(c, gin.H{"message": "签署回调已处理"})
 }
-
 
 func DownloadContract(c *gin.Context) {
 	contractID, err := parseUint(c.Param("id"))

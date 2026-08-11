@@ -5,6 +5,7 @@ import (
 	"net/http/httptest"
 	"strconv"
 	"testing"
+	"time"
 
 	"github.com/eqs/server/internal/model"
 	"github.com/gin-gonic/gin"
@@ -131,8 +132,19 @@ func TestQualificationFlow(t *testing.T) {
 	r := setupFlowRouter()
 	createTestUser(t, "13900000130", 2)
 
+	// 先上传扫描件附件（登记 project_files，作为资质审核通过的附件条件）
+	att := model.ProjectFile{UploaderID: 2, OriginalName: "qual.pdf", FileType: "pdf", StorageKey: "uploads/qualifications/test.pdf", Version: 1}
+	if err := model.DB.Create(&att).Error; err != nil {
+		t.Fatalf("创建附件失败: %v", err)
+	}
+
+	future := time.Now().AddDate(5, 0, 0)
+	past := time.Now().AddDate(-1, 0, 0)
 	w := doJSONFullAuth(t, r, "POST", "/api/v1/supplier/2/qualifications", map[string]interface{}{
 		"qualification_type": "咨询资质", "certificate_no": "ZX-2026-001", "level": "甲级",
+		"issuing_authority": "安徽省住房和城乡建设厅", "issue_date": past.Format(time.RFC3339),
+		"valid_from": past.Format(time.RFC3339), "valid_to": future.Format(time.RFC3339),
+		"evidence_file_id": att.ID,
 	}, 2, 2)
 	if w.Code != http.StatusOK {
 		t.Fatalf("提交资质失败: %d %s", w.Code, w.Body.String())
@@ -149,10 +161,14 @@ func TestQualificationFlow(t *testing.T) {
 		t.Fatalf("核验失败: %d %s", w.Code, w.Body.String())
 	}
 
-	// 查询资质列表
+	// 查询资质列表（服务方本人可查，含已审核状态）
 	w = doJSONFullAuth(t, r, "GET", "/api/v1/supplier/2/qualifications", nil, 9, 3)
 	if w.Code != http.StatusOK {
 		t.Fatalf("查询资质失败: %d %s", w.Code, w.Body.String())
+	}
+	listOut := decodeBody(t, w)
+	if listOut["qualifications"] == nil {
+		t.Fatalf("资质列表缺失: %v", listOut)
 	}
 }
 

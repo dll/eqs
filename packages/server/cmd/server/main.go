@@ -18,7 +18,8 @@ import (
 )
 
 func main() {
-	cfg := config.Load()
+	// 启动即构造进程内配置单例（后续热路径经 config.Get() 复用同一实例）
+	cfg := config.Get()
 
 	// P0-07：生产环境拒绝弱默认凭据/密钥启动
 	if cfg.IsProduction() {
@@ -47,7 +48,7 @@ func main() {
 
 	// P2-08：版本化数据库迁移（仅 MySQL 驱动执行；SQLite 由 AutoMigrate 维护）
 	if cfg.DBDriver == "mysql" {
-		if err := model.ApplyMigrations(db, ""); err != nil {
+		if err := model.ApplyMigrations(db); err != nil {
 			log.Printf("[migration] 迁移执行失败（继续启动）: %v", err)
 		}
 	}
@@ -141,7 +142,10 @@ func setupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 			auth.GET("/project/list", handler.ListProjects)
 			auth.GET("/project/:id/recommend", handler.GetRecommendations)
 			auth.GET("/project/:id", handler.GetProject)
+			auth.PUT("/project/:id", handler.UpdateProject)
+			auth.DELETE("/project/:id", handler.DeleteProject)
 			auth.POST("/project/:id/invite", handler.InviteSuppliers)
+			auth.GET("/project/:id/reviews", handler.ListProjectReviews)
 
 			// Bid
 			auth.POST("/bid/submit", handler.SubmitBid)
@@ -152,6 +156,8 @@ func setupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 			// Order
 			auth.GET("/order/list", handler.ListMyOrders)
 			auth.GET("/order/:id", handler.GetOrder)
+			auth.PUT("/order/:id", handler.UpdateOrder)
+			auth.POST("/order/:id/cancel", handler.CancelOrder)
 			auth.PUT("/order/:id/milestones", handler.SetMilestones)
 			auth.POST("/milestone/:id/deliver", handler.UploadDeliverable)
 			auth.POST("/milestone/:id/accept", handler.ConfirmAcceptance)
@@ -174,6 +180,7 @@ func setupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 			auth.GET("/dispute/mine", handler.ListMyDisputes)
 			auth.POST("/dispute/:id/evidence", handler.UploadDisputeEvidence)
 			auth.GET("/dispute/:id", handler.GetDispute)
+			auth.PUT("/dispute/:id", handler.UpdateDispute)
 			auth.POST("/dispute/:id/expert", handler.AssignDisputeExpert)
 			auth.POST("/dispute-expert/:id/opinion", handler.SubmitExpertOpinion)
 			auth.POST("/dispute/:id/close", handler.CloseDispute)
@@ -185,7 +192,12 @@ func setupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 			// Qualification（资质核验）
 			auth.GET("/supplier/:id/qualifications", handler.ListQualifications)
 			auth.POST("/supplier/:id/qualifications", handler.SubmitQualification)
+			auth.GET("/qualification/:id", handler.GetQualification)
+			auth.PUT("/qualification/:id", handler.UpdateQualification)
+			auth.DELETE("/qualification/:id", handler.DeleteQualification)
 			auth.POST("/qualification/:id/review", handler.ReviewQualification)
+			// V6：资质扫描件上传（附件备份，multipart file 字段）
+			auth.POST("/qualification/upload", handler.UploadQualificationFile)
 
 			// File（文件与批注）
 			auth.POST("/file/upload", handler.UploadFile)
@@ -202,6 +214,8 @@ func setupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 			// Message / Notification（V8 补齐）
 			auth.POST("/message/send", handler.SendMessage)
 			auth.GET("/message/list", handler.ListMessages)
+			auth.GET("/message/:id", handler.GetMessage)
+			auth.DELETE("/message/:id", handler.DeleteMessage)
 			auth.PUT("/message/read/:id", handler.MarkMessageRead)
 			auth.GET("/notification/list", handler.ListNotifications)
 			auth.PUT("/notification/read/:id", handler.MarkNotificationRead)
@@ -218,6 +232,7 @@ func setupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 		{
 			admin.GET("/admin/stats", handler.AdminDashboardStats)
 			admin.GET("/admin/users", handler.AdminListUsers)
+			admin.PUT("/admin/users/:id/status", handler.AdminUpdateUserStatus)
 			admin.GET("/admin/orders", handler.AdminListOrders)
 			admin.GET("/admin/transactions", handler.AdminListTransactions)
 			admin.GET("/admin/disputes", handler.AdminListDisputes)
