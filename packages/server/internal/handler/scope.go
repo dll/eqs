@@ -56,3 +56,37 @@ func getOrderForUser(c *gin.Context, orderID uint) (*model.Order, bool) {
 	}
 	return &order, true
 }
+
+// canAccessDispute 用户能否访问争议（管理员/订单参与方/指派专家）
+func canAccessDispute(c *gin.Context, dispute *model.Dispute) bool {
+	if isAdmin(c) {
+		return true
+	}
+	userID := c.GetUint("user_id")
+	// 发起人
+	if dispute.InitiatorID == userID {
+		return true
+	}
+	// 订单参与方
+	var order model.Order
+	if err := model.DB.First(&order, dispute.OrderID).Error; err == nil && isOrderParticipant(userID, &order) {
+		return true
+	}
+	// 指派专家
+	var cnt int64
+	model.DB.Model(&model.DisputeExpertAssignment{}).
+		Where("dispute_id = ? AND expert_user_id = ?", dispute.ID, userID).Count(&cnt)
+	return cnt > 0
+}
+
+// getDisputeForUser 加载争议并校验权限
+func getDisputeForUser(c *gin.Context, disputeID uint) (*model.Dispute, bool) {
+	var dispute model.Dispute
+	if err := model.DB.First(&dispute, disputeID).Error; err != nil {
+		return nil, false
+	}
+	if !canAccessDispute(c, &dispute) {
+		return &dispute, false
+	}
+	return &dispute, true
+}

@@ -194,6 +194,11 @@ func CloseDispute(c *gin.Context) {
 		notFound(c, "争议不存在")
 		return
 	}
+	// P0-05：仅参与方可提交证据
+	if !canAccessDispute(c, &dispute) {
+		forbidden(c, "无权操作该争议")
+		return
+	}
 	if dispute.Status == "closed" {
 		ok(c, gin.H{"message": "已结案", "idempotent": true})
 		return
@@ -225,6 +230,11 @@ func GetDispute(c *gin.Context) {
 	var dispute model.Dispute
 	if err := model.DB.First(&dispute, disputeID).Error; err != nil {
 		notFound(c, "争议不存在")
+		return
+	}
+	// P0-05：仅参与方/专家/管理员可查看
+	if !canAccessDispute(c, &dispute) {
+		forbidden(c, "无权查看该争议")
 		return
 	}
 

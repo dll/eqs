@@ -49,6 +49,13 @@ func ListFiles(c *gin.Context) {
 		return
 	}
 
+	// P0-05：仅项目参与方可查看文件
+	var proj model.Project
+	if err := model.DB.First(&proj, projectID).Error; err != nil || !canAccessProject(c, &proj) {
+		forbidden(c, "无权查看该项目文件")
+		return
+	}
+
 	var files []model.ProjectFile
 	model.DB.Where("project_id = ?", projectID).Order("created_at DESC").Find(&files)
 	ok(c, gin.H{"files": files})
@@ -143,6 +150,12 @@ func AddAnnotation(c *gin.Context) {
 		notFound(c, "文件不存在")
 		return
 	}
+	// P0-05：仅项目参与方可批注
+	var proj model.Project
+	if err := model.DB.First(&proj, file.ProjectID).Error; err != nil || !canAccessProject(c, &proj) {
+		forbidden(c, "无权批注该项目文件")
+		return
+	}
 
 	annotation := model.FileAnnotation{
 		FileID:   req.FileID,
@@ -167,6 +180,18 @@ func ListAnnotations(c *gin.Context) {
 		return
 	}
 
+	// P0-05：仅项目参与方可查看批注
+	var file model.ProjectFile
+	if err := model.DB.First(&file, fileID).Error; err != nil {
+		notFound(c, "文件不存在")
+		return
+	}
+	var proj model.Project
+	if err := model.DB.First(&proj, file.ProjectID).Error; err != nil || !canAccessProject(c, &proj) {
+		forbidden(c, "无权查看该项目批注")
+		return
+	}
+
 	var annotations []model.FileAnnotation
 	model.DB.Where("file_id = ? AND status = ?", fileID, "active").Order("created_at ASC").Find(&annotations)
 	ok(c, gin.H{"annotations": annotations})
@@ -183,6 +208,17 @@ func ResolveAnnotation(c *gin.Context) {
 	var annotation model.FileAnnotation
 	if err := model.DB.First(&annotation, annotationID).Error; err != nil {
 		notFound(c, "批注不存在")
+		return
+	}
+	// P0-05：仅项目参与方可解决批注
+	var file model.ProjectFile
+	if err := model.DB.First(&file, annotation.FileID).Error; err != nil {
+		notFound(c, "文件不存在")
+		return
+	}
+	var proj model.Project
+	if err := model.DB.First(&proj, file.ProjectID).Error; err != nil || !canAccessProject(c, &proj) {
+		forbidden(c, "无权操作该项目批注")
 		return
 	}
 	model.DB.Model(&annotation).Update("status", "resolved")

@@ -2,20 +2,31 @@ package middleware
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/eqs/server/internal/config"
+	"github.com/eqs/server/internal/model"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
-	"time"
 )
 
 func setup() *gin.Engine {
 	gin.SetMode(gin.TestMode)
+	model.InitTestDB()
 	r := gin.New()
 	return r
+}
+
+// ensureUser 创建测试用户（若不存在）
+func ensureUser(id uint, userType int) {
+	var u model.User
+	if err := model.DB.First(&u, id).Error; err != nil {
+		model.DB.Create(&model.User{ID: id, Phone: "13" + fmt.Sprint(id%10000000000), UserType: userType, Status: 1})
+	}
 }
 
 func TestAuth_MissingToken(t *testing.T) {
@@ -51,6 +62,7 @@ func TestAuth_InvalidToken(t *testing.T) {
 
 func TestAuth_ValidToken(t *testing.T) {
 	r := setup()
+	ensureUser(42, 2)
 	cfg := config.Load()
 	r.Use(Auth(cfg))
 
