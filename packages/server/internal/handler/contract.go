@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/eqs/server/internal/config"
 	"github.com/eqs/server/internal/model"
 	"github.com/gin-gonic/gin"
 )
@@ -114,10 +115,32 @@ func SignNotify(c *gin.Context) {
 		SignFlowID string `json:"sign_flow_id"`
 		OrderID    uint   `json:"order_id"`
 		Result     string `json:"result"`
+		Timestamp  int64  `json:"timestamp"`
+		Sign       string `json:"sign"`
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
 		badRequest(c, "参数错误")
 		return
+	}
+
+	// P0-04：回调验签（HMAC-SHA256，需配置 ESignAPIKey）
+	cfg := config.Load()
+	if cfg.ESignAPIKey == "" {
+		if cfg.IsProduction() {
+			serverError(c, fmt.Errorf("电子签回调密钥未配置"))
+			return
+		}
+		// 非生产（测试/Mock）：无密钥时跳过验签，便于联调
+	} else {
+		if !verifyCallbackSign(cfg.ESignAPIKey, req.SignFlowID, req.OrderID, 0, req.Result, req.Timestamp, req.Sign) {
+			unauthorized(c, "回调签名无效")
+			return
+		}
+		// 重放防护：时间戳 5 分钟内有效
+		if time.Since(time.Unix(req.Timestamp, 0)) > 5*time.Minute || req.Timestamp > time.Now().Unix()+60 {
+			badRequest(c, "回调时间戳无效")
+			return
+		}
 	}
 
 	var contract model.Contract
@@ -133,13 +156,16 @@ func SignNotify(c *gin.Context) {
 	if req.Result == "signed" {
 		now := time.Now()
 		model.DB.Model(&contract).Updates(map[string]interface{}{"status": "signed", "signed_at": now})
-		model.DB.Model(&model.Order{}).Where("id = ? AND status = ?", req.OrderID, 0).Update("status", 1)
+		// 订单以合同关联为准，不信任回调 order_id
+		if contract.OrderID > 0 {
+			model.DB.Model(&model.Order{}).Where("id = ? AND status = ?", contract.OrderID, 0).Update("status", 1)
+		}
 	}
 
 	ok(c, gin.H{"message": "签署回调已处理"})
 }
 
-// DownloadContract 按权限下载签署版合同（MVP 返回合同基本信息）
+
 func DownloadContract(c *gin.Context) {
 	contractID, err := parseUint(c.Param("id"))
 	if err != nil {

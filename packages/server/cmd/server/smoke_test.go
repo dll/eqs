@@ -22,6 +22,9 @@ func TestSmokeCoreFlow(t *testing.T) {
 	cfg := config.Load()
 	r := setupRouter(db, cfg)
 
+	// P0-01：管理员不能自注册，测试需预创建
+	model.DB.Create(&model.User{Phone: "13800000003", UserType: 3, Status: 1, CompanyName: "测试管理员"})
+
 	// 1) 手机号登录（甲方）
 	w := doSmoke(t, r, "POST", "/api/v1/auth/login", map[string]interface{}{
 		"phone": "13800000001", "code": "123456", "user_type": 1,

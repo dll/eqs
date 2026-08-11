@@ -4,6 +4,7 @@ import "os"
 
 type Config struct {
 	ServerPort  string
+	AppEnv      string
 	DBDriver    string
 	DBHost      string
 	DBPort      string
@@ -38,6 +39,7 @@ type Config struct {
 func Load() *Config {
 	return &Config{
 		ServerPort:  getEnv("SERVER_PORT", "8080"),
+		AppEnv:      getEnv("APP_ENV", "development"),
 		DBDriver:    getEnv("DB_DRIVER", "mysql"),
 		DBHost:      getEnv("DB_HOST", "localhost"),
 		DBPort:      getEnv("DB_PORT", "3306"),
@@ -73,4 +75,14 @@ func getEnv(key, fallback string) string {
 		return v
 	}
 	return fallback
+}
+
+// IsProduction 是否生产环境
+func (c *Config) IsProduction() bool {
+	return c.AppEnv == "production"
+}
+
+// IsTest 是否测试环境（允许固定验证码等测试便利）
+func (c *Config) IsTest() bool {
+	return c.AppEnv == "test" || c.AppEnv == "testing"
 }

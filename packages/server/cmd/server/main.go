@@ -20,6 +20,19 @@ import (
 func main() {
 	cfg := config.Load()
 
+	// P0-07：生产环境拒绝弱默认凭据/密钥启动
+	if cfg.IsProduction() {
+		weak := []string{"root", "eqs-secret-key", "", "123456"}
+		for _, w := range weak {
+			if cfg.JWTSecret == w || cfg.DBPassword == w {
+				log.Fatalf("生产环境禁止使用默认/弱凭据：请设置强 JWT_SECRET 与 DB_PASSWORD")
+			}
+		}
+		if cfg.DBPassword == "root" {
+			log.Fatalf("生产环境禁止默认数据库密码 root")
+		}
+	}
+
 	db, err := model.InitDB(cfg)
 	if err != nil {
 		log.Fatalf("Failed to connect to database: %v", err)

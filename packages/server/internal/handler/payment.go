@@ -1,6 +1,9 @@
 package handler
 
 import (
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"time"
 
@@ -88,10 +91,32 @@ func PaymentNotify(c *gin.Context) {
 		OrderID               uint    `json:"order_id"`
 		Amount                float64 `json:"amount"`
 		Result                string  `json:"result"`
+		Timestamp             int64   `json:"timestamp"`
+		Sign                  string  `json:"sign"`
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
 		badRequest(c, "参数错误")
 		return
+	}
+
+	// P0-03：回调验签（HMAC-SHA256，需配置 PaymentNotifySecret）
+	cfg := config.Load()
+	if cfg.PaymentNotifySecret == "" {
+		if cfg.IsProduction() {
+			serverError(c, fmt.Errorf("支付回调密钥未配置"))
+			return
+		}
+		// 非生产（测试/Mock）：无密钥时跳过验签，便于联调
+	} else {
+		if !verifyCallbackSign(cfg.PaymentNotifySecret, req.ExternalTransactionID, req.OrderID, req.Amount, req.Result, req.Timestamp, req.Sign) {
+			unauthorized(c, "回调签名无效")
+			return
+		}
+		// 重放防护：时间戳 5 分钟内有效
+		if time.Since(time.Unix(req.Timestamp, 0)) > 5*time.Minute || req.Timestamp > time.Now().Unix()+60 {
+			badRequest(c, "回调时间戳无效")
+			return
+		}
 	}
 
 	var txn model.PaymentTransaction
@@ -99,26 +124,42 @@ func PaymentNotify(c *gin.Context) {
 		notFound(c, "交易不存在")
 		return
 	}
-	// 幂等：已成功不再重复更新
+	// 幂等：已成功则直接返回，不重复处理
 	if txn.Status == 1 {
 		ok(c, gin.H{"message": "已处理", "idempotent": true})
 		return
 	}
+	// 金额必须与交易记录一致；不匹配则不更新状态（安全，防伪造）
 	if req.Result == "success" && txn.Amount == req.Amount {
 		model.DB.Model(&txn).Update("status", 1)
+	} else if req.Result == "success" {
+		// 金额不匹配：不更新，仅记录
+		WriteAudit(c, "pay.notify.mismatch", "transaction", txn.ID, gin.H{"order_id": txn.OrderID, "cb_amount": req.Amount, "txn_amount": txn.Amount})
+		ok(c, gin.H{"channel": channel, "message": "金额不匹配，忽略"})
+		return
 	}
 
-	// 更新订单为已支付（进行中）
-	if req.Result == "success" {
-		model.DB.Model(&model.Order{}).Where("id = ? AND status = ?", req.OrderID, 0).
+	// 更新订单状态：订单以交易记录关联为准，不信任回调 order_id
+	if req.Result == "success" && txn.OrderID > 0 {
+		model.DB.Model(&model.Order{}).Where("id = ? AND status = ?", txn.OrderID, 0).
 			Update("status", 1)
 	}
 
-	WriteAudit(c, "pay.notify", "transaction", txn.ID, gin.H{"order_id": req.OrderID, "result": req.Result, "amount": req.Amount})
+	WriteAudit(c, "pay.notify", "transaction", txn.ID, gin.H{"order_id": txn.OrderID, "result": req.Result, "amount": txn.Amount})
 	ok(c, gin.H{"channel": channel, "message": "通知已处理"})
 }
 
-// SettleMilestone 验收后向第三方提交节点结算指令
+// verifyCallbackSign 回调签名校验：HMAC-SHA256(signstr, secret)
+// signstr = external_transaction_id|order_id|amount|result|timestamp
+func verifyCallbackSign(secret, txid string, orderID uint, amount float64, result string, ts int64, sign string) bool {
+	str := fmt.Sprintf("%s|%d|%.2f|%s|%d", txid, orderID, amount, result, ts)
+	mac := hmac.New(sha256.New, []byte(secret))
+	mac.Write([]byte(str))
+	expect := hex.EncodeToString(mac.Sum(nil))
+	return hmac.Equal([]byte(expect), []byte(sign))
+}
+
+
 func SettleMilestone(c *gin.Context) {
 	milestoneID, err := parseUint(c.Param("id"))
 	if err != nil {
