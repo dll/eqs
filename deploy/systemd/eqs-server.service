@@ -9,6 +9,8 @@ WorkingDirectory=/opt/eqs/packages/server
 ExecStart=/opt/eqs/packages/server/server
 Restart=always
 RestartSec=5
+KillSignal=SIGTERM
+TimeoutStopSec=15
 Environment=SERVER_PORT=8090
 Environment=DB_DRIVER=mysql
 Environment=DB_HOST=localhost

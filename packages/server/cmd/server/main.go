@@ -1,7 +1,13 @@
 ﻿package main
 
 import (
+	"context"
 	"log"
+	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"github.com/eqs/server/internal/config"
 	"github.com/eqs/server/internal/handler"
@@ -26,10 +32,31 @@ func main() {
 	}
 
 	r := setupRouter(db, cfg)
-	log.Printf("Server starting on port %s", cfg.ServerPort)
-	if err := r.Run(":" + cfg.ServerPort); err != nil {
-		log.Fatalf("Failed to start server: %v", err)
+
+	// 优雅停机：SIGTERM/SIGINT 时等待当前请求完成（最多 10s）再退出
+	srv := &http.Server{
+		Addr:    ":" + cfg.ServerPort,
+		Handler: r,
 	}
+
+	go func() {
+		log.Printf("Server starting on port %s", cfg.ServerPort)
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("Failed to start server: %v", err)
+		}
+	}()
+
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+
+	log.Println("Shutting down server gracefully...")
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	if err := srv.Shutdown(ctx); err != nil {
+		log.Printf("Graceful shutdown failed: %v", err)
+	}
+	log.Println("Server exited")
 }
 
 func setupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
