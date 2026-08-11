@@ -113,6 +113,45 @@
       </view>
     </view>
 
+    <view class="milestone-card">
+      <text class="card-title">
+        {{ $t('order.attendance') }}
+      </text>
+      <button
+        class="mini-btn primary checkin-btn"
+        @tap="checkin"
+      >
+        {{ $t('order.checkin') }}
+      </button>
+      <text
+        v-if="checkinStatus"
+        class="checkin-status"
+      >
+        {{ checkinStatus }}
+      </text>
+      <view
+        v-if="attendanceList.length"
+        class="att-list"
+      >
+        <view
+          v-for="a in attendanceList"
+          :key="a.id"
+          class="att-item"
+        >
+          <text>{{ $t('order.checkinAt', { time: a.check_in_at }) }}</text>
+          <text class="att-loc">
+            {{ a.longitude }},{{ a.latitude }}
+          </text>
+        </view>
+      </view>
+      <text
+        v-else
+        class="att-empty"
+      >
+        {{ $t('order.noAttendance') }}
+      </text>
+    </view>
+
     <view class="actions-card">
       <button
         class="action-btn"
@@ -141,6 +180,8 @@ usePageTitle('page.orderDetail', { onLoad })
 const order = ref<any>(null)
 const contract = ref<any>(null)
 const milestones = ref<any[]>([])
+const attendanceList = ref<any[]>([])
+const checkinStatus = ref('')
 
 onLoad((options) => {
   if (options?.id) {
@@ -154,9 +195,43 @@ const loadOrder = async (id: string) => {
     order.value = res.order
     milestones.value = res.milestones || []
     contract.value = res.contract || null
+    loadAttendance()
   } catch {
     // request 已提示
   }
+}
+
+const loadAttendance = async () => {
+  if (!order.value?.id) return
+  try {
+    const res = await request.get(`/api/v1/order/${order.value.id}/attendance`, { silent401: true }).catch(() => ({ records: [] }))
+    attendanceList.value = res.records || []
+  } catch {
+    attendanceList.value = []
+  }
+}
+
+const checkin = () => {
+  uni.getLocation({
+    type: 'gcj02',
+    success: async (loc) => {
+      try {
+        await request.post('/api/v1/attendance/checkin', {
+          order_id: order.value?.id,
+          longitude: loc.longitude,
+          latitude: loc.latitude,
+          distance_meters: 0,
+        })
+        checkinStatus.value = $t('order.checkinOk')
+        loadAttendance()
+      } catch {
+        checkinStatus.value = $t('order.checkinFail')
+      }
+    },
+    fail: () => {
+      checkinStatus.value = $t('order.checkinNoLocation')
+    },
+  })
 }
 
 const statusText = (status: any) => {
@@ -337,5 +412,37 @@ const goPay = () => {
   background: var(--input-bg);
   border-radius: 10rpx;
   font-size: 28rpx;
+}
+
+.checkin-btn {
+  margin-bottom: 16rpx;
+}
+
+.checkin-status {
+  display: block;
+  font-size: 26rpx;
+  color: var(--primary-color);
+  margin-bottom: 10rpx;
+}
+
+.att-list {
+  border-top: 1rpx solid var(--border-color, #eee);
+}
+
+.att-item {
+  padding: 14rpx 0;
+  border-bottom: 1rpx solid var(--border-color, #eee);
+  font-size: 24rpx;
+  color: var(--text-color, #333);
+}
+
+.att-loc {
+  color: var(--muted-color, #999);
+  margin-left: 10rpx;
+}
+
+.att-empty {
+  font-size: 24rpx;
+  color: var(--muted-color, #999);
 }
 </style>

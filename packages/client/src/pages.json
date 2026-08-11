@@ -77,6 +77,12 @@
       "style": {
         "navigationBarTitleText": "争议详情"
       }
+    },
+    {
+      "path": "pages/qualification/index",
+      "style": {
+        "navigationBarTitleText": "我的资质"
+      }
     }
   ],
   "tabBar": {

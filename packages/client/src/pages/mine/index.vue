@@ -53,6 +53,16 @@
         </text>
       </view>
       <view
+        v-if="isSupplier"
+        class="menu-item"
+        @tap="goTo('/pages/qualification/index')"
+      >
+        <text>{{ $t('mine.qual') }}</text>
+        <text class="arrow">
+          >
+        </text>
+      </view>
+      <view
         class="menu-item"
         @tap="showThemePicker"
       >
@@ -100,6 +110,7 @@ onShow(() => {
 
 const themeName = computed(() => $t('theme.' + settingsStore.theme))
 const langName = computed(() => $t('lang.' + settingsStore.lang))
+const isSupplier = computed(() => userStore.user?.user_type === 2)
 
 const goTo = (url: string) => {
   uni.navigateTo({ url })
