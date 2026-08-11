@@ -220,5 +220,10 @@
   "qual.pending": "Pending",
   "qual.approved": "Approved",
   "qual.rejected": "Rejected",
-  "qual.expired": "Expired"
+  "qual.expired": "Expired",
+  "order.deliverOk": "Deliverable submitted",
+  "order.payOk": "Payment created",
+  "order.disputeDefaultReason": "Disagreement with deliverable",
+  "order.disputeDefaultClaim": "Request platform intervention",
+  "order.disputeCreated": "Dispute created"
 }

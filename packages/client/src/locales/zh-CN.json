@@ -220,5 +220,10 @@
   "qual.pending": "待审核",
   "qual.approved": "已通过",
   "qual.rejected": "已驳回",
-  "qual.expired": "已过期"
+  "qual.expired": "已过期",
+  "order.deliverOk": "交付物已提交",
+  "order.payOk": "支付单已创建",
+  "order.disputeDefaultReason": "对交付成果存在异议",
+  "order.disputeDefaultClaim": "要求平台介入处理",
+  "order.disputeCreated": "争议已发起"
 }

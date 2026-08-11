@@ -271,8 +271,28 @@ const signContract = async () => {
   }
 }
 
-const deliver = async (_ms: any) => {
-  uni.showToast({ title: $t('order.deliverToast'), icon: 'none' })
+const deliver = async (ms: any) => {
+  // P1-05：服务方上传交付物（文件 URL 简化版，MVP 先登记）
+  uni.chooseImage({
+    count: 1,
+    success: async (res) => {
+      const path = res.tempFilePaths[0]
+      const name = path.split('/').pop() || '交付物'
+      try {
+        await request.post(`/api/v1/milestone/${ms.id}/deliver`, {
+          file_name: name,
+          file_url: path,
+        })
+        uni.showToast({ title: $t('order.deliverOk'), icon: 'success' })
+        loadOrder(order.value?.id)
+      } catch {
+        // request 已提示
+      }
+    },
+    fail: () => {
+      // 用户取消选择
+    },
+  })
 }
 
 const settle = async (ms: any) => {
@@ -295,12 +315,35 @@ const accept = async (ms: any, ok: boolean) => {
   }
 }
 
-const openDispute = () => {
-  uni.showToast({ title: $t('order.disputeToast'), icon: 'none' })
+const openDispute = async () => {
+  // P1-05：发起争议（默认理由，可后续完善）
+  if (!order.value?.id) return
+  try {
+    await request.post('/api/v1/dispute/create', {
+      order_id: order.value.id,
+      reason: $t('order.disputeDefaultReason'),
+      claim: $t('order.disputeDefaultClaim'),
+    })
+    uni.showToast({ title: $t('order.disputeCreated'), icon: 'success' })
+    loadOrder(order.value?.id)
+  } catch {
+    // request 已提示
+  }
 }
 
-const goPay = () => {
-  uni.showToast({ title: $t('order.payToast'), icon: 'none' })
+const goPay = async () => {
+  if (!order.value?.id) return
+  try {
+    await request.post('/api/v1/pay/create', {
+      order_id: order.value.id,
+      amount: order.value.amount,
+      channel: 'mock',
+    })
+    uni.showToast({ title: $t('order.payOk'), icon: 'success' })
+    loadOrder(order.value?.id)
+  } catch {
+    // request 已提示
+  }
 }
 </script>
 
