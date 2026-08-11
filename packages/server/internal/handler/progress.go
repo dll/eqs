@@ -52,6 +52,26 @@ func ListProjectProgress(c *gin.Context) {
 	var projects []model.Project
 	model.DB.Order("created_at DESC").Limit(50).Find(&projects)
 
+	// P2-04：批量预加载，消除 N+1
+	projectIDs := make([]uint, 0, len(projects))
+	for _, p := range projects {
+		projectIDs = append(projectIDs, p.ID)
+	}
+	// 一次查全部订单
+	var allOrders []model.Order
+	model.DB.Where("project_id IN ?", projectIDs).Find(&allOrders)
+	orderByProject := map[uint][]model.Order{}
+	for _, o := range allOrders {
+		orderByProject[o.ProjectID] = append(orderByProject[o.ProjectID], o)
+	}
+	// 一次查全部里程碑
+	var allMS []model.PaymentMilestone
+	model.DB.Where("order_id IN ?", allOrderIDs(allOrders)).Order("sequence ASC").Find(&allMS)
+	msByOrder := map[uint][]model.PaymentMilestone{}
+	for _, m := range allMS {
+		msByOrder[m.OrderID] = append(msByOrder[m.OrderID], m)
+	}
+
 	items := make([]ProjectProgressItem, 0, len(projects))
 	for _, p := range projects {
 		item := ProjectProgressItem{
@@ -63,25 +83,32 @@ func ListProjectProgress(c *gin.Context) {
 			StartDate:   fmtDate(p.PublishTime),
 			EndDate:     fmtDate(p.Deadline),
 		}
-		// 项目关联订单（进度来源）
-		var orders []model.Order
-		model.DB.Where("project_id = ?", p.ID).Find(&orders)
+		orders := orderByProject[p.ID]
 		item.OrderCount = int64(len(orders))
 		for _, o := range orders {
-			var ms []model.PaymentMilestone
-			model.DB.Where("order_id = ?", o.ID).Order("sequence ASC").Find(&ms)
-			for _, m := range ms {
+			for _, m := range msByOrder[o.ID] {
 				item.Milestones = append(item.Milestones, MilestoneBar{
 					ID: m.ID, Name: m.Name, Ratio: m.Ratio, Status: m.Status, Amount: m.Amount, OrderID: o.ID,
 				})
 			}
 		}
-		// 进度计算：已结算里程碑占比 + 状态权重
 		item.Progress = calcProjectProgress(p, item.Milestones)
 		items = append(items, item)
 	}
 
 	ok(c, gin.H{"projects": items, "total": len(items)})
+}
+
+// allOrderIDs 提取订单 ID 列表
+func allOrderIDs(orders []model.Order) []uint {
+	ids := make([]uint, 0, len(orders))
+	for _, o := range orders {
+		ids = append(ids, o.ID)
+	}
+	if len(ids) == 0 {
+		return []uint{0}
+	}
+	return ids
 }
 
 // GetProjectProgress 单项目进度（甘特图）

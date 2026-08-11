@@ -7,6 +7,23 @@ import (
 
 // P0-05：对象级授权辅助函数
 
+// P2-03：统一分页参数解析（page/size，size 默认 20 最大 100）
+func parsePage(c *gin.Context) (page, size int) {
+	page = 1
+	size = 20
+	if p := c.Query("page"); p != "" {
+		if v, err := parseUint(p); err == nil && v > 0 {
+			page = int(v)
+		}
+	}
+	if s := c.Query("size"); s != "" {
+		if v, err := parseUint(s); err == nil && v > 0 && v <= 100 {
+			size = int(v)
+		}
+	}
+	return page, size
+}
+
 // isAdmin 当前用户是否为管理员（user_type=3）
 func isAdmin(c *gin.Context) bool {
 	return c.GetInt("user_type") == 3

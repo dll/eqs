@@ -88,13 +88,18 @@ func ListProjects(c *gin.Context) {
 		q = q.Where("title LIKE ?", "%"+keyword+"%")
 	}
 
+	// P2-03：分页保护（page/size，size 最大 100）
+	page, size := parsePage(c)
+	var total int64
+	q.Model(&model.Project{}).Count(&total)
+
 	var projects []model.Project
-	if err := q.Order("created_at DESC").Find(&projects).Error; err != nil {
+	if err := q.Order("created_at DESC").Offset((page - 1) * size).Limit(size).Find(&projects).Error; err != nil {
 		serverError(c, err)
 		return
 	}
 
-	ok(c, gin.H{"projects": projects})
+	ok(c, gin.H{"projects": projects, "total": total, "page": page, "size": size})
 }
 
 // GetProject 项目详情
