@@ -149,6 +149,12 @@
           </text>
           <view class="q-ops">
             <text
+              class="q-op"
+              @tap.stop="viewQual(q)"
+            >
+              详情
+            </text>
+            <text
               v-if="q.verification_status !== 'approved'"
               class="q-op"
               @tap.stop="editQual(q)"
@@ -316,6 +322,26 @@ const statusText = (s: string) => {
 
 // V9：编辑资质（回填表单后 PUT）
 const editingID = ref(0)
+
+// V9：查看资质详情（弹窗展示完整信息与审核意见）
+const detailQual = ref<any>(null)
+const viewQual = (q: any) => {
+  detailQual.value = q
+  uni.showModal({
+    title: '资质详情',
+    content: [
+      `类型：${q.qualification_type || '-'}`,
+      `证书号：${q.certificate_no || '-'}`,
+      `等级：${q.level || '-'}`,
+      `发证机关：${q.issuing_authority || '-'}`,
+      `有效期至：${q.valid_to ? String(q.valid_to).slice(0, 10) : '-'}`,
+      `状态：${statusText(q.verification_status)}`,
+      q.review_comment ? `审核意见：${q.review_comment}` : '',
+    ].filter(Boolean).join('\n'),
+    showCancel: false,
+    confirmText: '关闭',
+  })
+}
 const editQual = (q: any) => {
   editingID.value = q.id
   form.value = {

@@ -55,6 +55,8 @@
   "login.fillAll": "Please fill in all fields",
   "login.loginSuccess": "Login successful",
   "project.create": "Publish Project",
+  "project.edit": "Edit Project",
+  "project.edited": "Project updated",
   "project.list": "Project List",
   "project.detail": "Project Detail",
   "project.type": "Type",

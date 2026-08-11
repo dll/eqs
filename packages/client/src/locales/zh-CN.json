@@ -55,6 +55,8 @@
   "login.fillAll": "请填写完整信息",
   "login.loginSuccess": "登录成功",
   "project.create": "发布项目",
+  "project.edit": "编辑项目",
+  "project.edited": "项目已更新",
   "project.list": "项目列表",
   "project.detail": "项目详情",
   "project.type": "类型",

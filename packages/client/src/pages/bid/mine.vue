@@ -23,6 +23,13 @@
         <text class="b-time">
           报价时间：{{ fmtTime(b.created_at) }}
         </text>
+        <button
+          v-if="b.status === 'submitted'"
+          class="withdraw-btn"
+          @tap="withdraw(b)"
+        >
+          撤回报价
+        </button>
       </view>
       <view
         v-if="hasMore"
@@ -78,6 +85,25 @@ const loadMore = () => {
   load(true)
 }
 
+// 撤回报价（截止前未中选可撤回）
+const withdraw = (b: any) => {
+  uni.showModal({
+    title: '撤回报价',
+    content: `确认撤回 #${b.id} 的报价？`,
+    success: async (r: any) => {
+      if (!r.confirm) return
+      try {
+        await request.put(`/api/v1/bid/${b.id}/withdraw`)
+        uni.showToast({ title: '已撤回', icon: 'none' })
+        page.value = 1
+        load()
+      } catch {
+        // request 已提示
+      }
+    },
+  })
+}
+
 const statusText = (s: string) => {
   const map: Record<string, string> = {
     submitted: $t('bid.submitted'),
@@ -130,6 +156,15 @@ const fmtTime = (s: string) => (s ? s.replace('T', ' ').slice(0, 16) : '')
 .b-time {
   font-size: 22rpx;
   color: var(--muted-color, #999);
+}
+.withdraw-btn {
+  margin-top: 16rpx;
+  background: var(--input-bg, #f5f5f5);
+  color: var(--danger-color, #ef4444);
+  border: 1rpx solid var(--danger-color, #ef4444);
+  border-radius: 10rpx;
+  font-size: 26rpx;
+  padding: 10rpx 0;
 }
 .empty {
   text-align: center;

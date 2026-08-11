@@ -77,6 +77,12 @@
         >
           <template #default="{ row }">
             <el-button
+              size="small"
+              @click="viewDetail(row)"
+            >
+              {{ $t('dispute.detail') }}
+            </el-button>
+            <el-button
               v-if="row.status === 'evidence' || row.status === 'review' || row.status === 'mediation'"
               size="small"
               type="primary"
@@ -183,6 +189,67 @@
         </el-button>
       </template>
     </el-dialog>
+
+    <!-- 争议详情 -->
+    <el-dialog
+      v-model="detailDialog.visible"
+      :title="$t('dispute.detail')"
+      width="520px"
+    >
+      <template v-if="detailDialog.data">
+        <el-descriptions
+          :column="2"
+          border
+        >
+          <el-descriptions-item :label="$t('dispute.id')">
+            #{{ detailDialog.data.id }}
+          </el-descriptions-item>
+          <el-descriptions-item :label="$t('dispute.orderId')">
+            {{ detailDialog.data.order_id }}
+          </el-descriptions-item>
+          <el-descriptions-item :label="$t('dispute.initiatorId')">
+            {{ detailDialog.data.initiator_id }}
+          </el-descriptions-item>
+          <el-descriptions-item :label="$t('dispute.status')">
+            <el-tag :type="statusType(detailDialog.data.status)">
+              {{ statusText(detailDialog.data.status) }}
+            </el-tag>
+          </el-descriptions-item>
+          <el-descriptions-item
+            :label="$t('dispute.reason')"
+            :span="2"
+          >
+            {{ detailDialog.data.reason || '-' }}
+          </el-descriptions-item>
+          <el-descriptions-item
+            v-if="detailDialog.data.claim"
+            :label="$t('dispute.claim')"
+            :span="2"
+          >
+            {{ detailDialog.data.claim }}
+          </el-descriptions-item>
+          <el-descriptions-item
+            v-if="detailDialog.data.expert_result"
+            :label="$t('dispute.expertResult')"
+            :span="2"
+          >
+            {{ detailDialog.data.expert_result }}
+          </el-descriptions-item>
+          <el-descriptions-item
+            v-if="detailDialog.data.resolution_type"
+            :label="$t('dispute.resolution')"
+          >
+            {{ detailDialog.data.resolution_type }}
+          </el-descriptions-item>
+          <el-descriptions-item
+            v-if="detailDialog.data.closed_at"
+            :label="$t('dispute.closedAt')"
+          >
+            {{ detailDialog.data.closed_at }}
+          </el-descriptions-item>
+        </el-descriptions>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -218,6 +285,21 @@ const closeDialog = reactive({
   settleAmount: '',
   loading: false,
 })
+
+const detailDialog = reactive({
+  visible: false,
+  data: null as any,
+})
+
+const viewDetail = async (row: any) => {
+  try {
+    const res = await api.get(`/api/v1/dispute/${row.id}`)
+    detailDialog.data = res.dispute || res
+    detailDialog.visible = true
+  } catch {
+    // interceptor 已提示
+  }
+}
 
 const statusFilter = ref('')
 const page = ref(1)

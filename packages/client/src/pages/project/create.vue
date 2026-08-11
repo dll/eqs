@@ -92,6 +92,7 @@ const { $t } = useI18n()
 usePageTitle('page.projectCreate', { onLoad })
 
 const projectTypes = PROJECT_TYPES
+const editId = ref(0)
 
 const form = ref({
   projectType: '',
@@ -106,23 +107,54 @@ const onTypeChange = (e: any) => {
   form.value.projectType = projectTypes[e.detail.value]
 }
 
+// 编辑模式：加载项目详情回填表单
+onLoad((options) => {
+  if (options?.id) {
+    editId.value = Number(options.id)
+    loadProject(editId.value)
+  }
+})
+
+const loadProject = async (id: number) => {
+  try {
+    const res = await request.get(`/api/v1/project/${id}`)
+    const p = res.project
+    form.value = {
+      projectType: p.service_type || p.project_type,
+      title: p.title,
+      budgetMin: String(p.budget_min ?? ''),
+      budgetMax: String(p.budget_max ?? ''),
+      address: p.address || '',
+      description: p.description || '',
+    }
+  } catch {
+    // request 已提示
+  }
+}
+
 const submit = async () => {
   if (!form.value.projectType || !form.value.title) {
     uni.showToast({ title: $t('project.required'), icon: 'none' })
     return
   }
+  const payload = {
+    project_type: toTypeCode(form.value.projectType),
+    service_type: toTypeCode(form.value.projectType),
+    title: form.value.title,
+    address: form.value.address,
+    budget_min: Number(form.value.budgetMin) || 0,
+    budget_max: Number(form.value.budgetMax) || 0,
+    description: form.value.description,
+    publish_scope: 'public',
+  }
   try {
-    await request.post('/api/v1/project/create', {
-      project_type: toTypeCode(form.value.projectType),
-      service_type: toTypeCode(form.value.projectType),
-      title: form.value.title,
-      address: form.value.address,
-      budget_min: Number(form.value.budgetMin) || 0,
-      budget_max: Number(form.value.budgetMax) || 0,
-      description: form.value.description,
-      publish_scope: 'public',
-    })
-    uni.showToast({ title: $t('project.publishSuccess'), icon: 'success' })
+    if (editId.value) {
+      await request.put(`/api/v1/project/${editId.value}`, payload)
+      uni.showToast({ title: $t('project.edited'), icon: 'success' })
+    } else {
+      await request.post('/api/v1/project/create', payload)
+      uni.showToast({ title: $t('project.publishSuccess'), icon: 'success' })
+    }
     setTimeout(() => uni.navigateBack(), 1500)
   } catch {
     // request 已提示

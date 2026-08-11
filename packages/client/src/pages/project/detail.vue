@@ -89,6 +89,13 @@
         </button>
         <button
           v-if="isOwner() && (project.status === 0 || project.status === 1)"
+          class="action-btn"
+          @tap="editProject"
+        >
+          {{ $t('project.edit') }}
+        </button>
+        <button
+          v-if="isOwner() && (project.status === 0 || project.status === 1)"
           class="action-btn danger"
           @tap="deleteProject"
         >
@@ -209,6 +216,11 @@ const statusText = (status: number) => {
 
 const isOwner = () => userStore.user?.id === project.value?.user_id
 const isSupplier = () => userStore.user?.user_type === 2
+
+// V10：编辑项目（跳转发布页编辑模式，回填表单后 PUT）
+const editProject = () => {
+  uni.navigateTo({ url: `/pages/project/create?id=${project.value.id}` })
+}
 
 // V9：删除/下架项目（无业务往来物理删除，否则下架）
 const deleteProject = () => {
