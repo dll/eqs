@@ -46,6 +46,9 @@ func main() {
 
 	r := setupRouter(db, cfg)
 
+	// 可信代理：仅信任本机 nginx/Caddy（127.0.0.1），防止伪造 X-Forwarded-For 错误归因 IP
+	_ = r.SetTrustedProxies([]string{"127.0.0.1", "::1"})
+
 	// 优雅停机：SIGTERM/SIGINT 时等待当前请求完成（最多 10s）再退出
 	srv := &http.Server{
 		Addr:    ":" + cfg.ServerPort,
