@@ -2,8 +2,8 @@
 
 > **文档版本**：V4.0
 > **创建日期**：2026-08-11
-> **审核依据**：PRD V8.0、SAR-v3.0 遗留问题清单、V3.0 后全部代码变更（GAP-08 修复 / 部署优化 / 看板 / AI / 日志 / UI）
-> **审核范围**：V3.0 遗留缺口闭环、V8.0 新功能落地、部署管线稳定性、生产环境验证
+> **审核依据**：PRD V8.0、SAR-v3.0 遗留问题清单、V3.0 后全部代码变更（GAP-08 修复 / 部署优化 / 看板 / AI / 日志 / UI / demo seed 修复 / 客户端消息页）
+> **审核范围**：V3.0 遗留缺口闭环、V8.0 新功能落地、部署管线稳定性、生产环境复核、V4.0 增补（demo seed 修复、客户端消息页、网络 SNI 说明）
 
 ---
 
@@ -41,7 +41,7 @@ V3.0 提出 GAP-08-01~10 十项缺口，并暴露部署管线（scp-action 卡�
 | GAP-08-03 | 文件下载端点缺失 | 待实现 | ✅ **已修复** | `file.go` DownloadFile：权限校验 + URL 重定向/元信息 |
 | GAP-08-04 | 后台无路由守卫 | **高严重** | ✅ **已修复** | `router.beforeEach`：未登录跳 /login+redirect，已登录禁访问 /login |
 | GAP-08-05 | 后台争议无仲裁 UI | 待实现 | ✅ **已修复** | dispute/index.vue：指派专家、结案操作 |
-| GAP-08-06 | 客户端缺业务页面 | 待实现 | 🔶 部分（服务商列表/详情已接真实接口） | provider/list.vue + detail.vue 接后端 |
+| GAP-08-06 | 客户端缺业务页面 | 待实现 | ✅ **服务商页已接真实接口；消息通知页已新增** | provider list/detail 接后端；pages/message/index.vue 对接 notification 接口 |
 | GAP-08-07 | admin chunk 1.2MB | 待优化 | ✅ **已优化** | Element Plus 按需引入：**1209KB → 339KB**（-72%） |
 | GAP-08-08 | 微信/支付真实对接 | 外部依赖 | ⏸️ 外部依赖 | 待服务商签约 |
 | GAP-08-09 | App 离线 SDK 工程 | 外部依赖 | ⏸️ 外部依赖 | apps/android、apps/ios 未建 |
@@ -112,7 +112,7 @@ V3.0 提出 GAP-08-01~10 十项缺口，并暴露部署管线（scp-action 卡�
 
 | 问题 | 根因 | 修复 | 验证 |
 |------|------|------|------|
-| 演示数据"无效"、seed 后 orders=0 | MySQL 外键（fk_projects_user / fk_bids_supplier）因 cleanDemoUsers 未清理 Orders/Milestones 残留，导致用户重建后旧外键悬空、新插入 user_id=0 失败 | seed 开头改 `cleanAll()` 完整清空全部业务表；用户/项目 Create 增加错误检查与 ID 回填校验 | 生产：demo 3订单/5项目/7用户、test 4/8、training 5/8 全部正常 |
+| 演示数据"无效"、seed 后 orders=0 | MySQL 外键（fk_projects_user / fk_bids_supplier）因 cleanDemoUsers 未清理 Orders/Milestones 残留，导致用户重建后旧外键悬空、新插入 user_id=0 失败 | seed 开头改 `cleanAll()` 完整清空全部业务表；用户/项目 Create 增加错误检查与 ID 回填校验 | 生产复核：demo 3订单/5项目/7用户、test 4/8、training 5/8 全部正常；bids 数量随随机报价波动（5-13） |
 | 网络层无法访问 | 本机网络对 `eqs-chzu.tech` 的 SNI/TLS 阻断（同 IP 的 wxx-agent.online 正常） | 非代码问题；建议手机流量访问 | wxx 200、eqs 握手 reset（网络环境限制） |
 
 ---
@@ -156,7 +156,8 @@ V3.0 提出 GAP-08-01~10 十项缺口，并暴露部署管线（scp-action 卡�
 |--------|------|------|
 | Handler 覆盖率 | 85.9% | ✅ |
 | 后端测试 | 17+1 文件 | ✅ 全通过 |
-| demo 数据断言 | 新增 TestDemo_SeedDataCount（7/5/3/9/9 + 外键完整性） | ✅ |
+| demo 数据断言 | TestDemo_SeedDataCount：users=7/projects=5/orders=3/milestones=9 + 无孤儿外键 | ✅ 生产复核 7/5/3 |
+| client 新增页面 | pages/message/index.vue（通知列表） | ✅ |
 | Client Vitest | 23 例 | ✅ |
 | Admin Vitest | 11 例 | ✅ |
 | E2E Playwright | 3 例 | ✅ |
@@ -172,9 +173,10 @@ V3.0 提出 GAP-08-01~10 十项缺口，并暴露部署管线（scp-action 卡�
 | GAP-08-08 | 微信登录/支付/签约真实对接 | 外部依赖 | 待持牌机构/服务商签约 |
 | GAP-08-09 | App 离线 SDK 原生工程 | 外部依赖 | apps/android、apps/ios |
 | NEW-01 | AI 大模型 API key 未配置（走规则分析） | 中 | 配置 ZHIPU_API_KEY 后启用 AI 摘要 |
-| NEW-02 | 客户端仍缺争议/资质/打卡/消息页面 | 中 | 后端已实现 |
+| NEW-02 | 客户端仍缺争议/资质/打卡页面 | 中 | 消息通知页已新增（1f4b48a），争议/资质/打卡待补 |
 | NEW-03 | 后台争议页无分页/搜索 | 低 | 待增强 |
 | NEW-04 | 甘特图单项目模式需项目选择入口完善 | 低 | 已可选，待优化 |
+| NEW-05 | 客户端消息页未加入"我的"菜单入口 | 低 | 页面已建，入口待接 |
 
 ---
 
@@ -204,7 +206,7 @@ V3.0 提出 GAP-08-01~10 十项缺口，并暴露部署管线（scp-action 卡�
 | 优先级 | 事项 |
 |--------|------|
 | 中 | 配置 AI 大模型 API key（ZHIPU），启用 AI 摘要 |
-| 中 | 客户端补齐争议/资质/打卡/消息页面 |
+| 中 | 客户端补齐争议/资质/打卡页面、消息页加入"我的"入口 |
 | 外部依赖 | 微信/支付/签约真实对接、App 离线 SDK |
 
 ---
