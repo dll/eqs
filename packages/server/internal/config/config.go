@@ -28,6 +28,9 @@ type Config struct {
 	ESignAPIKey                string
 	QualificationVerifyProvider string
 
+	// P1-09 敏感字段加密密钥（未配置时字段以明文存取，仅允许开发环境）
+	DataEncryptionKey string
+
 	// 中国国产 AI 模型
 	BaiduAPIKey    string
 	BaiduSecretKey string
@@ -61,6 +64,8 @@ func Load() *Config {
 		ESignAppID: getEnv("ESIGN_APP_ID", ""),
 		ESignAPIKey: getEnv("ESIGN_API_KEY", ""),
 		QualificationVerifyProvider: getEnv("QUALIFICATION_VERIFY_PROVIDER", "manual"),
+
+		DataEncryptionKey: getEnv("DATA_ENCRYPTION_KEY", ""),
 
 		BaiduAPIKey:    getEnv("BAIDU_API_KEY", ""),
 		BaiduSecretKey: getEnv("BAIDU_SECRET_KEY", ""),

@@ -91,10 +91,15 @@ func AdminDashboardStats(c *gin.Context) {
 	})
 }
 
-// AdminListUsers 后台用户列表
+// AdminListUsers 后台用户列表（page/size 可选，默认全量）
 func AdminListUsers(c *gin.Context) {
 	var users []model.User
-	model.DB.Order("created_at DESC").Find(&users)
+	q := model.DB.Select("id, phone, user_type, company_name, credit_score, status, created_at")
+	// P2-03：传入 page/size 时启用分页，避免全表一次拉取
+	if p, size := parsePage(c); c.Query("page") != "" {
+		q = q.Offset((p - 1) * size).Limit(size)
+	}
+	q.Order("created_at DESC").Find(&users)
 	// P1-09：手机号脱敏返回
 	type userDTO struct {
 		ID          uint    `json:"id"`

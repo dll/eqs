@@ -245,8 +245,9 @@ func seedByMode(mode string) seedResult {
 	}
 	for _, q := range qualTypes {
 		model.DB.Create(&model.SupplierQualification{
-			SupplierID: q.sid, QualificationType: q.t, CertificateNo: fmt.Sprintf("ZZ-DEMO-%03d", rng.Intn(999)),
-			Level: q.lv, Scope: q.t, VerificationStatus: "approved",
+			SupplierID: q.sid, QualificationType: q.t,
+			CertificateNo: model.EncryptedString(fmt.Sprintf("ZZ-DEMO-%03d", rng.Intn(999))),
+			Level:         q.lv, Scope: q.t, VerificationStatus: "approved",
 		})
 		r.Qualifiers++
 	}

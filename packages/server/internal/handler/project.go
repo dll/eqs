@@ -135,7 +135,24 @@ func GetRecommendations(c *gin.Context) {
 		return
 	}
 
-	ok(c, gin.H{"suppliers": suppliers})
+	// P1-09：对外返回手机号脱敏
+	type supplierItem struct {
+		ID          uint    `json:"id"`
+		Phone       string  `json:"phone"`
+		CompanyName string  `json:"company_name"`
+		CreditScore float64 `json:"credit_score"`
+	}
+	items := make([]supplierItem, 0, len(suppliers))
+	for _, s := range suppliers {
+		items = append(items, supplierItem{
+			ID:          s.ID,
+			Phone:       model.MaskPhone(s.Phone),
+			CompanyName: s.CompanyName,
+			CreditScore: s.CreditScore,
+		})
+	}
+
+	ok(c, gin.H{"suppliers": items})
 }
 
 type InviteSupplierRequest struct {

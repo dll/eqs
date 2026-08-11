@@ -31,7 +31,14 @@ func main() {
 		if cfg.DBPassword == "root" {
 			log.Fatalf("生产环境禁止默认数据库密码 root")
 		}
+		// P1-09：生产环境必须配置字段加密密钥，否则敏感字段会以明文落库
+		if cfg.DataEncryptionKey == "" {
+			log.Fatalf("生产环境必须设置 DATA_ENCRYPTION_KEY（AES-256-GCM 敏感字段加密密钥）")
+		}
 	}
+
+	// P1-09：注入敏感字段加密密钥（开发环境未配置时字段以明文存取）
+	model.InitFieldCrypto(cfg.DataEncryptionKey)
 
 	db, err := model.InitDB(cfg)
 	if err != nil {
@@ -114,6 +121,10 @@ func setupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 			auth.POST("/project/:id/ai-analysis", handler.AIAnalyzeProject)
 			// V8 个人日志
 			auth.GET("/log/list", handler.ListMyLogs)
+			// P1-06 标准交付模板
+			auth.GET("/delivery-templates", handler.ListDeliveryTemplates)
+			auth.GET("/delivery-templates/:id", handler.GetDeliveryTemplate)
+			auth.POST("/delivery-templates/:id/validate", handler.ValidateDeliveryChecklist)
 			// User
 			auth.GET("/user/info", handler.GetUserInfo)
 			auth.PUT("/user/info", handler.UpdateUserInfo)
