@@ -52,6 +52,12 @@ func CreatePayment(c *gin.Context) {
 		notFound(c, "订单不存在")
 		return
 	}
+	// P0-05：仅甲方（项目创建者）可发起支付
+	var proj model.Project
+	if err := model.DB.First(&proj, order.ProjectID).Error; err != nil || proj.UserID != c.GetUint("user_id") {
+		forbidden(c, "仅甲方可发起支付")
+		return
+	}
 	if req.Amount != order.Amount {
 		badRequest(c, "支付金额与订单金额不一致")
 		return

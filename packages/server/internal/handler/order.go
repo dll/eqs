@@ -21,6 +21,11 @@ func GetOrder(c *gin.Context) {
 		notFound(c, "订单不存在")
 		return
 	}
+	// P0-05：仅管理员或订单参与方可查看
+	if !canAccessOrder(c, &order) {
+		forbidden(c, "无权查看该订单")
+		return
+	}
 
 	var milestones []model.PaymentMilestone
 	model.DB.Where("order_id = ?", orderID).Order("sequence ASC").Find(&milestones)
@@ -158,6 +163,12 @@ func UploadDeliverable(c *gin.Context) {
 		badRequest(c, "当前节点不可上传交付物")
 		return
 	}
+	// P0-05：仅订单服务方可上传交付物
+	var order model.Order
+	if err := model.DB.First(&order, ms.OrderID).Error; err != nil || order.SupplierID != c.GetUint("user_id") {
+		forbidden(c, "仅服务方可上传交付物")
+		return
+	}
 
 	// 版本号递增
 	var maxVer int
@@ -211,6 +222,17 @@ func ConfirmAcceptance(c *gin.Context) {
 	}
 	if ms.Status != "submitted" {
 		badRequest(c, "节点尚未提交交付物")
+		return
+	}
+	// P0-05：仅项目甲方（订单甲方）可验收
+	var order model.Order
+	if err := model.DB.First(&order, ms.OrderID).Error; err != nil {
+		notFound(c, "订单不存在")
+		return
+	}
+	var proj model.Project
+	if err := model.DB.First(&proj, order.ProjectID).Error; err != nil || proj.UserID != userID {
+		forbidden(c, "仅甲方可验收")
 		return
 	}
 

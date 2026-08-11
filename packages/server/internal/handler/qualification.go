@@ -36,6 +36,12 @@ func SubmitQualification(c *gin.Context) {
 		return
 	}
 
+	// P0-05：仅当前服务方可提交自己的资质
+	if c.GetUint("user_id") != supplierID {
+		forbidden(c, "仅可提交自己的资质")
+		return
+	}
+
 	var req SubmitQualificationRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		badRequest(c, "参数错误")
@@ -60,6 +66,11 @@ func SubmitQualification(c *gin.Context) {
 
 // ReviewQualification 平台核验资质（OCR/人工），结果更新核验状态
 func ReviewQualification(c *gin.Context) {
+	// P0-05：仅管理员可审核资质
+	if c.GetInt("user_type") != 3 {
+		forbidden(c, "仅管理员可审核资质")
+		return
+	}
 	qualID, err := parseUint(c.Param("id"))
 	if err != nil {
 		badRequest(c, "资质ID无效")

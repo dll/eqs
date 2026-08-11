@@ -115,7 +115,7 @@ func TestSelectBid_ProjectNotFound(t *testing.T) {
 // TestSubmitQualification_MissingParam 缺字段400
 func TestSubmitQualification_MissingParam(t *testing.T) {
 	r := setupFlowRouter()
-	w := doJSONFull(t, r, "POST", "/api/v1/supplier/2/qualifications", map[string]interface{}{})
+	w := doJSONFullAuth(t, r, "POST", "/api/v1/supplier/2/qualifications", map[string]interface{}{}, 2, 2)
 	if w.Code != http.StatusBadRequest {
 		t.Fatalf("缺参数应400，得到 %d %s", w.Code, w.Body.String())
 	}
@@ -142,9 +142,9 @@ func TestReviewQualification_Rejected(t *testing.T) {
 	}
 	model.DB.Create(&q)
 
-	w := doJSONFull(t, r, "POST", "/api/v1/qualification/"+strconv.Itoa(int(q.ID))+"/review", map[string]interface{}{
+	w := doJSONFullAuth(t, r, "POST", "/api/v1/qualification/"+strconv.Itoa(int(q.ID))+"/review", map[string]interface{}{
 		"verified": false, "comment": "材料不全",
-	})
+	}, 9, 3)
 	if w.Code != http.StatusOK {
 		t.Fatalf("核验驳回失败: %d %s", w.Code, w.Body.String())
 	}
@@ -158,11 +158,11 @@ func TestReviewQualification_Rejected(t *testing.T) {
 // TestReviewQualification_NotFound 资质不存在404
 func TestReviewQualification_NotFound(t *testing.T) {
 	r := setupFlowRouter()
-	w := doJSONFull(t, r, "POST", "/api/v1/qualification/8888/review", map[string]interface{}{
+	w := doJSONFullAuth(t, r, "POST", "/api/v1/qualification/8888/review", map[string]interface{}{
 		"verified": true,
-	})
+	}, 9, 3)
 	if w.Code != http.StatusNotFound {
-		t.Fatalf("不存在资质应404，得到 %d %s", w.Code, w.Body.String())
+		t.Fatalf("不存在的资质应404，得到 %d %s", w.Code, w.Body.String())
 	}
 }
 

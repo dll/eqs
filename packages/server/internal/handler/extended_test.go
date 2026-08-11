@@ -131,9 +131,9 @@ func TestQualificationFlow(t *testing.T) {
 	r := setupFlowRouter()
 	createTestUser(t, "13900000130", 2)
 
-	w := doJSONFull(t, r, "POST", "/api/v1/supplier/2/qualifications", map[string]interface{}{
+	w := doJSONFullAuth(t, r, "POST", "/api/v1/supplier/2/qualifications", map[string]interface{}{
 		"qualification_type": "咨询资质", "certificate_no": "ZX-2026-001", "level": "甲级",
-	})
+	}, 2, 2)
 	if w.Code != http.StatusOK {
 		t.Fatalf("提交资质失败: %d %s", w.Code, w.Body.String())
 	}
@@ -142,15 +142,15 @@ func TestQualificationFlow(t *testing.T) {
 	qualID := uint(qual["id"].(float64))
 
 	// 平台核验通过
-	w = doJSONFull(t, r, "POST", "/api/v1/qualification/"+strconv.Itoa(int(qualID))+"/review", map[string]interface{}{
+	w = doJSONFullAuth(t, r, "POST", "/api/v1/qualification/"+strconv.Itoa(int(qualID))+"/review", map[string]interface{}{
 		"verified": true, "comment": "核验通过",
-	})
+	}, 9, 3)
 	if w.Code != http.StatusOK {
 		t.Fatalf("核验失败: %d %s", w.Code, w.Body.String())
 	}
 
 	// 查询资质列表
-	w = doJSONFull(t, r, "GET", "/api/v1/supplier/2/qualifications", nil)
+	w = doJSONFullAuth(t, r, "GET", "/api/v1/supplier/2/qualifications", nil, 9, 3)
 	if w.Code != http.StatusOK {
 		t.Fatalf("查询资质失败: %d %s", w.Code, w.Body.String())
 	}

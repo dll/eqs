@@ -13,10 +13,23 @@ import (
 )
 
 // AuthTestMiddleware 模拟登录中间件，注入 user_id 和 user_type
+// 支持 X-Test-User-ID / X-Test-User-Type 头覆盖（便于同一 router 多角色测试）
 func AuthTestMiddleware(userID, userType int) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		c.Set("user_id", uint(userID))
-		c.Set("user_type", userType)
+		uid := userID
+		ut := userType
+		if h := c.GetHeader("X-Test-User-ID"); h != "" {
+			if v, err := strconv.Atoi(h); err == nil {
+				uid = v
+			}
+		}
+		if h := c.GetHeader("X-Test-User-Type"); h != "" {
+			if v, err := strconv.Atoi(h); err == nil {
+				ut = v
+			}
+		}
+		c.Set("user_id", uint(uid))
+		c.Set("user_type", ut)
 		c.Next()
 	}
 }
@@ -43,7 +56,6 @@ func setupFlowRouter() *gin.Engine {
 		client.GET("/order/list", ListMyOrders)
 		client.GET("/order/:id", GetOrder)
 		client.PUT("/order/:id/milestones", SetMilestones)
-		client.POST("/milestone/:id/deliver", UploadDeliverable)
 		client.POST("/milestone/:id/accept", ConfirmAcceptance)
 		client.POST("/milestone/:id/settle", SettleMilestone)
 		client.GET("/order/:id/disputes", ListDisputes)
@@ -55,6 +67,7 @@ func setupFlowRouter() *gin.Engine {
 	{
 		supplier.POST("/bid/submit", SubmitBid)
 		supplier.PUT("/bid/:id/withdraw", WithdrawBid)
+		supplier.POST("/milestone/:id/deliver", UploadDeliverable)
 	}
 
 	shared := api.Group("")
@@ -109,6 +122,24 @@ func doJSONFull(t *testing.T, r *gin.Engine, method, path string, body interface
 	r.ServeHTTP(w, req)
 	return w
 }
+
+// doJSONFullAuth 带指定用户认证的请求
+func doJSONFullAuth(t *testing.T, r *gin.Engine, method, path string, body interface{}, userID, userType int) *httptest.ResponseRecorder {
+	t.Helper()
+	var buf bytes.Buffer
+	if body != nil {
+		b, _ := json.Marshal(body)
+		buf.Write(b)
+	}
+	req := httptest.NewRequest(method, path, &buf)
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("X-Test-User-ID", strconv.Itoa(userID))
+	req.Header.Set("X-Test-User-Type", strconv.Itoa(userType))
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+	return w
+}
+
 
 func decodeBody(t *testing.T, w *httptest.ResponseRecorder) gin.H {
 	t.Helper()

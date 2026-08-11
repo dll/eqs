@@ -83,6 +83,12 @@ func SignContract(c *gin.Context) {
 		notFound(c, "合同不存在")
 		return
 	}
+	// P0-05：仅参与方可签署
+	var order model.Order
+	if err := model.DB.First(&order, contract.OrderID).Error; err != nil || !canAccessOrder(c, &order) {
+		forbidden(c, "无权签署该合同")
+		return
+	}
 	if contract.Status == "signed" {
 		ok(c, gin.H{"message": "已签署", "contract": contract})
 		return
