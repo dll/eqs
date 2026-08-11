@@ -95,5 +95,34 @@ func GetProvider(c *gin.Context) {
 			"credit_score":  provider.CreditScore,
 			"qualifications": qualItems,
 		},
+		"stats": providerStats(provider.ID),
 	})
+}
+
+// providerStats 服务商经营数据（服务超市增强：评价分布 + 成交记录）
+func providerStats(supplierID uint) gin.H {
+	// 历史评价
+	var reviews []model.Review
+	model.DB.Where("reviewee_id = ?", supplierID).Order("created_at DESC").Limit(10).Find(&reviews)
+	// 评分分布
+	dist := map[int]int{5: 0, 4: 0, 3: 0, 2: 0, 1: 0}
+	var all []int
+	model.DB.Model(&model.Review{}).Where("reviewee_id = ?", supplierID).Pluck("rating", &all)
+	for _, r := range all {
+		if r >= 1 && r <= 5 {
+			dist[r]++
+		}
+	}
+	// 成交记录（作为服务方的已签约/已完成订单数）
+	var signed, completed int64
+	model.DB.Model(&model.Order{}).Where("supplier_id = ? AND status >= ?", supplierID, 1).Count(&signed)
+	model.DB.Model(&model.Order{}).Where("supplier_id = ? AND status = ?", supplierID, 3).Count(&completed)
+
+	return gin.H{
+		"review_count":      len(all),
+		"rating_dist":       dist,
+		"recent_reviews":    reviews,
+		"orders_signed":     signed,
+		"orders_completed":  completed,
+	}
 }
