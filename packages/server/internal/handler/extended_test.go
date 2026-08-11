@@ -250,13 +250,13 @@ func TestDisputeFlow(t *testing.T) {
 		t.Fatalf("上传证据失败: %d %s", w.Code, w.Body.String())
 	}
 
-	// 指派专家（平台）
+	// 指派专家（平台管理员操作，P1-08）
 	expert := model.User{Phone: "13900000142", UserType: 4, Status: 1}
 	model.DB.Create(&expert)
 	disputeID := uint(disputeRaw["id"].(float64))
-	w = doJSONFull(t, r, "POST", "/api/v1/dispute/"+strconv.Itoa(int(disputeID))+"/expert", map[string]interface{}{
+	w = doJSONFullAuth(t, r, "POST", "/api/v1/dispute/"+strconv.Itoa(int(disputeID))+"/expert", map[string]interface{}{
 		"expert_user_id": expert.ID,
-	})
+	}, 9, 3)
 	if w.Code != http.StatusOK {
 		t.Fatalf("指派专家失败: %d %s", w.Code, w.Body.String())
 	}

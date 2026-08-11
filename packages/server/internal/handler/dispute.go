@@ -110,25 +110,41 @@ func AssignDisputeExpert(c *gin.Context) {
 	}
 
 	var req struct {
-		ExpertUserID uint `json:"expert_user_id" binding:"required"`
+		ExpertUserID    uint `json:"expert_user_id" binding:"required"`
+		ConflictDeclared bool `json:"conflict_declared"`
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
 		badRequest(c, "参数错误")
 		return
 	}
 
+	// P1-08：仅管理员可指派专家；专家必须 user_type=4
+	if !isAdmin(c) {
+		forbidden(c, "仅管理员可指派专家")
+		return
+	}
+	var expert model.User
+	if err := model.DB.First(&expert, req.ExpertUserID).Error; err != nil || expert.UserType != 4 {
+		badRequest(c, "专家不存在或非评审专家")
+		return
+	}
+	// 利益冲突披露声明（模型字段为 int：0未披露/1已披露/2有冲突）
+	conflict := 0
+	if req.ConflictDeclared {
+		conflict = 1
+	}
 	assignment := model.DisputeExpertAssignment{
-		DisputeID:    disputeID,
-		ExpertUserID: req.ExpertUserID,
+		DisputeID:       disputeID,
+		ExpertUserID:    req.ExpertUserID,
+		ConflictDeclared: conflict,
 	}
 	if err := model.DB.Create(&assignment).Error; err != nil {
 		serverError(c, err)
 		return
 	}
-
-	model.DB.Model(&model.Dispute{}).Where("id = ? AND status = ?", disputeID, "review").
-		Update("status", "review")
-	ok(c, gin.H{"assignment": assignment})
+	// 更新争议状态为评审中
+	model.DB.Model(&model.Dispute{}).Where("id = ?", disputeID).Update("status", "review")
+	ok(c, gin.H{"assignment": assignment, "message": "专家已指派，利益冲突已披露"})
 }
 
 type SubmitExpertOpinionRequest struct {
@@ -248,6 +264,8 @@ func GetDispute(c *gin.Context) {
 		"dispute":     dispute,
 		"evidence":    evidence,
 		"assignments": assignments,
+		// P1-08：法定救济声明（平台专家评审≠法定仲裁，保留诉讼权利）
+		"legal_remedy_notice": "本平台争议处理为专家评审与平台调解，不构成《仲裁法》意义上的法定仲裁；当事人保留依法向法院起诉或申请仲裁的权利。",
 	})
 }
 

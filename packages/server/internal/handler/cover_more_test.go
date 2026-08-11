@@ -298,13 +298,15 @@ func TestCloseDispute_InvalidParam(t *testing.T) {
 // TestAssignDisputeExpert_Success 指派专家成功并推动评审
 func TestAssignDisputeExpert_Success(t *testing.T) {
 	r := setupFlowRouter()
-	createTestUser(t, "13950000014", 4)
+	var expert model.User
+	model.DB.Create(&model.User{Phone: "13950000014", UserType: 4, Status: 1})
+	model.DB.Where("phone = ?", "13950000014").First(&expert)
 	dispute := model.Dispute{OrderID: 1, InitiatorID: 1, Status: "review", Reason: "z"}
 	model.DB.Create(&dispute)
 
-	w := doJSONFull(t, r, "POST", "/api/v1/dispute/"+strconv.Itoa(int(dispute.ID))+"/expert", map[string]interface{}{
-		"expert_user_id": 1,
-	})
+	w := doJSONFullAuth(t, r, "POST", "/api/v1/dispute/"+strconv.Itoa(int(dispute.ID))+"/expert", map[string]interface{}{
+		"expert_user_id": expert.ID,
+	}, 9, 3)
 	if w.Code != http.StatusOK {
 		t.Fatalf("指派专家失败: %d %s", w.Code, w.Body.String())
 	}
