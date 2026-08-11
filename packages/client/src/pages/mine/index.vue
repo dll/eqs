@@ -74,6 +74,16 @@
         </text>
       </view>
       <view
+        v-if="isSupplier"
+        class="menu-item"
+        @tap="goTo('/pages/template/list')"
+      >
+        <text>{{ $t('mine.templates') }}</text>
+        <text class="arrow">
+          >
+        </text>
+      </view>
+      <view
         class="menu-item"
         @tap="showThemePicker"
       >

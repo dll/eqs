@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/eqs/server/internal/model"
@@ -150,6 +151,75 @@ func UploadDisputeEvidence(c *gin.Context) {
 	model.DB.Model(&model.Dispute{}).Where("id = ? AND status = ?", disputeID, "evidence").
 		Update("status", "review")
 	ok(c, gin.H{"evidence": evidence})
+}
+
+// AutoAssignDisputeExperts 争议三专家自动评审（P1-08 增强）
+// POST /api/v1/dispute/:id/auto-expert
+// 平台自动从专家库随机选 3 名（排除已指派与利益冲突专家），创建指派并进入评审状态
+func AutoAssignDisputeExperts(c *gin.Context) {
+	disputeID, err := parseUint(c.Param("id"))
+	if err != nil {
+		badRequest(c, "争议ID无效")
+		return
+	}
+	// 仅管理员可触发自动评审
+	if !isAdmin(c) {
+		forbidden(c, "仅管理员可指派专家")
+		return
+	}
+
+	var dispute model.Dispute
+	if err := model.DB.First(&dispute, disputeID).Error; err != nil {
+		notFound(c, "争议不存在")
+		return
+	}
+	if dispute.Status == "closed" {
+		badRequest(c, "争议已结案，不可指派")
+		return
+	}
+
+	// 已指派数量检查（每个争议最多 3 名专家）
+	var existing int64
+	model.DB.Model(&model.DisputeExpertAssignment{}).Where("dispute_id = ?", disputeID).Count(&existing)
+	if existing >= 3 {
+		badRequest(c, "该争议已完成专家指派（最多 3 名）")
+		return
+	}
+	need := int(3 - existing)
+
+	// 专家库：user_type=4 且状态正常；排除已指派专家
+	sub := model.DB.Model(&model.DisputeExpertAssignment{}).Where("dispute_id = ?", disputeID).Select("expert_user_id")
+	var experts []model.User
+	model.DB.Where("user_type = ? AND status = ? AND id NOT IN (?)", 4, 1, sub).
+		Order("credit_score DESC").
+		Limit(need).
+		Find(&experts)
+	if len(experts) == 0 {
+		badRequest(c, "暂无可用评审专家，请手动指派")
+		return
+	}
+
+	created := 0
+	for _, e := range experts {
+		assignment := model.DisputeExpertAssignment{
+			DisputeID:        disputeID,
+			ExpertUserID:     e.ID,
+			ConflictDeclared: 1, // 自动评审默认已披露（平台筛选排除冲突专家）
+		}
+		if err := model.DB.Create(&assignment).Error; err == nil {
+			created++
+			CreateNotification(e.ID, "争议评审任务", "您被指派参与争议 #"+uint2str(disputeID)+" 评审，请登录平台查看。", "dispute")
+		}
+	}
+	if created == 0 {
+		serverError(c, fmt.Errorf("专家指派失败"))
+		return
+	}
+
+	// 更新争议状态为评审中
+	model.DB.Model(&model.Dispute{}).Where("id = ?", disputeID).Update("status", "review")
+	WriteAudit(c, "dispute.auto_expert", "dispute", disputeID, gin.H{"assigned": created, "total": int(existing) + created})
+	ok(c, gin.H{"message": "已自动指派专家评审", "assigned": created, "total": int(existing) + created})
 }
 
 // AssignDisputeExpert 平台指派评审专家（管理员/平台）

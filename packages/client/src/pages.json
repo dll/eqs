@@ -43,6 +43,12 @@
       }
     },
     {
+      "path": "pages/template/list",
+      "style": {
+        "navigationBarTitleText": "标准交付模板"
+      }
+    },
+    {
       "path": "pages/provider/list",
       "style": {
         "navigationBarTitleText": "服务商"

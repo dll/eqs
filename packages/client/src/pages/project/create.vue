@@ -71,6 +71,39 @@
         />
       </view>
 
+      <view class="form-item">
+        <text class="label">
+          {{ $t('project.attachment') }}
+        </text>
+        <button
+          class="upload-btn"
+          :disabled="uploading"
+          @tap="chooseAndUpload"
+        >
+          {{ uploading ? $t('project.uploading') : $t('project.uploadAttachment') }}
+        </button>
+        <view
+          v-if="attachments.length"
+          class="att-list"
+        >
+          <view
+            v-for="(a, i) in attachments"
+            :key="a.file_id"
+            class="att-item"
+          >
+            <text class="att-name">
+              {{ a.original_name }}
+            </text>
+            <text
+              class="att-del"
+              @tap="attachments.splice(i, 1)"
+            >
+              ✕
+            </text>
+          </view>
+        </view>
+      </view>
+
       <button
         class="submit-btn"
         @tap="submit"
@@ -102,6 +135,51 @@ const form = ref({
   address: '',
   description: '',
 })
+
+// V10：附件上传（批文/CAD/PDF，≤50MB，先登记后随项目提交）
+const attachments = ref<any[]>([])
+const uploading = ref(false)
+
+const chooseAndUpload = async () => {
+  if (uploading.value) return
+  uploading.value = true
+  try {
+    const token = uni.getStorageSync('token')
+    const res: any = await new Promise((resolve, reject) => {
+      uni.chooseImage({
+        count: 1,
+        sizeType: ['original'],
+        success: (chooseRes: any) => {
+          const filePath = chooseRes.tempFilePaths[0]
+          uni.uploadFile({
+            url: `/api/v1/project/upload`,
+            filePath,
+            name: 'file',
+            header: { Authorization: `Bearer ${token}` },
+            success: (up: any) => {
+              try {
+                resolve(JSON.parse(up.data))
+              } catch {
+                reject(new Error('bad response'))
+              }
+            },
+            fail: reject,
+          })
+        },
+        fail: reject,
+      })
+    })
+    if (res && res.file_id) {
+      attachments.value.push({ file_id: res.file_id, original_name: res.original_name })
+    } else {
+      uni.showToast({ title: $t('project.uploadFail'), icon: 'none' })
+    }
+  } catch {
+    uni.showToast({ title: $t('project.uploadFail'), icon: 'none' })
+  } finally {
+    uploading.value = false
+  }
+}
 
 const onTypeChange = (e: any) => {
   form.value.projectType = projectTypes[e.detail.value]

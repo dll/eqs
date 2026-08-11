@@ -1,12 +1,82 @@
 package handler
 
 import (
+	"os"
+	"path/filepath"
 	"strconv"
+	"strings"
 	"time"
 
+	"github.com/eqs/server/internal/config"
 	"github.com/eqs/server/internal/model"
 	"github.com/gin-gonic/gin"
 )
+
+// allowedProjectFileExt 项目附件允许的扩展名（CAD/PDF/图片）
+var allowedProjectFileExt = map[string]bool{
+	".dwg": true, ".dxf": true, ".pdf": true,
+	".jpg": true, ".jpeg": true, ".png": true, ".doc": true, ".docx": true, ".xls": true, ".xlsx": true,
+}
+
+// UploadProjectFile 甲方上传项目附件（批文/CAD/PDF等），保存本地并登记 project_files
+// POST /api/v1/project/upload (multipart/form-data: file, 可选 project_id 绑定)
+func UploadProjectFile(c *gin.Context) {
+	userID := c.GetUint("user_id")
+
+	fileHeader, err := c.FormFile("file")
+	if err != nil {
+		badRequest(c, "请选择要上传的附件")
+		return
+	}
+	ext := strings.ToLower(filepath.Ext(fileHeader.Filename))
+	if !allowedProjectFileExt[ext] {
+		badRequest(c, "仅支持 dwg/dxf/pdf/jpg/png/doc/xls 格式")
+		return
+	}
+	if fileHeader.Size > 50*1024*1024 {
+		badRequest(c, "附件不能超过 50MB")
+		return
+	}
+
+	// 保存到本地 uploads/{UPLOAD_DIR 配置}/projects/{年月}/ 目录
+	relDir := filepath.Join(config.Get().UploadDir, "projects", time.Now().Format("200601"))
+	dir := filepath.Join(".", relDir)
+	if err := os.MkdirAll(dir, 0o750); err != nil {
+		serverError(c, err)
+		return
+	}
+	now := time.Now().Format("150405.000000000")
+	name := filepath.Join(dir, now+"_"+strings.ReplaceAll(fileHeader.Filename, " ", "_"))
+	if err := c.SaveUploadedFile(fileHeader, name); err != nil {
+		serverError(c, err)
+		return
+	}
+
+	// 可选绑定项目 ID（需为发布者本人项目，或暂不绑定）
+	projectID := uint(0)
+	if pid := c.PostForm("project_id"); pid != "" {
+		if v, perr := parseUint(pid); perr == nil {
+			var proj model.Project
+			if model.DB.First(&proj, v).Error == nil && (proj.UserID == userID || isAdmin(c)) {
+				projectID = v
+			}
+		}
+	}
+
+	file := model.ProjectFile{
+		ProjectID:    projectID,
+		UploaderID:   userID,
+		OriginalName: fileHeader.Filename,
+		FileType:     strings.TrimPrefix(ext, "."),
+		StorageKey:   relDir + "/" + filepath.Base(name),
+		Version:      1,
+	}
+	if err := model.DB.Create(&file).Error; err != nil {
+		serverError(c, err)
+		return
+	}
+	ok(c, gin.H{"file_id": file.ID, "original_name": file.OriginalName, "storage_key": file.StorageKey})
+}
 
 type CreateProjectRequest struct {
 	ProjectType  string  `json:"project_type" binding:"required"`
