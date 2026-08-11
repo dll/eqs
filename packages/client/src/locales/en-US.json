@@ -172,5 +172,7 @@
   "provider.creditScore": "Credit Score",
   "provider.creditScorePrefix": "Credit: {score}",
   "provider.sample": "Sample Provider",
-  "provider.qualifications": "Qualifications"
+  "provider.qualifications": "Qualifications",
+  "page.notice": "Notifications",
+  "message.empty": "No messages"
 }

@@ -172,5 +172,7 @@
   "provider.creditScore": "信用分",
   "provider.creditScorePrefix": "信用分：{score}",
   "provider.sample": "示例服务商",
-  "provider.qualifications": "资质证书"
+  "provider.qualifications": "资质证书",
+  "page.notice": "消息通知",
+  "message.empty": "暂无消息"
 }
