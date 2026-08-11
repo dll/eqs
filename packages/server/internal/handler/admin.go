@@ -95,7 +95,25 @@ func AdminDashboardStats(c *gin.Context) {
 func AdminListUsers(c *gin.Context) {
 	var users []model.User
 	model.DB.Order("created_at DESC").Find(&users)
-	ok(c, gin.H{"users": users, "count": len(users)})
+	// P1-09：手机号脱敏返回
+	type userDTO struct {
+		ID          uint    `json:"id"`
+		Phone       string  `json:"phone"`
+		UserType    int     `json:"user_type"`
+		CompanyName string  `json:"company_name"`
+		CreditScore float64 `json:"credit_score"`
+		Status      int     `json:"status"`
+		CreatedAt   string  `json:"created_at"`
+	}
+	dto := make([]userDTO, 0, len(users))
+	for _, u := range users {
+		dto = append(dto, userDTO{
+			ID: u.ID, Phone: model.MaskPhone(u.Phone), UserType: u.UserType,
+			CompanyName: u.CompanyName, CreditScore: u.CreditScore, Status: u.Status,
+			CreatedAt: u.CreatedAt.Format("2006-01-02 15:04:05"),
+		})
+	}
+	ok(c, gin.H{"users": dto, "count": len(dto)})
 }
 
 // AdminListOrders 后台全量订单列表

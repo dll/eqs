@@ -17,6 +17,12 @@ func ListQualifications(c *gin.Context) {
 
 	var quals []model.SupplierQualification
 	model.DB.Where("supplier_id = ?", supplierID).Order("created_at DESC").Find(&quals)
+	// P1-09：解密证书号
+	for i := range quals {
+		if dec, err := model.DecryptField(quals[i].CertificateNo); err == nil {
+			quals[i].CertificateNo = dec
+		}
+	}
 	ok(c, gin.H{"qualifications": quals})
 }
 
@@ -51,7 +57,7 @@ func SubmitQualification(c *gin.Context) {
 	qual := model.SupplierQualification{
 		SupplierID:        supplierID,
 		QualificationType: req.QualificationType,
-		CertificateNo:     req.CertificateNo,
+		CertificateNo:     encryptCertNo(req.CertificateNo),
 		Level:             req.Level,
 		Scope:             req.Scope,
 		EvidenceFileID:    req.EvidenceFileID,
@@ -105,4 +111,16 @@ func ReviewQualification(c *gin.Context) {
 	})
 	WriteAudit(c, "qualification.review", "qualification", qualID, gin.H{"status": status, "reviewer_id": reviewerID})
 	ok(c, gin.H{"qualification": qual, "status": status})
+}
+
+// encryptCertNo 加密证书号（未配置密钥时原样）
+func encryptCertNo(v string) string {
+	if v == "" {
+		return ""
+	}
+	enc, err := model.EncryptField(v)
+	if err != nil {
+		return v
+	}
+	return enc
 }

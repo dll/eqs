@@ -1,7 +1,9 @@
 package handler
 
 import (
+	"fmt"
 	"math"
+	"strconv"
 	"time"
 
 	"github.com/eqs/server/internal/model"
@@ -45,6 +47,11 @@ func CheckIn(c *gin.Context) {
 		DistanceMeters: req.DistanceMeters,
 		EvidenceFileID: req.EvidenceFileID,
 	}
+	// P1-09：经纬度加密存储
+	lonEnc, _ := model.EncryptField(fmt.Sprintf("%.6f", req.Longitude))
+	latEnc, _ := model.EncryptField(fmt.Sprintf("%.6f", req.Latitude))
+	record.LongitudeEnc = lonEnc
+	record.LatitudeEnc = latEnc
 	if err := model.DB.Create(&record).Error; err != nil {
 		serverError(c, err)
 		return
@@ -69,6 +76,23 @@ func ListAttendance(c *gin.Context) {
 
 	var records []model.AttendanceRecord
 	model.DB.Where("order_id = ?", orderID).Order("check_in_at DESC").Find(&records)
+	// P1-09：若存在加密经纬度则解密回填
+	for i := range records {
+		if records[i].LongitudeEnc != "" {
+			if v, err := model.DecryptField(records[i].LongitudeEnc); err == nil {
+				if f, err := strconv.ParseFloat(v, 64); err == nil {
+					records[i].Longitude = f
+				}
+			}
+		}
+		if records[i].LatitudeEnc != "" {
+			if v, err := model.DecryptField(records[i].LatitudeEnc); err == nil {
+				if f, err := strconv.ParseFloat(v, 64); err == nil {
+					records[i].Latitude = f
+				}
+			}
+		}
+	}
 	ok(c, gin.H{"attendance": records, "total_hours": computeTotalHours(records)})
 }
 

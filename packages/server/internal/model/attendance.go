@@ -32,6 +32,8 @@ type AttendanceRecord struct {
 	CheckInAt          time.Time  `json:"check_in_at"`
 	Longitude          float64    `json:"longitude"`
 	Latitude           float64    `json:"latitude"`
+	LongitudeEnc       string     `json:"-"` // P1-09：加密经纬度
+	LatitudeEnc        string     `json:"-"`
 	DistanceMeters     int        `json:"distance_meters"`
 	EvidenceFileID     uint       `json:"evidence_file_id"`
 	VerificationStatus string     `json:"verification_status" gorm:"size:20;default:ok"`
