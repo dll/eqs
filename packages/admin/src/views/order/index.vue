@@ -1,22 +1,56 @@
 <template>
   <div>
     <el-card>
-      <template #header>{{ $t('order.title') }}</template>
-      <el-table :data="orders" style="width: 100%">
-        <el-table-column prop="id" :label="$t('order.id')" width="80" />
-        <el-table-column :label="$t('order.relatedProject')" width="200">
-          <template #default="{ row }">{{ row.project?.title || '-' }}</template>
-        </el-table-column>
-        <el-table-column prop="project_id" :label="$t('order.projectId')" width="80" />
-        <el-table-column :label="$t('order.supplier')" width="140">
-          <template #default="{ row }">{{ row.supplier?.company_name || ('#' + row.supplier_id) }}</template>
-        </el-table-column>
-        <el-table-column :label="$t('order.amount')" width="120">
-          <template #default="{ row }">¥{{ row.amount }}</template>
-        </el-table-column>
-        <el-table-column prop="status" :label="$t('order.status')" width="100">
+      <template #header>
+        {{ $t('order.title') }}
+      </template>
+      <el-table
+        :data="orders"
+        style="width: 100%"
+      >
+        <el-table-column
+          prop="id"
+          :label="$t('order.id')"
+          width="80"
+        />
+        <el-table-column
+          :label="$t('order.relatedProject')"
+          width="200"
+        >
           <template #default="{ row }">
-            <el-tag :type="row.status === 3 ? 'success' : row.status === 4 ? 'danger' : 'info'">{{ statusText(row.status) }}</el-tag>
+            {{ row.project?.title || '-' }}
+          </template>
+        </el-table-column>
+        <el-table-column
+          prop="project_id"
+          :label="$t('order.projectId')"
+          width="80"
+        />
+        <el-table-column
+          :label="$t('order.supplier')"
+          width="140"
+        >
+          <template #default="{ row }">
+            {{ row.supplier?.company_name || ('#' + row.supplier_id) }}
+          </template>
+        </el-table-column>
+        <el-table-column
+          :label="$t('order.amount')"
+          width="120"
+        >
+          <template #default="{ row }">
+            ¥{{ row.amount }}
+          </template>
+        </el-table-column>
+        <el-table-column
+          prop="status"
+          :label="$t('order.status')"
+          width="100"
+        >
+          <template #default="{ row }">
+            <el-tag :type="row.status === 3 ? 'success' : row.status === 4 ? 'danger' : 'info'">
+              {{ statusText(row.status) }}
+            </el-tag>
           </template>
         </el-table-column>
       </el-table>

@@ -1,23 +1,68 @@
 <template>
   <div>
     <el-card>
-      <template #header>{{ $t('audit.title') }}</template>
-      <el-table :data="auditList" style="width: 100%">
-        <el-table-column prop="id" :label="$t('audit.id')" width="80" />
-        <el-table-column prop="supplier_id" :label="$t('audit.supplierId')" width="90" />
-        <el-table-column prop="qualification_type" :label="$t('audit.qualType')" width="140" />
-        <el-table-column prop="certificate_no" :label="$t('audit.certNo')" />
-        <el-table-column prop="level" :label="$t('audit.level')" width="80" />
-        <el-table-column prop="verification_status" :label="$t('audit.status')" width="100">
+      <template #header>
+        {{ $t('audit.title') }}
+      </template>
+      <el-table
+        :data="auditList"
+        style="width: 100%"
+      >
+        <el-table-column
+          prop="id"
+          :label="$t('audit.id')"
+          width="80"
+        />
+        <el-table-column
+          prop="supplier_id"
+          :label="$t('audit.supplierId')"
+          width="90"
+        />
+        <el-table-column
+          prop="qualification_type"
+          :label="$t('audit.qualType')"
+          width="140"
+        />
+        <el-table-column
+          prop="certificate_no"
+          :label="$t('audit.certNo')"
+        />
+        <el-table-column
+          prop="level"
+          :label="$t('audit.level')"
+          width="80"
+        />
+        <el-table-column
+          prop="verification_status"
+          :label="$t('audit.status')"
+          width="100"
+        >
           <template #default="{ row }">
-            <el-tag :type="statusType(row.verification_status)">{{ statusText(row.verification_status) }}</el-tag>
+            <el-tag :type="statusType(row.verification_status)">
+              {{ statusText(row.verification_status) }}
+            </el-tag>
           </template>
         </el-table-column>
-        <el-table-column :label="$t('audit.actions')" width="180">
+        <el-table-column
+          :label="$t('audit.actions')"
+          width="180"
+        >
           <template #default="{ row }">
             <template v-if="row.verification_status === 'pending'">
-              <el-button type="success" size="small" @click="review(row, true)">{{ $t('common.approve') }}</el-button>
-              <el-button type="danger" size="small" @click="review(row, false)">{{ $t('common.reject') }}</el-button>
+              <el-button
+                type="success"
+                size="small"
+                @click="review(row, true)"
+              >
+                {{ $t('common.approve') }}
+              </el-button>
+              <el-button
+                type="danger"
+                size="small"
+                @click="review(row, false)"
+              >
+                {{ $t('common.reject') }}
+              </el-button>
             </template>
           </template>
         </el-table-column>

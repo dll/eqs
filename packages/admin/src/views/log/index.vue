@@ -5,25 +5,87 @@
         <div class="head">
           <span>{{ $t('log.title') }}</span>
           <div class="filters">
-            <el-input v-model="filters.userId" :placeholder="$t('log.filterUser')" size="small" style="width: 140px" clearable @change="load(1)" />
-            <el-input v-model="filters.action" :placeholder="$t('log.filterAction')" size="small" style="width: 160px" clearable @change="load(1)" />
-            <el-button size="small" type="primary" @click="load(1)">{{ $t('common.search') }}</el-button>
+            <el-input
+              v-model="filters.userId"
+              :placeholder="$t('log.filterUser')"
+              size="small"
+              style="width: 140px"
+              clearable
+              @change="load(1)"
+            />
+            <el-input
+              v-model="filters.action"
+              :placeholder="$t('log.filterAction')"
+              size="small"
+              style="width: 160px"
+              clearable
+              @change="load(1)"
+            />
+            <el-button
+              size="small"
+              type="primary"
+              @click="load(1)"
+            >
+              {{ $t('common.search') }}
+            </el-button>
           </div>
         </div>
       </template>
 
-      <el-table :data="logs" style="width: 100%">
-        <el-table-column prop="id" :label="$t('log.id')" width="70" />
-        <el-table-column prop="user_id" :label="$t('log.userId')" width="80" />
-        <el-table-column prop="action" :label="$t('log.action')" width="180" show-overflow-tooltip />
-        <el-table-column prop="target_type" :label="$t('log.targetType')" width="110" />
-        <el-table-column prop="target_id" :label="$t('log.targetId')" width="80" />
-        <el-table-column prop="detail" :label="$t('log.detail')" show-overflow-tooltip />
-        <el-table-column prop="ip" :label="$t('log.ip')" width="120" />
-        <el-table-column prop="created_at" :label="$t('log.time')" width="170">
-          <template #default="{ row }">{{ fmtTime(row.created_at) }}</template>
+      <el-table
+        :data="logs"
+        style="width: 100%"
+      >
+        <el-table-column
+          prop="id"
+          :label="$t('log.id')"
+          width="70"
+        />
+        <el-table-column
+          prop="user_id"
+          :label="$t('log.userId')"
+          width="80"
+        />
+        <el-table-column
+          prop="action"
+          :label="$t('log.action')"
+          width="180"
+          show-overflow-tooltip
+        />
+        <el-table-column
+          prop="target_type"
+          :label="$t('log.targetType')"
+          width="110"
+        />
+        <el-table-column
+          prop="target_id"
+          :label="$t('log.targetId')"
+          width="80"
+        />
+        <el-table-column
+          prop="detail"
+          :label="$t('log.detail')"
+          show-overflow-tooltip
+        />
+        <el-table-column
+          prop="ip"
+          :label="$t('log.ip')"
+          width="120"
+        />
+        <el-table-column
+          prop="created_at"
+          :label="$t('log.time')"
+          width="170"
+        >
+          <template #default="{ row }">
+            {{ fmtTime(row.created_at) }}
+          </template>
         </el-table-column>
-        <el-table-column :label="$t('log.restore')" width="110" fixed="right">
+        <el-table-column
+          :label="$t('log.restore')"
+          width="110"
+          fixed="right"
+        >
           <template #default="{ row }">
             <el-button
               v-if="row.target_type === 'config'"

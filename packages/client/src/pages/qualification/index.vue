@@ -1,22 +1,48 @@
 <template>
   <view class="container">
     <view class="card">
-      <view class="card-title">{{ $t('qual.title') }}</view>
-      <view class="form-item">
-        <text class="label">{{ $t('qual.type') }}</text>
-        <input v-model="form.qualification_type" class="input" :placeholder="$t('qual.typePh')" />
+      <view class="card-title">
+        {{ $t('qual.title') }}
       </view>
       <view class="form-item">
-        <text class="label">{{ $t('qual.certNo') }}</text>
-        <input v-model="form.certificate_no" class="input" :placeholder="$t('qual.certNoPh')" />
+        <text class="label">
+          {{ $t('qual.type') }}
+        </text>
+        <input
+          v-model="form.qualification_type"
+          class="input"
+          :placeholder="$t('qual.typePh')"
+        >
       </view>
       <view class="form-item">
-        <text class="label">{{ $t('qual.level') }}</text>
-        <input v-model="form.level" class="input" :placeholder="$t('qual.levelPh')" />
+        <text class="label">
+          {{ $t('qual.certNo') }}
+        </text>
+        <input
+          v-model="form.certificate_no"
+          class="input"
+          :placeholder="$t('qual.certNoPh')"
+        >
       </view>
       <view class="form-item">
-        <text class="label">{{ $t('qual.scope') }}</text>
-        <input v-model="form.scope" class="input" :placeholder="$t('qual.scopePh')" />
+        <text class="label">
+          {{ $t('qual.level') }}
+        </text>
+        <input
+          v-model="form.level"
+          class="input"
+          :placeholder="$t('qual.levelPh')"
+        >
+      </view>
+      <view class="form-item">
+        <text class="label">
+          {{ $t('qual.scope') }}
+        </text>
+        <input
+          v-model="form.scope"
+          class="input"
+          :placeholder="$t('qual.scopePh')"
+        >
       </view>
       <button
         class="submit-btn"
@@ -33,7 +59,9 @@
     </view>
 
     <view class="card">
-      <view class="card-title">{{ $t('qual.myList') }}</view>
+      <view class="card-title">
+        {{ $t('qual.myList') }}
+      </view>
       <view
         v-if="qualList.length"
         class="q-item"
@@ -46,7 +74,10 @@
           <text class="q-type">
             {{ q.qualification_type }}
           </text>
-          <text class="q-status" :class="'s-' + q.verification_status">
+          <text
+            class="q-status"
+            :class="'s-' + q.verification_status"
+          >
             {{ statusText(q.verification_status) }}
           </text>
         </view>

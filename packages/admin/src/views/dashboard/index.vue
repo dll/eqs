@@ -2,104 +2,244 @@
   <div class="dashboard">
     <!-- 统计卡 -->
     <el-row :gutter="16">
-      <el-col v-for="c in statCards" :key="c.label" :span="6">
-        <el-card shadow="hover" class="stat-card">
-          <div class="stat-icon" :style="{ background: c.bg }">
-            <el-icon :size="22"><component :is="c.icon" /></el-icon>
+      <el-col
+        v-for="c in statCards"
+        :key="c.label"
+        :span="6"
+      >
+        <el-card
+          shadow="hover"
+          class="stat-card"
+        >
+          <div
+            class="stat-icon"
+            :style="{ background: c.bg }"
+          >
+            <el-icon :size="22">
+              <component :is="c.icon" />
+            </el-icon>
           </div>
           <div>
-            <div class="stat-value">{{ c.value }}</div>
-            <div class="stat-label">{{ c.label }}</div>
+            <div class="stat-value">
+              {{ c.value }}
+            </div>
+            <div class="stat-label">
+              {{ c.label }}
+            </div>
           </div>
         </el-card>
       </el-col>
     </el-row>
 
     <!-- 甘特图：全部项目时间线 -->
-    <el-card class="panel" shadow="hover">
+    <el-card
+      class="panel"
+      shadow="hover"
+    >
       <template #header>
         <div class="panel-head">
           <span>{{ $t('dashboard.ganttAll') }}</span>
           <div class="panel-actions">
-            <el-radio-group v-model="ganttMode" size="small" @change="loadProgress">
-              <el-radio-button label="all">{{ $t('dashboard.allProjects') }}</el-radio-button>
-              <el-radio-button label="single">{{ $t('dashboard.singleProject') }}</el-radio-button>
+            <el-radio-group
+              v-model="ganttMode"
+              size="small"
+              @change="loadProgress"
+            >
+              <el-radio-button label="all">
+                {{ $t('dashboard.allProjects') }}
+              </el-radio-button>
+              <el-radio-button label="single">
+                {{ $t('dashboard.singleProject') }}
+              </el-radio-button>
             </el-radio-group>
-            <el-select v-if="ganttMode === 'single'" v-model="singleProjectId" size="small" style="width: 180px; margin-left: 8px" @change="loadProgress">
-              <el-option v-for="p in progressProjects" :key="p.id" :label="`#${p.id} ${p.title}`" :value="p.id" />
+            <el-select
+              v-if="ganttMode === 'single'"
+              v-model="singleProjectId"
+              size="small"
+              style="width: 180px; margin-left: 8px"
+              @change="loadProgress"
+            >
+              <el-option
+                v-for="p in progressProjects"
+                :key="p.id"
+                :label="`#${p.id} ${p.title}`"
+                :value="p.id"
+              />
             </el-select>
           </div>
         </div>
       </template>
       <div class="chart-area">
-        <GanttChart v-if="ganttData.length" :projects="ganttData" @select="openProject" />
-        <el-empty v-else :description="$t('dashboard.noProjects')" />
+        <GanttChart
+          v-if="ganttData.length"
+          :projects="ganttData"
+          @select="openProject"
+        />
+        <el-empty
+          v-else
+          :description="$t('dashboard.noProjects')"
+        />
       </div>
     </el-card>
 
-    <el-row :gutter="16" style="margin-top: 16px">
+    <el-row
+      :gutter="16"
+      style="margin-top: 16px"
+    >
       <!-- 看板：进度分布 -->
       <el-col :span="12">
-        <el-card class="panel" shadow="hover">
-          <template #header>{{ $t('dashboard.kanbanProgress') }}</template>
+        <el-card
+          class="panel"
+          shadow="hover"
+        >
+          <template #header>
+            {{ $t('dashboard.kanbanProgress') }}
+          </template>
           <div class="chart-area">
-            <KanbanChart v-if="kanbanData.length" :items="kanbanData" />
-            <el-empty v-else :description="$t('dashboard.noProjects')" />
+            <KanbanChart
+              v-if="kanbanData.length"
+              :items="kanbanData"
+            />
+            <el-empty
+              v-else
+              :description="$t('dashboard.noProjects')"
+            />
           </div>
         </el-card>
       </el-col>
       <!-- AI 分析 -->
       <el-col :span="12">
-        <el-card class="panel" shadow="hover">
+        <el-card
+          class="panel"
+          shadow="hover"
+        >
           <template #header>
             <div class="panel-head">
               <span>🤖 {{ $t('dashboard.aiAnalysis') }}</span>
-              <el-button size="small" type="primary" plain :loading="aiLoading" @click="runAI">
+              <el-button
+                size="small"
+                type="primary"
+                plain
+                :loading="aiLoading"
+                @click="runAI"
+              >
                 {{ $t('dashboard.aiRun') }}
               </el-button>
             </div>
           </template>
-          <div v-if="aiLoading" class="ai-loading">
-            <el-skeleton :rows="4" animated />
+          <div
+            v-if="aiLoading"
+            class="ai-loading"
+          >
+            <el-skeleton
+              :rows="4"
+              animated
+            />
           </div>
-          <div v-else-if="aiResult" class="ai-body">
+          <div
+            v-else-if="aiResult"
+            class="ai-body"
+          >
             <div class="ai-summary">
-              <el-tag :type="aiResult.riskTag" size="small">{{ aiResult.riskLabel }}</el-tag>
-              <p class="ai-text">{{ aiResult.summary }}</p>
+              <el-tag
+                :type="aiResult.riskTag"
+                size="small"
+              >
+                {{ aiResult.riskLabel }}
+              </el-tag>
+              <p class="ai-text">
+                {{ aiResult.summary }}
+              </p>
             </div>
-            <div v-if="aiResult.issues.length" class="ai-section">
-              <div class="ai-section-title">{{ $t('dashboard.aiIssues') }}</div>
+            <div
+              v-if="aiResult.issues.length"
+              class="ai-section"
+            >
+              <div class="ai-section-title">
+                {{ $t('dashboard.aiIssues') }}
+              </div>
               <ul class="ai-list">
-                <li v-for="(it, i) in aiResult.issues" :key="i">{{ it }}</li>
+                <li
+                  v-for="(it, i) in aiResult.issues"
+                  :key="i"
+                >
+                  {{ it }}
+                </li>
               </ul>
             </div>
-            <div v-if="aiResult.suggestions.length" class="ai-section">
-              <div class="ai-section-title">{{ $t('dashboard.aiSuggestions') }}</div>
+            <div
+              v-if="aiResult.suggestions.length"
+              class="ai-section"
+            >
+              <div class="ai-section-title">
+                {{ $t('dashboard.aiSuggestions') }}
+              </div>
               <ul class="ai-list success">
-                <li v-for="(it, i) in aiResult.suggestions" :key="i">{{ it }}</li>
+                <li
+                  v-for="(it, i) in aiResult.suggestions"
+                  :key="i"
+                >
+                  {{ it }}
+                </li>
               </ul>
             </div>
           </div>
-          <el-empty v-else :description="$t('dashboard.aiEmpty')" />
+          <el-empty
+            v-else
+            :description="$t('dashboard.aiEmpty')"
+          />
         </el-card>
       </el-col>
     </el-row>
 
     <!-- 最近项目 -->
-    <el-card class="panel" shadow="hover" style="margin-top: 16px">
-      <template #header>{{ $t('dashboard.recentProjects') }}</template>
-      <el-table :data="recentProjects" style="width: 100%">
-        <el-table-column prop="id" :label="$t('dashboard.columnId')" width="80" />
-        <el-table-column prop="title" :label="$t('dashboard.columnTitle')" />
-        <el-table-column prop="project_type" :label="$t('dashboard.columnType')" width="120" />
-        <el-table-column prop="status" :label="$t('dashboard.columnStatus')" width="110">
+    <el-card
+      class="panel"
+      shadow="hover"
+      style="margin-top: 16px"
+    >
+      <template #header>
+        {{ $t('dashboard.recentProjects') }}
+      </template>
+      <el-table
+        :data="recentProjects"
+        style="width: 100%"
+      >
+        <el-table-column
+          prop="id"
+          :label="$t('dashboard.columnId')"
+          width="80"
+        />
+        <el-table-column
+          prop="title"
+          :label="$t('dashboard.columnTitle')"
+        />
+        <el-table-column
+          prop="project_type"
+          :label="$t('dashboard.columnType')"
+          width="120"
+        />
+        <el-table-column
+          prop="status"
+          :label="$t('dashboard.columnStatus')"
+          width="110"
+        >
           <template #default="{ row }">
-            <el-tag :type="statusType(row.status)">{{ statusText(row.status) }}</el-tag>
+            <el-tag :type="statusType(row.status)">
+              {{ statusText(row.status) }}
+            </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="progress" :label="$t('dashboard.columnProgress')" width="160">
+        <el-table-column
+          prop="progress"
+          :label="$t('dashboard.columnProgress')"
+          width="160"
+        >
           <template #default="{ row }">
-            <el-progress :percentage="row.progress || 0" :stroke-width="10" />
+            <el-progress
+              :percentage="row.progress || 0"
+              :stroke-width="10"
+            />
           </template>
         </el-table-column>
       </el-table>

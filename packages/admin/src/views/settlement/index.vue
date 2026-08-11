@@ -1,20 +1,60 @@
 <template>
   <div>
     <el-card>
-      <template #header>{{ $t('settlement.title') }}</template>
-      <el-table :data="records" style="width: 100%">
-        <el-table-column prop="id" :label="$t('settlement.id')" width="80" />
-        <el-table-column prop="user_id" :label="$t('settlement.userId')" width="80" />
-        <el-table-column prop="order_id" :label="$t('settlement.orderId')" width="80" />
-        <el-table-column prop="milestone_id" :label="$t('settlement.milestoneId')" width="80" />
-        <el-table-column :label="$t('settlement.amount')" width="120">
-          <template #default="{ row }">¥{{ row.amount }}</template>
+      <template #header>
+        {{ $t('settlement.title') }}
+      </template>
+      <el-table
+        :data="records"
+        style="width: 100%"
+      >
+        <el-table-column
+          prop="id"
+          :label="$t('settlement.id')"
+          width="80"
+        />
+        <el-table-column
+          prop="user_id"
+          :label="$t('settlement.userId')"
+          width="80"
+        />
+        <el-table-column
+          prop="order_id"
+          :label="$t('settlement.orderId')"
+          width="80"
+        />
+        <el-table-column
+          prop="milestone_id"
+          :label="$t('settlement.milestoneId')"
+          width="80"
+        />
+        <el-table-column
+          :label="$t('settlement.amount')"
+          width="120"
+        >
+          <template #default="{ row }">
+            ¥{{ row.amount }}
+          </template>
         </el-table-column>
-        <el-table-column prop="type" :label="$t('settlement.type')" width="110">
-          <template #default="{ row }">{{ typeText(row.type) }}</template>
+        <el-table-column
+          prop="type"
+          :label="$t('settlement.type')"
+          width="110"
+        >
+          <template #default="{ row }">
+            {{ typeText(row.type) }}
+          </template>
         </el-table-column>
-        <el-table-column prop="channel" :label="$t('settlement.channel')" width="90" />
-        <el-table-column prop="status" :label="$t('settlement.status')" width="90">
+        <el-table-column
+          prop="channel"
+          :label="$t('settlement.channel')"
+          width="90"
+        />
+        <el-table-column
+          prop="status"
+          :label="$t('settlement.status')"
+          width="90"
+        >
           <template #default="{ row }">
             <el-tag :type="row.status === 1 ? 'success' : row.status === 2 ? 'danger' : 'info'">
               {{ statusText(row.status) }}

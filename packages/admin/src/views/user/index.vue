@@ -1,16 +1,46 @@
 <template>
   <div>
     <el-card>
-      <template #header>{{ $t('user.title') }}</template>
-      <el-table :data="users" style="width: 100%">
-        <el-table-column prop="id" :label="$t('user.id')" width="80" />
-        <el-table-column prop="phone" :label="$t('user.phone')" width="140" />
-        <el-table-column prop="company_name" :label="$t('user.company')" />
-        <el-table-column prop="user_type" :label="$t('user.type')" width="100">
-          <template #default="{ row }">{{ userTypeText(row.user_type) }}</template>
+      <template #header>
+        {{ $t('user.title') }}
+      </template>
+      <el-table
+        :data="users"
+        style="width: 100%"
+      >
+        <el-table-column
+          prop="id"
+          :label="$t('user.id')"
+          width="80"
+        />
+        <el-table-column
+          prop="phone"
+          :label="$t('user.phone')"
+          width="140"
+        />
+        <el-table-column
+          prop="company_name"
+          :label="$t('user.company')"
+        />
+        <el-table-column
+          prop="user_type"
+          :label="$t('user.type')"
+          width="100"
+        >
+          <template #default="{ row }">
+            {{ userTypeText(row.user_type) }}
+          </template>
         </el-table-column>
-        <el-table-column prop="credit_score" :label="$t('user.creditScore')" width="80" />
-        <el-table-column prop="status" :label="$t('user.status')" width="80">
+        <el-table-column
+          prop="credit_score"
+          :label="$t('user.creditScore')"
+          width="80"
+        />
+        <el-table-column
+          prop="status"
+          :label="$t('user.status')"
+          width="80"
+        >
           <template #default="{ row }">
             <el-tag :type="row.status === 1 ? 'success' : 'danger'">
               {{ row.status === 1 ? $t('user.status.active') : $t('user.status.disabled') }}

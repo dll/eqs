@@ -1,41 +1,86 @@
 <template>
   <view class="container">
-    <view v-if="dispute" class="detail">
+    <view
+      v-if="dispute"
+      class="detail"
+    >
       <view class="card">
         <view class="row">
-          <text class="label">{{ $t('dispute.order') }}</text>
-          <text class="value">#{{ dispute.order_id }}</text>
+          <text class="label">
+            {{ $t('dispute.order') }}
+          </text>
+          <text class="value">
+            #{{ dispute.order_id }}
+          </text>
         </view>
         <view class="row">
-          <text class="label">{{ $t('dispute.status') }}</text>
-          <text class="value">{{ statusText(dispute.status) }}</text>
+          <text class="label">
+            {{ $t('dispute.status') }}
+          </text>
+          <text class="value">
+            {{ statusText(dispute.status) }}
+          </text>
         </view>
         <view class="row">
-          <text class="label">{{ $t('dispute.reason') }}</text>
-          <text class="value">{{ dispute.reason }}</text>
+          <text class="label">
+            {{ $t('dispute.reason') }}
+          </text>
+          <text class="value">
+            {{ dispute.reason }}
+          </text>
         </view>
         <view class="row">
-          <text class="label">{{ $t('dispute.claim') }}</text>
-          <text class="value">{{ dispute.claim }}</text>
+          <text class="label">
+            {{ $t('dispute.claim') }}
+          </text>
+          <text class="value">
+            {{ dispute.claim }}
+          </text>
         </view>
       </view>
 
-      <view v-if="evidence.length" class="card">
-        <view class="card-title">{{ $t('dispute.evidence') }}</view>
-        <view v-for="e in evidence" :key="e.id" class="ev-item">
+      <view
+        v-if="evidence.length"
+        class="card"
+      >
+        <view class="card-title">
+          {{ $t('dispute.evidence') }}
+        </view>
+        <view
+          v-for="e in evidence"
+          :key="e.id"
+          class="ev-item"
+        >
           <text>{{ e.content }}</text>
         </view>
       </view>
 
-      <view v-if="assignments.length" class="card">
-        <view class="card-title">{{ $t('dispute.experts') }}</view>
-        <view v-for="a in assignments" :key="a.id" class="ev-item">
+      <view
+        v-if="assignments.length"
+        class="card"
+      >
+        <view class="card-title">
+          {{ $t('dispute.experts') }}
+        </view>
+        <view
+          v-for="a in assignments"
+          :key="a.id"
+          class="ev-item"
+        >
           <text>{{ $t('dispute.expertId') }}:{{ a.expert_user_id }}</text>
-          <text v-if="a.vote" class="vote"> {{ a.vote }}</text>
+          <text
+            v-if="a.vote"
+            class="vote"
+          >
+            {{ a.vote }}
+          </text>
         </view>
       </view>
     </view>
-    <view v-else class="empty">
+    <view
+      v-else
+      class="empty"
+    >
       <text>{{ $t('common.loading') }}</text>
     </view>
   </view>

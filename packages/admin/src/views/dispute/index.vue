@@ -4,26 +4,77 @@
       <template #header>
         <div class="dispute-head">
           <span>{{ $t('dispute.title') }}</span>
-          <el-select v-model="statusFilter" size="small" style="width: 160px" clearable :placeholder="$t('dispute.filterStatus')" @change="onFilter">
-            <el-option v-for="s in statusOptions" :key="s.value" :label="s.label" :value="s.value" />
+          <el-select
+            v-model="statusFilter"
+            size="small"
+            style="width: 160px"
+            clearable
+            :placeholder="$t('dispute.filterStatus')"
+            @change="onFilter"
+          >
+            <el-option
+              v-for="s in statusOptions"
+              :key="s.value"
+              :label="s.label"
+              :value="s.value"
+            />
           </el-select>
         </div>
       </template>
-      <el-table :data="disputes" style="width: 100%">
-        <el-table-column prop="id" :label="$t('dispute.id')" width="80" />
-        <el-table-column prop="order_id" :label="$t('dispute.orderId')" width="80" />
-        <el-table-column prop="reason" :label="$t('dispute.reason')" show-overflow-tooltip />
-        <el-table-column prop="claim" :label="$t('dispute.claim')" show-overflow-tooltip />
-        <el-table-column prop="initiator_id" :label="$t('dispute.initiatorId')" width="90" />
-        <el-table-column prop="status" :label="$t('dispute.status')" width="100">
+      <el-table
+        :data="disputes"
+        style="width: 100%"
+      >
+        <el-table-column
+          prop="id"
+          :label="$t('dispute.id')"
+          width="80"
+        />
+        <el-table-column
+          prop="order_id"
+          :label="$t('dispute.orderId')"
+          width="80"
+        />
+        <el-table-column
+          prop="reason"
+          :label="$t('dispute.reason')"
+          show-overflow-tooltip
+        />
+        <el-table-column
+          prop="claim"
+          :label="$t('dispute.claim')"
+          show-overflow-tooltip
+        />
+        <el-table-column
+          prop="initiator_id"
+          :label="$t('dispute.initiatorId')"
+          width="90"
+        />
+        <el-table-column
+          prop="status"
+          :label="$t('dispute.status')"
+          width="100"
+        >
           <template #default="{ row }">
-            <el-tag :type="statusType(row.status)">{{ statusText(row.status) }}</el-tag>
+            <el-tag :type="statusType(row.status)">
+              {{ statusText(row.status) }}
+            </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="resolution_type" :label="$t('dispute.resolution')" width="100">
-          <template #default="{ row }">{{ row.resolution_type || '-' }}</template>
+        <el-table-column
+          prop="resolution_type"
+          :label="$t('dispute.resolution')"
+          width="100"
+        >
+          <template #default="{ row }">
+            {{ row.resolution_type || '-' }}
+          </template>
         </el-table-column>
-        <el-table-column :label="$t('dispute.actions')" width="200" fixed="right">
+        <el-table-column
+          :label="$t('dispute.actions')"
+          width="200"
+          fixed="right"
+        >
           <template #default="{ row }">
             <el-button
               v-if="row.status === 'evidence' || row.status === 'review' || row.status === 'mediation'"
@@ -57,39 +108,77 @@
       />
     </el-card>
 
-    <el-dialog v-model="expertDialog.visible" :title="$t('dispute.assignExpert')" width="420px">
+    <el-dialog
+      v-model="expertDialog.visible"
+      :title="$t('dispute.assignExpert')"
+      width="420px"
+    >
       <el-form label-width="100px">
         <el-form-item :label="$t('dispute.disputeId')">
           <span>{{ expertDialog.disputeId }}</span>
         </el-form-item>
         <el-form-item :label="$t('dispute.expertUserId')">
-          <el-input v-model="expertDialog.expertId" type="number" />
+          <el-input
+            v-model="expertDialog.expertId"
+            type="number"
+          />
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="expertDialog.visible = false">{{ $t('common.cancel') }}</el-button>
-        <el-button type="primary" :loading="expertDialog.loading" @click="submitExpert">
+        <el-button @click="expertDialog.visible = false">
+          {{ $t('common.cancel') }}
+        </el-button>
+        <el-button
+          type="primary"
+          :loading="expertDialog.loading"
+          @click="submitExpert"
+        >
           {{ $t('common.confirm') }}
         </el-button>
       </template>
     </el-dialog>
 
-    <el-dialog v-model="closeDialog.visible" :title="$t('dispute.close')" width="420px">
+    <el-dialog
+      v-model="closeDialog.visible"
+      :title="$t('dispute.close')"
+      width="420px"
+    >
       <el-form label-width="100px">
         <el-form-item :label="$t('dispute.resolution')">
-          <el-select v-model="closeDialog.resolutionType" placeholder="settlement / agreement / award">
-            <el-option label="settlement" value="settlement" />
-            <el-option label="agreement" value="agreement" />
-            <el-option label="award" value="award" />
+          <el-select
+            v-model="closeDialog.resolutionType"
+            placeholder="settlement / agreement / award"
+          >
+            <el-option
+              label="settlement"
+              value="settlement"
+            />
+            <el-option
+              label="agreement"
+              value="agreement"
+            />
+            <el-option
+              label="award"
+              value="award"
+            />
           </el-select>
         </el-form-item>
         <el-form-item :label="$t('dispute.settleAmount')">
-          <el-input v-model="closeDialog.settleAmount" type="number" />
+          <el-input
+            v-model="closeDialog.settleAmount"
+            type="number"
+          />
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="closeDialog.visible = false">{{ $t('common.cancel') }}</el-button>
-        <el-button type="success" :loading="closeDialog.loading" @click="submitClose">
+        <el-button @click="closeDialog.visible = false">
+          {{ $t('common.cancel') }}
+        </el-button>
+        <el-button
+          type="success"
+          :loading="closeDialog.loading"
+          @click="submitClose"
+        >
           {{ $t('common.confirm') }}
         </el-button>
       </template>

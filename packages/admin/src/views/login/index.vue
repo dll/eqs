@@ -3,19 +3,47 @@
     <el-card class="login-card">
       <div class="login-head">
         <h2>{{ $t('app.title') }}</h2>
-        <el-select :model-value="lang" size="small" style="width: 100px" @change="onLangChange">
-          <el-option label="中文" value="zh-CN" />
-          <el-option label="EN" value="en-US" />
+        <el-select
+          :model-value="lang"
+          size="small"
+          style="width: 100px"
+          @change="onLangChange"
+        >
+          <el-option
+            label="中文"
+            value="zh-CN"
+          />
+          <el-option
+            label="EN"
+            value="en-US"
+          />
         </el-select>
       </div>
-      <el-form :model="form" @submit.prevent="login">
+      <el-form
+        :model="form"
+        @submit.prevent="login"
+      >
         <el-form-item>
-          <el-input v-model="form.phone" :placeholder="$t('login.phone')" prefix-icon="Phone" />
+          <el-input
+            v-model="form.phone"
+            :placeholder="$t('login.phone')"
+            prefix-icon="Phone"
+          />
         </el-form-item>
         <el-form-item>
-          <el-input v-model="form.code" :placeholder="$t('login.code')" prefix-icon="Message" />
+          <el-input
+            v-model="form.code"
+            :placeholder="$t('login.code')"
+            prefix-icon="Message"
+          />
         </el-form-item>
-        <el-button type="primary" @click="login" style="width: 100%">{{ $t('login.submit') }}</el-button>
+        <el-button
+          type="primary"
+          style="width: 100%"
+          @click="login"
+        >
+          {{ $t('login.submit') }}
+        </el-button>
       </el-form>
     </el-card>
   </div>

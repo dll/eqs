@@ -1,15 +1,32 @@
 <template>
   <view class="container">
-    <view v-if="messages.length" class="msg-list">
-      <view v-for="m in messages" :key="m.id" class="msg-item" @tap="openOrder(m)">
+    <view
+      v-if="messages.length"
+      class="msg-list"
+    >
+      <view
+        v-for="m in messages"
+        :key="m.id"
+        class="msg-item"
+        @tap="openOrder(m)"
+      >
         <view class="msg-row">
-          <text class="msg-title">{{ m.title }}</text>
-          <text class="msg-time">{{ fmtTime(m.created_at) }}</text>
+          <text class="msg-title">
+            {{ m.title }}
+          </text>
+          <text class="msg-time">
+            {{ fmtTime(m.created_at) }}
+          </text>
         </view>
-        <text class="msg-content">{{ m.content }}</text>
+        <text class="msg-content">
+          {{ m.content }}
+        </text>
       </view>
     </view>
-    <view v-else class="empty">
+    <view
+      v-else
+      class="empty"
+    >
       <text>{{ $t('message.empty') }}</text>
     </view>
   </view>

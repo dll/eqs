@@ -1,8 +1,20 @@
 <template>
   <el-container class="layout">
-    <el-aside width="200px" class="aside">
-      <div class="logo">⚡ {{ $t('app.title') }}</div>
-      <el-menu :default-active="route.path" router class="side-menu" background-color="transparent" text-color="rgba(255,255,255,.75)" active-text-color="#fff">
+    <el-aside
+      width="200px"
+      class="aside"
+    >
+      <div class="logo">
+        ⚡ {{ $t('app.title') }}
+      </div>
+      <el-menu
+        :default-active="route.path"
+        router
+        class="side-menu"
+        background-color="transparent"
+        text-color="rgba(255,255,255,.75)"
+        active-text-color="#fff"
+      >
         <el-menu-item index="/dashboard">
           <el-icon><DataAnalysis /></el-icon>
           <span>{{ $t('menu.dashboard') }}</span>
@@ -50,11 +62,27 @@
       <el-header class="header">
         <span>{{ $t('menu.' + route.meta.titleKey) }}</span>
         <div>
-          <el-select :model-value="lang" size="small" style="width: 100px; margin-right: 12px" @change="onLangChange">
-            <el-option label="中文" value="zh-CN" />
-            <el-option label="EN" value="en-US" />
+          <el-select
+            :model-value="lang"
+            size="small"
+            style="width: 100px; margin-right: 12px"
+            @change="onLangChange"
+          >
+            <el-option
+              label="中文"
+              value="zh-CN"
+            />
+            <el-option
+              label="EN"
+              value="en-US"
+            />
           </el-select>
-          <el-button type="text" @click="logout">{{ $t('common.logout') }}</el-button>
+          <el-button
+            type="text"
+            @click="logout"
+          >
+            {{ $t('common.logout') }}
+          </el-button>
         </div>
       </el-header>
       <el-main class="main">

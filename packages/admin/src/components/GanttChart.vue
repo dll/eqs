@@ -1,6 +1,9 @@
 <template>
   <div class="gantt-wrap">
-    <div ref="chartEl" class="gantt-chart"></div>
+    <div
+      ref="chartEl"
+      class="gantt-chart"
+    />
   </div>
 </template>
 

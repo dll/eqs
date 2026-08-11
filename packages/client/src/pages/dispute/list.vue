@@ -1,16 +1,38 @@
 <template>
   <view class="container">
-    <view v-if="disputes.length" class="d-list">
-      <view v-for="d in disputes" :key="d.id" class="d-item" @tap="openDetail(d.id)">
+    <view
+      v-if="disputes.length"
+      class="d-list"
+    >
+      <view
+        v-for="d in disputes"
+        :key="d.id"
+        class="d-item"
+        @tap="openDetail(d.id)"
+      >
         <view class="d-row">
-          <text class="d-order">订单#{{ d.order_id }}</text>
-          <text class="d-status" :class="'s-' + d.status">{{ statusText(d.status) }}</text>
+          <text class="d-order">
+            订单#{{ d.order_id }}
+          </text>
+          <text
+            class="d-status"
+            :class="'s-' + d.status"
+          >
+            {{ statusText(d.status) }}
+          </text>
         </view>
-        <text class="d-reason">{{ d.reason }}</text>
-        <text class="d-claim">{{ d.claim }}</text>
+        <text class="d-reason">
+          {{ d.reason }}
+        </text>
+        <text class="d-claim">
+          {{ d.claim }}
+        </text>
       </view>
     </view>
-    <view v-else class="empty">
+    <view
+      v-else
+      class="empty"
+    >
       <text>{{ $t('dispute.empty') }}</text>
     </view>
   </view>

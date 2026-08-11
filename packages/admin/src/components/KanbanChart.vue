@@ -1,5 +1,8 @@
 <template>
-  <div ref="chartEl" class="kanban-chart"></div>
+  <div
+    ref="chartEl"
+    class="kanban-chart"
+  />
 </template>
 
 <script setup lang="ts">
