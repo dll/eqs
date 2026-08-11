@@ -185,10 +185,9 @@ func TestCreditScore_RecalcOnReview(t *testing.T) {
 
 	var user model.User
 	model.DB.First(&user, 2)
-	// 满分评价：reviewScore=100, deliveryScore=100(无节点), disputeScore=100
-	// 100*0.5 + 100*0.3 + 100*0.2 = 100
-	if user.CreditScore != 100 {
-		t.Fatalf("满分评价后信用分应为100，得到 %v", user.CreditScore)
+	// 满分评价：质量100*0.3 + 准时100*0.3 + 纠纷100*0.2 + 活跃20*0.1 + 履约100*0.1 = 92
+	if user.CreditScore != 92 {
+		t.Fatalf("满分评价后信用分应为92，得到 %v", user.CreditScore)
 	}
 
 	// 低分评价
@@ -196,9 +195,8 @@ func TestCreditScore_RecalcOnReview(t *testing.T) {
 	recalcUserCredit(2)
 	model.DB.First(&user, 2)
 	// reviewScore = 100 - (5-3)*20 = 60（两条评价 avg=3）
-	// 60*0.5 + 100*0.3 + 100*0.2 = 30+30+20 = 80
-	if user.CreditScore != 80 {
-		t.Fatalf("低分评价后信用分应为80，得到 %v", user.CreditScore)
+	if user.CreditScore != 82 {
+		t.Fatalf("低分评价后信用分应为82，得到 %v", user.CreditScore)
 	}
 }
 
@@ -214,9 +212,8 @@ func TestCreditScore_RecalcOnDisputeClose(t *testing.T) {
 
 	var user model.User
 	model.DB.First(&user, 2)
-	// reviewScore=100, deliveryScore=100, disputeScore=90（1次结案争议扣10）
-	// 100*0.5 + 100*0.3 + 90*0.2 = 50+30+18 = 98
-	if user.CreditScore != 98 {
-		t.Fatalf("结案争议后信用分应为98，得到 %v", user.CreditScore)
+	// 五维：质量100*0.3 + 准时100*0.3 + 纠纷90*0.2 + 活跃20*0.1 + 履约100*0.1 = 90
+	if user.CreditScore != 90 {
+		t.Fatalf("结案争议后信用分应为90，得到 %v", user.CreditScore)
 	}
 }
