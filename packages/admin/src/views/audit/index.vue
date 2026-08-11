@@ -1,5 +1,11 @@
 <template>
   <div>
+    <el-alert
+      type="info"
+      :closable="false"
+      :title="$t('audit.gateHint')"
+      style="margin-bottom: 12px"
+    />
     <el-card>
       <template #header>
         {{ $t('audit.title') }}
@@ -11,31 +17,45 @@
         <el-table-column
           prop="id"
           :label="$t('audit.id')"
-          width="80"
+          width="60"
         />
         <el-table-column
           prop="supplier_id"
           :label="$t('audit.supplierId')"
-          width="90"
+          width="80"
         />
         <el-table-column
           prop="qualification_type"
           :label="$t('audit.qualType')"
-          width="140"
+          width="120"
         />
         <el-table-column
           prop="certificate_no"
           :label="$t('audit.certNo')"
+          width="130"
         />
         <el-table-column
           prop="level"
           :label="$t('audit.level')"
-          width="80"
+          width="70"
         />
         <el-table-column
-          prop="verification_status"
+          prop="issuing_authority"
+          :label="$t('audit.authority')"
+          width="140"
+        />
+        <el-table-column
+          prop="valid_to"
+          :label="$t('audit.validTo')"
+          width="110"
+        >
+          <template #default="{ row }">
+            {{ row.valid_to ? String(row.valid_to).slice(0, 10) : '-' }}
+          </template>
+        </el-table-column>
+        <el-table-column
           :label="$t('audit.status')"
-          width="100"
+          width="90"
         >
           <template #default="{ row }">
             <el-tag :type="statusType(row.verification_status)">
@@ -45,10 +65,16 @@
         </el-table-column>
         <el-table-column
           :label="$t('audit.actions')"
-          width="180"
+          width="230"
         >
           <template #default="{ row }">
             <template v-if="row.verification_status === 'pending'">
+              <el-input
+                v-model="comments[row.id]"
+                :placeholder="$t('audit.commentPh')"
+                size="small"
+                style="width: 130px; margin-right: 6px"
+              />
               <el-button
                 type="success"
                 size="small"
@@ -64,6 +90,12 @@
                 {{ $t('common.reject') }}
               </el-button>
             </template>
+            <span
+              v-else-if="row.review_comment"
+              class="comment-text"
+            >
+              {{ row.review_comment }}
+            </span>
           </template>
         </el-table-column>
       </el-table>
@@ -80,6 +112,7 @@ import { useI18n } from '@/utils/i18n'
 const { $t } = useI18n()
 
 const auditList = ref<any[]>([])
+const comments = ref<Record<number, string>>({})
 
 const load = async () => {
   try {
@@ -94,8 +127,17 @@ onMounted(load)
 
 const review = async (row: any, verified: boolean) => {
   try {
-    await api.post(`/api/v1/qualification/${row.id}/review`, { verified })
-    ElMessage.success(verified ? $t('common.passed') : $t('common.rejected'))
+    const res = await api.post(`/api/v1/qualification/${row.id}/review`, {
+      verified,
+      comment: comments.value[row.id] || '',
+    })
+    const ai = (res as any)?.ai_suggestion
+    if (ai?.suggestion) {
+      ElMessage.info(`${verified ? $t('common.passed') : $t('common.rejected')}。${$t('audit.aiSuggestion')}: ${ai.suggestion}`)
+    } else {
+      ElMessage.success(verified ? $t('common.passed') : $t('common.rejected'))
+    }
+    delete comments.value[row.id]
     load()
   } catch {
     // interceptor 已提示
@@ -117,3 +159,10 @@ const statusType = (status: string) => {
   return map[status] || 'info'
 }
 </script>
+
+<style scoped>
+.comment-text {
+  font-size: 12px;
+  color: #909399;
+}
+</style>

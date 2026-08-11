@@ -1,69 +1,82 @@
 <template>
-  <view class="container">
-    <view class="lang-switch">
-      <text
-        class="lang-btn"
-        :class="settingsStore.lang === 'zh-CN' ? 'active' : ''"
-        @tap="settingsStore.setLang('zh-CN')"
-      >
-        中文
-      </text>
-      <text
-        class="lang-btn"
-        :class="settingsStore.lang === 'en-US' ? 'active' : ''"
-        @tap="settingsStore.setLang('en-US')"
-      >
-        EN
-      </text>
+  <view class="page">
+    <!-- 品牌头图 -->
+    <view class="hero">
+      <view class="hero-glow hero-glow-ai" />
+      <view class="hero-glow hero-glow-cyan" />
+      <view class="hero-badge">⚡</view>
+      <text class="hero-title">{{ $t('app.title') }}</text>
+      <text class="hero-sub">Agile · AI · Engineering Service</text>
     </view>
-    <view class="form">
-      <view class="form-item">
-        <input
-          v-model="form.phone"
-          class="input"
-          :placeholder="$t('login.phone')"
-          type="number"
-          maxlength="11"
+
+    <view class="container">
+      <view class="lang-switch">
+        <text
+          class="lang-btn"
+          :class="settingsStore.lang === 'zh-CN' ? 'active' : ''"
+          @tap="settingsStore.setLang('zh-CN')"
         >
+          中文
+        </text>
+        <text
+          class="lang-btn"
+          :class="settingsStore.lang === 'en-US' ? 'active' : ''"
+          @tap="settingsStore.setLang('en-US')"
+        >
+          EN
+        </text>
       </view>
-      <view class="form-item code-row">
-        <input
-          v-model="form.code"
-          class="input code-input"
-          :placeholder="$t('login.code')"
-          type="number"
-          maxlength="6"
-        >
-        <button
-          class="code-btn"
-          :disabled="countdown > 0"
-          @tap="sendCode"
-        >
-          {{ countdown > 0 ? `${countdown}s` : $t('login.getCode') }}
-        </button>
-      </view>
-      <view class="form-item">
-        <view class="role-select">
-          <view
-            :class="['role-item', form.userType === 1 ? 'active' : '']"
-            @tap="form.userType = 1"
+
+      <view class="form">
+        <view class="form-item">
+          <input
+            v-model="form.phone"
+            class="input"
+            :placeholder="$t('login.phone')"
+            type="number"
+            maxlength="11"
           >
-            {{ $t('login.client') }}
-          </view>
-          <view
-            :class="['role-item', form.userType === 2 ? 'active' : '']"
-            @tap="form.userType = 2"
+        </view>
+        <view class="form-item code-row">
+          <input
+            v-model="form.code"
+            class="input code-input"
+            :placeholder="$t('login.code')"
+            type="number"
+            maxlength="6"
           >
-            {{ $t('login.supplier') }}
+          <button
+            class="code-btn"
+            :disabled="countdown > 0"
+            @tap="sendCode"
+          >
+            {{ countdown > 0 ? `${countdown}s` : $t('login.getCode') }}
+          </button>
+        </view>
+        <view class="form-item">
+          <view class="role-select">
+            <view
+              :class="['role-item', form.userType === 1 ? 'active' : '']"
+              @tap="form.userType = 1"
+            >
+              {{ $t('login.client') }}
+            </view>
+            <view
+              :class="['role-item', form.userType === 2 ? 'active' : '']"
+              @tap="form.userType = 2"
+            >
+              {{ $t('login.supplier') }}
+            </view>
           </view>
         </view>
+        <button
+          class="submit-btn"
+          @tap="login"
+        >
+          {{ $t('common.login') }}
+        </button>
+        <text class="ai-tip">AI 智能审核 · 敏捷交付闭环</text>
       </view>
-      <button
-        class="submit-btn"
-        @tap="login"
-      >
-        {{ $t('common.login') }}
-      </button>
     </view>
   </view>
 </template>
@@ -118,8 +131,78 @@ const login = async () => {
 </script>
 
 <style scoped>
+.page {
+  min-height: 100vh;
+  background: var(--bg-color);
+}
+
+/* 品牌头图 */
+.hero {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, #2563eb 0%, #06b6d4 100%);
+  padding: 80rpx 40rpx 60rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.hero-glow {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(40rpx);
+  opacity: .45;
+}
+.hero-glow-ai {
+  width: 260rpx;
+  height: 260rpx;
+  background: #8b5cf6;
+  top: -80rpx;
+  right: -40rpx;
+}
+.hero-glow-cyan {
+  width: 220rpx;
+  height: 220rpx;
+  background: #06b6d4;
+  bottom: -70rpx;
+  left: -40rpx;
+}
+.hero-badge {
+  width: 96rpx;
+  height: 96rpx;
+  border-radius: 28rpx;
+  background: rgba(255, 255, 255, .2);
+  backdrop-filter: blur(8rpx);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 48rpx;
+  color: #fff;
+  position: relative;
+  z-index: 1;
+  box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, .15);
+}
+.hero-title {
+  color: #fff;
+  font-size: 44rpx;
+  font-weight: 800;
+  margin-top: 24rpx;
+  position: relative;
+  z-index: 1;
+  letter-spacing: 2rpx;
+}
+.hero-sub {
+  color: rgba(255, 255, 255, .85);
+  font-size: 22rpx;
+  margin-top: 10rpx;
+  letter-spacing: 1rpx;
+  position: relative;
+  z-index: 1;
+}
+
 .container {
-  padding: 60rpx 40rpx;
+  padding: 40rpx;
+  margin-top: -20rpx;
+  position: relative;
 }
 
 .lang-switch {
@@ -132,8 +215,8 @@ const login = async () => {
 .lang-btn {
   font-size: 26rpx;
   color: var(--muted-color);
-  padding: 8rpx 20rpx;
-  border-radius: 8rpx;
+  padding: 8rpx 24rpx;
+  border-radius: 20rpx;
   background: var(--input-bg);
 }
 
@@ -147,10 +230,12 @@ const login = async () => {
 }
 
 .input {
-  background: var(--input-bg);
+  background: var(--card-bg);
   padding: 24rpx 30rpx;
-  border-radius: 10rpx;
+  border-radius: 14rpx;
   font-size: 30rpx;
+  color: var(--text-color);
+  border: 1rpx solid var(--border-color);
 }
 
 .code-row {
@@ -167,7 +252,7 @@ const login = async () => {
   color: #fff;
   font-size: 26rpx;
   padding: 0 30rpx;
-  border-radius: 10rpx;
+  border-radius: 14rpx;
   white-space: nowrap;
 }
 
@@ -179,21 +264,36 @@ const login = async () => {
 .role-item {
   flex: 1;
   text-align: center;
-  padding: 20rpx;
-  background: var(--input-bg);
-  border-radius: 10rpx;
+  padding: 22rpx;
+  background: var(--card-bg);
+  border-radius: 14rpx;
   font-size: 28rpx;
+  color: var(--muted-color);
+  border: 1rpx solid var(--border-color);
 }
 
 .role-item.active {
-  background: var(--primary-color);
+  background: linear-gradient(135deg, #2563eb, #06b6d4);
   color: #fff;
+  border-color: transparent;
+  box-shadow: 0 6rpx 18rpx rgba(37, 99, 235, .3);
 }
 
 .submit-btn {
-  background: var(--primary-color);
+  background: linear-gradient(135deg, #2563eb, #06b6d4);
   color: #fff;
   margin-top: 40rpx;
-  border-radius: 10rpx;
+  border-radius: 14rpx;
+  font-size: 32rpx;
+  font-weight: 600;
+  box-shadow: 0 8rpx 24rpx rgba(37, 99, 235, .3);
+}
+
+.ai-tip {
+  display: block;
+  text-align: center;
+  margin-top: 24rpx;
+  font-size: 22rpx;
+  color: var(--muted-color);
 }
 </style>

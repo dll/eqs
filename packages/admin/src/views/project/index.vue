@@ -43,22 +43,94 @@
           width="100"
         >
           <template #default="{ row }">
-            <el-tag>{{ statusText(row.status) }}</el-tag>
+            <el-tag :type="row.status === 5 ? 'info' : ''">{{ statusText(row.status) }}</el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column
+          :label="$t('project.actions')"
+          width="160"
+        >
+          <template #default="{ row }">
+            <el-button
+              type="primary"
+              size="small"
+              @click="openEdit(row)"
+            >
+              {{ $t('project.edit') }}
+            </el-button>
+            <el-button
+              type="danger"
+              size="small"
+              @click="removeProject(row)"
+            >
+              {{ $t('project.delete') }}
+            </el-button>
           </template>
         </el-table-column>
       </el-table>
     </el-card>
+
+    <!-- 编辑项目 -->
+    <el-dialog
+      v-model="editVisible"
+      :title="$t('project.edit')"
+      width="480px"
+    >
+      <el-form
+        :model="editForm"
+        label-width="90px"
+      >
+        <el-form-item :label="$t('project.name')">
+          <el-input v-model="editForm.title" />
+        </el-form-item>
+        <el-form-item :label="$t('project.desc')">
+          <el-input
+            v-model="editForm.description"
+            type="textarea"
+            :rows="3"
+          />
+        </el-form-item>
+        <el-form-item :label="$t('project.address')">
+          <el-input v-model="editForm.address" />
+        </el-form-item>
+        <el-form-item :label="$t('project.budget')">
+          <el-input-number
+            v-model="editForm.budget_min"
+            :min="0"
+            :step="1000"
+          />
+          <span style="margin: 0 8px">-</span>
+          <el-input-number
+            v-model="editForm.budget_max"
+            :min="0"
+            :step="1000"
+          />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="editVisible = false">{{ $t('common.cancel') }}</el-button>
+        <el-button
+          type="primary"
+          @click="saveEdit"
+        >
+          {{ $t('common.confirm') }}
+        </el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { api } from '@/utils/request'
 import { useI18n } from '@/utils/i18n'
 
 const { $t } = useI18n()
 
 const projects = ref<any[]>([])
+const editVisible = ref(false)
+const editForm = ref<any>({})
 
 const load = async () => {
   try {
@@ -71,9 +143,52 @@ const load = async () => {
 
 onMounted(load)
 
+const openEdit = (row: any) => {
+  editForm.value = {
+    id: row.id,
+    title: row.title,
+    description: row.description,
+    address: row.address,
+    budget_min: row.budget_min,
+    budget_max: row.budget_max,
+  }
+  editVisible.value = true
+}
+
+const saveEdit = async () => {
+  try {
+    const res = await api.put(`/api/v1/project/${editForm.value.id}`, {
+      title: editForm.value.title,
+      description: editForm.value.description,
+      address: editForm.value.address,
+      budget_min: editForm.value.budget_min,
+      budget_max: editForm.value.budget_max,
+    })
+    editVisible.value = false
+    ElMessage.success((res as any)?.locked ? $t('project.lockedHint') : $t('common.passed'))
+    load()
+  } catch {
+    // interceptor 已提示
+  }
+}
+
+const removeProject = (row: any) => {
+  ElMessageBox.confirm($t('project.deleteConfirm'), $t('project.delete'), { type: 'warning' })
+    .then(async () => {
+      try {
+        const res = await api.delete(`/api/v1/project/${row.id}`)
+        ElMessage.success((res as any)?.offline ? $t('project.offlined') : $t('project.deleted'))
+        load()
+      } catch {
+        // interceptor 已提示
+      }
+    })
+    .catch(() => {})
+}
+
 const statusText = (status: number) => {
   const map: Record<number, string> = {
-    0: $t('project.status.draft'), 1: $t('project.status.published'), 2: $t('project.status.assigned'), 3: $t('project.status.inProgress'), 4: $t('project.status.completed')
+    0: $t('project.status.draft'), 1: $t('project.status.published'), 2: $t('project.status.assigned'), 3: $t('project.status.inProgress'), 4: $t('project.status.completed'), 5: $t('project.status.offline')
   }
   return map[status] || $t('project.status.unknown')
 }

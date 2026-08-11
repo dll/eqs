@@ -88,6 +88,13 @@
           {{ $t('project.apply') }}
         </button>
         <button
+          v-if="isOwner() && (project.status === 0 || project.status === 1)"
+          class="action-btn danger"
+          @tap="deleteProject"
+        >
+          {{ $t('project.delete') }}
+        </button>
+        <button
           class="action-btn"
           @tap="contact"
         >
@@ -202,6 +209,24 @@ const statusText = (status: number) => {
 
 const isOwner = () => userStore.user?.id === project.value?.user_id
 const isSupplier = () => userStore.user?.user_type === 2
+
+// V9：删除/下架项目（无业务往来物理删除，否则下架）
+const deleteProject = () => {
+  uni.showModal({
+    title: $t('project.delete'),
+    content: $t('project.deleteConfirm'),
+    success: async (r: any) => {
+      if (!r.confirm) return
+      try {
+        const res = await request.delete(`/api/v1/project/${project.value.id}`)
+        uni.showToast({ title: (res as any)?.offline ? $t('project.offlined') : $t('project.deleted'), icon: 'none' })
+        setTimeout(() => uni.navigateBack(), 800)
+      } catch {
+        // request 已提示
+      }
+    },
+  })
+}
 
 const showBidModal = ref(false)
 const bidForm = ref({ amount: 0, service_days: 7 })

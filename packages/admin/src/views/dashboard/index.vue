@@ -373,22 +373,23 @@ const statusType = (status: number) => {
 .stat-icon {
   width: 48px;
   height: 48px;
-  border-radius: 10px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: #fff;
   flex-shrink: 0;
+  box-shadow: 0 6px 16px rgba(37, 99, 235, .22);
 }
 .stat-value {
   font-size: 24px;
   font-weight: 700;
-  color: #303133;
+  color: var(--eqs-text, #303133);
   line-height: 1.2;
 }
 .stat-label {
   font-size: 13px;
-  color: #909399;
+  color: var(--eqs-text-muted, #909399);
 }
 .panel {
   margin-top: 16px;
@@ -397,6 +398,7 @@ const statusType = (status: number) => {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  font-weight: 600;
 }
 .panel-actions {
   display: flex;
@@ -412,7 +414,7 @@ const statusType = (status: number) => {
 }
 .ai-text {
   margin: 0;
-  color: #303133;
+  color: var(--eqs-text, #303133);
   line-height: 1.6;
 }
 .ai-section {
@@ -420,17 +422,30 @@ const statusType = (status: number) => {
 }
 .ai-section-title {
   font-weight: 600;
-  color: #606266;
+  color: var(--eqs-text-secondary, #606266);
   margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.ai-section-title::before {
+  content: '';
+  width: 4px;
+  height: 14px;
+  border-radius: 2px;
+  background: var(--eqs-gradient-ai, linear-gradient(135deg, #8b5cf6, #06b6d4));
 }
 .ai-list {
   margin: 0;
   padding-left: 18px;
-  color: #606266;
+  color: var(--eqs-text-secondary, #606266);
   font-size: 13px;
   line-height: 1.8;
 }
 .ai-list.success {
-  color: #67C23A;
+  color: var(--eqs-success, #67C23A);
+}
+.ai-loading {
+  padding: 8px 0;
 }
 </style>

@@ -154,6 +154,13 @@
 
     <view class="actions-card">
       <button
+        v-if="order.status === 0"
+        class="action-btn danger"
+        @tap="cancelOrder"
+      >
+        {{ $t('order.cancel') }}
+      </button>
+      <button
         class="action-btn"
         @tap="openDispute"
       >
@@ -230,6 +237,24 @@ const checkin = () => {
     },
     fail: () => {
       checkinStatus.value = $t('order.checkinNoLocation')
+    },
+  })
+}
+
+// V9：取消未签约订单（二次确认后 POST /order/:id/cancel）
+const cancelOrder = () => {
+  uni.showModal({
+    title: $t('order.cancel'),
+    content: $t('order.cancelConfirm'),
+    success: async (r: any) => {
+      if (!r.confirm) return
+      try {
+        await request.post(`/api/v1/order/${order.value.id}/cancel`, { reason: $t('order.cancelReasonDefault') })
+        uni.showToast({ title: $t('order.cancelled'), icon: 'none' })
+        loadOrder(String(order.value.id))
+      } catch {
+        // request 已提示
+      }
     },
   })
 }

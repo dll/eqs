@@ -63,33 +63,34 @@ export const useSettingsStore = defineStore('settings', () => {
   }
 
   const applyTheme = (t: string) => {
+    // 统一品牌色：工程蓝 #2563EB / 科技青 #06B6D4 / AI 紫 #8B5CF6（与 Admin 设计系统一致）
     const vars: Record<string, Record<string, string>> = {
       print: {
-        '--bg-color': '#ffffff',
-        '--text-color': '#000000',
+        '--bg-color': '#f4f6fb',
+        '--text-color': '#1e293b',
         '--card-bg': '#ffffff',
-        '--border-color': '#e5e5e5',
-        '--muted-color': '#666666',
-        '--primary-color': '#1890ff',
-        '--input-bg': '#f5f5f5',
+        '--border-color': '#e6eaf3',
+        '--muted-color': '#64748b',
+        '--primary-color': '#2563eb',
+        '--input-bg': '#f1f5f9',
       },
       dark: {
-        '--bg-color': '#1e1e1e',
-        '--text-color': '#eeeeee',
-        '--card-bg': '#2a2a2a',
-        '--border-color': '#444444',
-        '--muted-color': '#999999',
-        '--primary-color': '#4d9fff',
-        '--input-bg': '#3a3a3a',
+        '--bg-color': '#0f172a',
+        '--text-color': '#e2e8f0',
+        '--card-bg': '#1e293b',
+        '--border-color': '#334155',
+        '--muted-color': '#94a3b8',
+        '--primary-color': '#60a5fa',
+        '--input-bg': '#1e293b',
       },
       light: {
-        '--bg-color': '#f5f5f5',
-        '--text-color': '#333333',
+        '--bg-color': '#f4f6fb',
+        '--text-color': '#1e293b',
         '--card-bg': '#ffffff',
-        '--border-color': '#e5e5e5',
-        '--muted-color': '#666666',
-        '--primary-color': '#1890ff',
-        '--input-bg': '#f5f5f5',
+        '--border-color': '#e6eaf3',
+        '--muted-color': '#64748b',
+        '--primary-color': '#2563eb',
+        '--input-bg': '#f1f5f9',
       },
     }
     const themeVars = vars[t] || vars.print

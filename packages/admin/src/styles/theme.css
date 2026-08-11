@@ -1,39 +1,68 @@
-/* EQS 敏捷风格主题
- * 品牌色：工程蓝 #2563EB → 科技青 #06B6D4 渐变
- * AI 元素：渐变光晕、玻璃拟态、发光强调
- * 敏捷风格：圆角、柔和阴影、紧凑间距
+/* ===== EQS 设计系统 =====
+ * 品牌定位：工程快捷服务 —— 专业工程 × 敏捷交付 × AI 增强
+ * 色板：
+ *   - 工程蓝 #2563EB（专业、信任）
+ *   - 科技青 #06B6D4（敏捷、流动）
+ *   - AI 紫 #8B5CF6（AI 增强、智能）
+ *   - 渐变主色 135deg 蓝→青；AI 元素用 紫→青 渐变
+ * 风格：
+ *   - 敏捷：大圆角(12-16px)、柔和阴影、紧凑间距、卡片化
+ *   - AI：玻璃拟态(毛玻璃)、渐变光晕、发光强调、数据面板
+ *   - 专业：工程网格背景、加粗数据、清晰层级
  */
 :root {
-  /* EQS 品牌色板 */
+  /* 品牌色板 */
   --eqs-primary: #2563eb;
+  --eqs-primary-dark: #1d4ed8;
   --eqs-primary-light: #60a5fa;
   --eqs-accent: #06b6d4;
+  --eqs-ai: #8b5cf6;
+  --eqs-ai-light: #a78bfa;
+  --eqs-success: #10b981;
+  --eqs-warning: #f59e0b;
+  --eqs-danger: #ef4444;
+
+  /* 渐变 */
   --eqs-gradient: linear-gradient(135deg, #2563eb 0%, #06b6d4 100%);
+  --eqs-gradient-ai: linear-gradient(135deg, #8b5cf6 0%, #06b6d4 100%);
   --eqs-gradient-soft: linear-gradient(135deg, rgba(37, 99, 235, .08) 0%, rgba(6, 182, 212, .08) 100%);
-  --eqs-bg: #f5f7fb;
+  --eqs-gradient-ai-soft: linear-gradient(135deg, rgba(139, 92, 246, .10) 0%, rgba(6, 182, 212, .10) 100%);
+
+  /* 表面 */
+  --eqs-bg: #f4f6fb;
   --eqs-card-bg: #ffffff;
-  --eqs-border: #e5e9f2;
+  --eqs-border: #e6eaf3;
   --eqs-text: #1e293b;
   --eqs-text-secondary: #64748b;
+  --eqs-text-muted: #94a3b8;
+
+  /* 形状与阴影 */
+  --eqs-radius-sm: 8px;
   --eqs-radius: 12px;
+  --eqs-radius-lg: 16px;
   --eqs-shadow: 0 2px 8px rgba(30, 41, 59, .06);
-  --eqs-shadow-hover: 0 6px 20px rgba(37, 99, 235, .12);
-  --eqs-glow: 0 0 20px rgba(37, 99, 235, .25);
+  --eqs-shadow-hover: 0 8px 24px rgba(37, 99, 235, .14);
+  --eqs-shadow-ai: 0 4px 24px rgba(139, 92, 246, .18);
+  --eqs-glow: 0 0 24px rgba(37, 99, 235, .22);
+
+  /* 玻璃拟态 */
+  --eqs-glass: rgba(255, 255, 255, .72);
+  --eqs-glass-border: rgba(255, 255, 255, .55);
 }
 
-/* Element Plus 主题覆盖 */
 html, body {
   background: var(--eqs-bg);
   color: var(--eqs-text);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'PingFang SC', 'Microsoft YaHei', sans-serif;
 }
 
+/* ---- Element Plus 全局覆盖 ---- */
 .el-card {
-  border-radius: var(--eqs-radius) !important;
-  border-color: var(--eqs-border) !important;
+  border-radius: var(--eqs-radius-lg) !important;
+  border: 1px solid var(--eqs-border) !important;
   box-shadow: var(--eqs-shadow) !important;
   transition: box-shadow .25s ease, transform .25s ease;
 }
-
 .el-card:hover {
   box-shadow: var(--eqs-shadow-hover) !important;
 }
@@ -41,38 +70,103 @@ html, body {
 .el-button--primary {
   background: var(--eqs-gradient) !important;
   border: none !important;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, .28) !important;
+}
+.el-button--primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(37, 99, 235, .36) !important;
 }
 
 .el-table {
   border-radius: var(--eqs-radius);
   overflow: hidden;
 }
+.el-table th.el-table__cell {
+  background: #f8fafc !important;
+  color: var(--eqs-text-secondary) !important;
+  font-weight: 600;
+}
 
-/* 统计卡数字渐变 */
-.stat-value {
+.el-tag {
+  border-radius: 20px;
+}
+
+/* ---- 通用组件类（设计系统令牌） ---- */
+
+/* 渐变文字（统计数字、标题强调） */
+.eqs-gradient-text {
   background: var(--eqs-gradient);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
+/* AI 渐变文字 */
+.eqs-ai-text {
+  background: var(--eqs-gradient-ai);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* 玻璃卡片 */
+.eqs-glass {
+  background: var(--eqs-glass);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid var(--eqs-glass-border);
+  border-radius: var(--eqs-radius-lg);
+}
+
 /* AI 面板光晕 */
 .ai-body {
   position: relative;
-  border-radius: var(--eqs-radius);
+  border-radius: var(--eqs-radius-lg);
   padding: 14px;
-  background: var(--eqs-gradient-soft);
+  background: var(--eqs-gradient-ai-soft);
+  border: 1px solid rgba(139, 92, 246, .18);
+}
+.ai-body::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  background: linear-gradient(135deg, rgba(139,92,246,.25), rgba(6,182,212,.25));
+  filter: blur(12px);
+  opacity: .35;
+  z-index: -1;
+}
+
+/* 统计卡数字渐变（兼容旧类名） */
+.stat-value {
+  background: var(--eqs-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-weight: 700;
+}
+
+/* 面板头 */
+.panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-weight: 600;
+}
+
+/* 页面过渡 */
+.fade-enter-active, .fade-leave-active { transition: opacity .2s; }
+.fade-enter-from, .fade-leave-to { opacity: 0; }
+
+/* 工程网格背景（登录页等） */
+.eqs-grid-bg {
+  background-image:
+    linear-gradient(rgba(37, 99, 235, .05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(37, 99, 235, .05) 1px, transparent 1px);
+  background-size: 28px 28px;
 }
 
 /* 滚动条（敏捷风） */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-::-webkit-scrollbar-thumb {
-  background: var(--eqs-primary-light);
-  border-radius: 4px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: var(--eqs-primary);
-}
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-thumb { background: var(--eqs-primary-light); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--eqs-primary); }
