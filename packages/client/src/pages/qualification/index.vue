@@ -149,6 +149,13 @@
           </text>
           <view class="q-ops">
             <text
+              v-if="q.evidence_file_id"
+              class="q-op"
+              @tap.stop="previewFile(q)"
+            >
+              预览
+            </text>
+            <text
               class="q-op"
               @tap.stop="viewQual(q)"
             >
@@ -325,6 +332,34 @@ const editingID = ref(0)
 
 // V9：查看资质详情（弹窗展示完整信息与审核意见）
 const detailQual = ref<any>(null)
+
+// V10：文件在线预览（下载后按类型打开：图片 previewImage / PDF openDocument）
+const previewFile = (q: any) => {
+  if (!q.evidence_file_id) return
+  uni.showLoading({ title: '加载中...' })
+  const token = uni.getStorageSync('token')
+  uni.downloadFile({
+    url: `/api/v1/file/${q.evidence_file_id}/preview`,
+    header: { Authorization: `Bearer ${token}` },
+    success: (res: any) => {
+      uni.hideLoading()
+      if (res.statusCode !== 200) {
+        uni.showToast({ title: '预览失败', icon: 'none' })
+        return
+      }
+      const isImage = /\.(jpg|jpeg|png)$/i.test(res.tempFilePath)
+      if (isImage) {
+        uni.previewImage({ urls: [res.tempFilePath] })
+      } else {
+        uni.openDocument({ filePath: res.tempFilePath, showMenu: true, fail: () => uni.showToast({ title: '请下载后查看', icon: 'none' }) })
+      }
+    },
+    fail: () => {
+      uni.hideLoading()
+      uni.showToast({ title: '预览失败', icon: 'none' })
+    },
+  })
+}
 const viewQual = (q: any) => {
   detailQual.value = q
   uni.showModal({

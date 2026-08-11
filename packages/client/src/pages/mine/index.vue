@@ -20,7 +20,15 @@
         class="menu-item"
         @tap="goTo('/pages/message/index')"
       >
-        <text>{{ $t('mine.notice') }}</text>
+        <view class="menu-left">
+          <text>{{ $t('mine.notice') }}</text>
+          <text
+            v-if="unread > 0"
+            class="badge"
+          >
+            {{ unread }}
+          </text>
+        </view>
         <text class="arrow">
           >
         </text>
@@ -115,18 +123,32 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { useUserStore } from '@/store/user'
 import { useSettingsStore, THEMES, LANGS } from '@/store/settings'
 import { useI18n, usePageTitle, applyTabBarI18n } from '@/utils/i18n'
+import { request } from '@/utils/request'
 
 const userStore = useUserStore()
 const settingsStore = useSettingsStore()
 const { $t } = useI18n()
 usePageTitle('page.mine', { onShow })
+
+// V10：消息未读角标
+const unread = ref(0)
+const loadUnread = async () => {
+  try {
+    const res = await request.get('/api/v1/notification/unread-count', { silent401: true }).catch(() => ({ unread: 0 }))
+    unread.value = res.unread || 0
+  } catch {
+    unread.value = 0
+  }
+}
+
 onShow(() => {
   applyTabBarI18n()
+  loadUnread()
 })
 
 const themeName = computed(() => $t('theme.' + settingsStore.theme))
@@ -203,10 +225,27 @@ const logout = () => {
 .menu-item {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   padding: 30rpx;
   border-bottom: 1rpx solid var(--border-color);
   font-size: 30rpx;
   color: var(--text-color);
+}
+.menu-left {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}
+.badge {
+  min-width: 32rpx;
+  height: 32rpx;
+  padding: 0 8rpx;
+  border-radius: 16rpx;
+  background: #ef4444;
+  color: #fff;
+  font-size: 20rpx;
+  line-height: 32rpx;
+  text-align: center;
 }
 
 .arrow {

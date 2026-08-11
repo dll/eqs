@@ -1,6 +1,8 @@
 package handler
 
 import (
+	"time"
+
 	"github.com/eqs/server/internal/model"
 	"github.com/gin-gonic/gin"
 )
@@ -88,6 +90,49 @@ func AdminDashboardStats(c *gin.Context) {
 		"order_count":   orderCount,
 		"dispute_count": disputeCount,
 		"settled_amount": amount,
+	})
+}
+
+// AdminOperationsStats 运营看板（V10：转化漏斗/状态分布/服务商活跃度）
+// GET /api/v1/admin/operations-stats
+func AdminOperationsStats(c *gin.Context) {
+	// 用户结构
+	var clientCount, supplierCount, expertCount int64
+	model.DB.Model(&model.User{}).Where("user_type = ?", 1).Count(&clientCount)
+	model.DB.Model(&model.User{}).Where("user_type = ?", 2).Count(&supplierCount)
+	model.DB.Model(&model.User{}).Where("user_type = ?", 4).Count(&expertCount)
+
+	// 项目状态分布（0草稿 1发布 2已接单 3进行中 4完成 5下架）
+	type statusCount struct {
+		Status int   `json:"status"`
+		Count  int64 `json:"count"`
+	}
+	var projectDist []statusCount
+	model.DB.Model(&model.Project{}).Select("status, COUNT(*) as count").Group("status").Scan(&projectDist)
+	var orderDist []statusCount
+	model.DB.Model(&model.Order{}).Select("status, COUNT(*) as count").Group("status").Scan(&orderDist)
+
+	// 转化漏斗：发布项目 → 有报价 → 中选成单 → 已完成
+	var published, withBid, completed int64
+	model.DB.Model(&model.Project{}).Where("status >= ?", 1).Count(&published)
+	model.DB.Model(&model.Bid{}).Where("status = ?", "selected").Distinct("project_id").Count(&withBid)
+	model.DB.Model(&model.Order{}).Where("status = ?", 3).Count(&completed)
+
+	// 服务商活跃度：近7天有报价/交付/打卡的服务商数
+	since := time.Now().AddDate(0, 0, -7)
+	var activeSuppliers int64
+	model.DB.Model(&model.Bid{}).Where("created_at >= ?", since).Distinct("supplier_id").Count(&activeSuppliers)
+
+	ok(c, gin.H{
+		"users": gin.H{
+			"clients": clientCount, "suppliers": supplierCount, "experts": expertCount,
+		},
+		"projects": projectDist,
+		"orders":   orderDist,
+		"funnel": gin.H{
+			"published": published, "with_bid": withBid, "completed": completed,
+		},
+		"active_suppliers_7d": activeSuppliers,
 	})
 }
 

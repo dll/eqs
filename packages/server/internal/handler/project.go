@@ -3,6 +3,7 @@ package handler
 import (
 	"os"
 	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -335,6 +336,8 @@ func DeleteProject(c *gin.Context) {
 }
 
 // GetRecommendations 基于地区、资质和信用推荐服务方
+// GetRecommendations 智能派单（P1 增强：资质匹配 + 信用分多维推荐）
+// 匹配规则：服务方持与项目 service_type 匹配的已通过资质 +60；信用分折算 40 分
 func GetRecommendations(c *gin.Context) {
 	id := c.Param("id")
 
@@ -344,7 +347,17 @@ func GetRecommendations(c *gin.Context) {
 		return
 	}
 
-	// 满足条件的服务方：状态正常、信誉分>=70，优先同地区（地址相似度简化为同服务类型）
+	// 1. 资质匹配：找出拥有与项目服务类型匹配的已通过资质的服务方
+	matched := map[uint]bool{}
+	var quals []model.SupplierQualification
+	model.DB.Where("verification_status = ?", "approved").
+		Where("qualification_type LIKE ?", "%"+project.ServiceType+"%").
+		Find(&quals)
+	for _, q := range quals {
+		matched[q.SupplierID] = true
+	}
+
+	// 2. 候选服务方：状态正常、信誉分>=70
 	q := model.DB.Where("user_type = ? AND status = ? AND credit_score >= ?", 2, 1, 70)
 	q = q.Where("id <> ?", project.UserID)
 
@@ -354,22 +367,32 @@ func GetRecommendations(c *gin.Context) {
 		return
 	}
 
-	// P1-09：对外返回手机号脱敏
+	// 3. 综合评分：资质匹配 +60、信用分折算 40
 	type supplierItem struct {
 		ID          uint    `json:"id"`
 		Phone       string  `json:"phone"`
 		CompanyName string  `json:"company_name"`
 		CreditScore float64 `json:"credit_score"`
+		MatchScore  float64 `json:"match_score"`  // 0-100 综合推荐分
+		QualMatched bool    `json:"qual_matched"` // 是否资质匹配
 	}
 	items := make([]supplierItem, 0, len(suppliers))
 	for _, s := range suppliers {
+		score := s.CreditScore / 100 * 40
+		if matched[s.ID] {
+			score += 60
+		}
 		items = append(items, supplierItem{
 			ID:          s.ID,
 			Phone:       model.MaskPhone(s.Phone),
 			CompanyName: s.CompanyName,
 			CreditScore: s.CreditScore,
+			MatchScore:  score,
+			QualMatched: matched[s.ID],
 		})
 	}
+	// 按综合推荐分降序
+	sort.Slice(items, func(i, j int) bool { return items[i].MatchScore > items[j].MatchScore })
 
 	ok(c, gin.H{"suppliers": items})
 }

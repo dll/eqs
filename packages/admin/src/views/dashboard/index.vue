@@ -192,6 +192,80 @@
       </el-col>
     </el-row>
 
+    <!-- 运营看板（V10） -->
+    <el-row
+      :gutter="16"
+      style="margin-top: 16px"
+    >
+      <el-col :span="12">
+        <el-card
+          class="panel"
+          shadow="hover"
+        >
+          <template #header>
+            {{ $t('dashboard.opsTitle') }}
+          </template>
+          <div class="ops-users">
+            <div class="ops-user-item">
+              <span class="ops-num">{{ ops?.users?.clients ?? 0 }}</span>
+              <span class="ops-label">{{ $t('dashboard.opsClients') }}</span>
+            </div>
+            <div class="ops-user-item">
+              <span class="ops-num">{{ ops?.users?.suppliers ?? 0 }}</span>
+              <span class="ops-label">{{ $t('dashboard.opsSuppliers') }}</span>
+            </div>
+            <div class="ops-user-item">
+              <span class="ops-num">{{ ops?.users?.experts ?? 0 }}</span>
+              <span class="ops-label">{{ $t('dashboard.opsExperts') }}</span>
+            </div>
+            <div class="ops-user-item">
+              <span class="ops-num">{{ ops?.active_suppliers_7d ?? 0 }}</span>
+              <span class="ops-label">{{ $t('dashboard.opsActive7d') }}</span>
+            </div>
+          </div>
+        </el-card>
+      </el-col>
+      <el-col :span="12">
+        <el-card
+          class="panel"
+          shadow="hover"
+        >
+          <template #header>
+            {{ $t('dashboard.opsFunnel') }}
+          </template>
+          <div class="ops-funnel">
+            <div class="funnel-row">
+              <span class="funnel-label">{{ $t('dashboard.funnelPublished') }}</span>
+              <el-progress
+                :percentage="100"
+                :stroke-width="12"
+                color="#2563eb"
+              />
+              <span class="funnel-num">{{ ops?.funnel?.published ?? 0 }}</span>
+            </div>
+            <div class="funnel-row">
+              <span class="funnel-label">{{ $t('dashboard.funnelWithBid') }}</span>
+              <el-progress
+                :percentage="funnelPct(ops?.funnel?.with_bid)"
+                :stroke-width="12"
+                color="#06b6d4"
+              />
+              <span class="funnel-num">{{ ops?.funnel?.with_bid ?? 0 }}</span>
+            </div>
+            <div class="funnel-row">
+              <span class="funnel-label">{{ $t('dashboard.funnelCompleted') }}</span>
+              <el-progress
+                :percentage="funnelPct(ops?.funnel?.completed)"
+                :stroke-width="12"
+                color="#8b5cf6"
+              />
+              <span class="funnel-num">{{ ops?.funnel?.completed ?? 0 }}</span>
+            </div>
+          </div>
+        </el-card>
+      </el-col>
+    </el-row>
+
     <!-- 最近项目 -->
     <el-card
       class="panel"
@@ -260,6 +334,7 @@ const { $t } = useI18n()
 const router = useRouter()
 
 const stats = ref({ user_count: 0, project_count: 0, order_count: 0, dispute_count: 0, settled_amount: 0 })
+const ops = ref<any>(null)
 const recentProjects = ref<any[]>([])
 const progressProjects = ref<any[]>([])
 const ganttData = ref<GanttItem[]>([])
@@ -282,6 +357,19 @@ const loadStats = async () => {
   try {
     stats.value = await api.get('/api/v1/admin/stats')
   } catch { /* interceptor */ }
+}
+
+const loadOps = async () => {
+  try {
+    ops.value = await api.get('/api/v1/admin/operations-stats')
+  } catch { /* interceptor */ }
+}
+
+// 漏斗占比（相对发布项目数）
+const funnelPct = (n?: number) => {
+  const base = ops.value?.funnel?.published || 0
+  if (!base) return 0
+  return Math.round(((n || 0) / base) * 100)
 }
 
 const loadProgress = async () => {
@@ -339,6 +427,7 @@ const openProject = (id: number) => {
 
 const loadAll = () => {
   loadStats()
+  loadOps()
   loadProgress()
   loadRecent()
 }
@@ -447,5 +536,49 @@ const statusType = (status: number) => {
 }
 .ai-loading {
   padding: 8px 0;
+}
+.ops-users {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+.ops-user-item {
+  background: var(--eqs-gradient-soft, #f5f7fb);
+  border-radius: 10px;
+  padding: 14px;
+  text-align: center;
+}
+.ops-num {
+  display: block;
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--eqs-primary, #2563eb);
+}
+.ops-label {
+  display: block;
+  font-size: 12px;
+  color: var(--eqs-text-secondary, #64748b);
+  margin-top: 4px;
+}
+.ops-funnel .funnel-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.funnel-label {
+  width: 90px;
+  font-size: 13px;
+  color: var(--eqs-text-secondary, #64748b);
+  flex-shrink: 0;
+}
+.funnel-row .el-progress {
+  flex: 1;
+}
+.funnel-num {
+  width: 50px;
+  text-align: right;
+  font-weight: 600;
+  color: var(--eqs-text, #1e293b);
 }
 </style>

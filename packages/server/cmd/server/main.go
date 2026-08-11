@@ -207,6 +207,7 @@ func setupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 			// File（文件与批注）
 			auth.POST("/file/upload", handler.UploadFile)
 			auth.GET("/file/:id/download", handler.DownloadFile)
+			auth.GET("/file/:id/preview", handler.PreviewFile)
 			auth.GET("/project/:id/files", handler.ListFiles)
 			auth.POST("/annotation/add", handler.AddAnnotation)
 			auth.GET("/annotation/list/:id", handler.ListAnnotations)
@@ -223,6 +224,7 @@ func setupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 			auth.DELETE("/message/:id", handler.DeleteMessage)
 			auth.PUT("/message/read/:id", handler.MarkMessageRead)
 			auth.GET("/notification/list", handler.ListNotifications)
+			auth.GET("/notification/unread-count", handler.NotificationUnreadCount)
 			auth.PUT("/notification/read/:id", handler.MarkNotificationRead)
 			// V7 用户偏好（需登录）
 			auth.GET("/config/user/prefs", handler.GetUserPrefs)
@@ -236,6 +238,7 @@ func setupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 		admin.Use(handler.RequireAdmin())
 		{
 			admin.GET("/admin/stats", handler.AdminDashboardStats)
+			admin.GET("/admin/operations-stats", handler.AdminOperationsStats)
 			admin.GET("/admin/users", handler.AdminListUsers)
 			admin.GET("/admin/users/:id", handler.AdminGetUser)
 			admin.PUT("/admin/users/:id/status", handler.AdminUpdateUserStatus)

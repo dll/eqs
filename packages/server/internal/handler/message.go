@@ -140,6 +140,16 @@ func ListNotifications(c *gin.Context) {
 	ok(c, gin.H{"notifications": notifications})
 }
 
+// NotificationUnreadCount 通知未读数（消息触达增强：供前端角标轮询）
+// GET /api/v1/notification/unread-count
+func NotificationUnreadCount(c *gin.Context) {
+	userID := c.GetUint("user_id")
+
+	var unread int64
+	model.DB.Model(&model.Notification{}).Where("user_id = ? AND is_read = ?", userID, 0).Count(&unread)
+	ok(c, gin.H{"unread": unread})
+}
+
 // MarkNotificationRead 标记通知已读
 // PUT /api/v1/notification/read/:id
 func MarkNotificationRead(c *gin.Context) {

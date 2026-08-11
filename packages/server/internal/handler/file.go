@@ -127,6 +127,67 @@ func DownloadFile(c *gin.Context) {
 	})
 }
 
+// PreviewFile 文件在线预览（图片/PDF 直接返回内容流，浏览器内联展示）
+// GET /api/v1/file/:id/preview
+// 权限与 DownloadFile 一致；仅允许预览图片与 PDF（避免任意文件下载）
+func PreviewFile(c *gin.Context) {
+	userID := c.GetUint("user_id")
+	userType := c.GetInt("user_type")
+
+	fileID, err := parseUint(c.Param("id"))
+	if err != nil {
+		badRequest(c, "文件ID无效")
+		return
+	}
+
+	var file model.ProjectFile
+	if err := model.DB.First(&file, fileID).Error; err != nil {
+		notFound(c, "文件不存在")
+		return
+	}
+
+	// 仅图片与 PDF 允许内联预览
+	previewable := map[string]bool{"jpg": true, "jpeg": true, "png": true, "pdf": true}
+	if !previewable[file.FileType] {
+		badRequest(c, "该文件类型不支持在线预览，请下载查看")
+		return
+	}
+
+	// 权限校验（与 DownloadFile 相同）
+	if userType != 3 && file.UploaderID != userID {
+		var project model.Project
+		if err := model.DB.First(&project, file.ProjectID).Error; err != nil || project.UserID != userID {
+			allowed := false
+			if file.OrderID > 0 {
+				var order model.Order
+				if model.DB.First(&order, file.OrderID).Error == nil {
+					if order.SupplierID == userID {
+						allowed = true
+					} else if model.DB.First(&project, order.ProjectID).Error == nil && project.UserID == userID {
+						allowed = true
+					}
+				}
+			}
+			if !allowed {
+				forbidden(c, "无权预览该文件")
+				return
+			}
+		}
+	}
+
+	// URL 指向外部时直接重定向
+	if len(file.StorageKey) > 7 && (file.StorageKey[:7] == "http://" || file.StorageKey[:8] == "https://") {
+		c.Redirect(302, file.StorageKey)
+		return
+	}
+	// 本地文件：按存储相对路径读取并返回（内联展示）
+	path := file.StorageKey
+	if len(path) > 0 && path[0] != '/' {
+		path = "./" + path
+	}
+	c.FileAttachment(path, file.OriginalName)
+}
+
 type AddAnnotationRequest struct {
 	FileID  uint    `json:"file_id" binding:"required"`
 	PageNo  int     `json:"page_no"`
