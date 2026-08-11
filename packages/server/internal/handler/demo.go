@@ -110,8 +110,8 @@ func seedByMode(mode string) seedResult {
 	rng := rand.New(rand.NewSource(time.Now().UnixNano()))
 	now := time.Now()
 
-	// ===== 幂等清理：删除演示手机号用户及其关联数据 =====
-	cleanDemoUsers()
+	// ===== 幂等清理：先清空全部业务表（彻底避免外键残留导致创建失败） =====
+	cleanAll()
 
 	// ===== 用户：甲方3 / 服务方3 / 管理员1 =====
 	type seededUser struct {
@@ -128,7 +128,13 @@ func seedByMode(mode string) seedResult {
 		{Phone: "13900007777", UserType: 2, Status: 1, CreditScore: 76, CompanyName: "远东设计工作室"},
 	}
 	for i := range users {
-		model.DB.Create(&users[i])
+		if err := model.DB.Create(&users[i]).Error; err != nil {
+			r.Actions = append(r.Actions, fmt.Sprintf("⚠️ 用户创建失败: %v", err))
+			continue
+		}
+		if users[i].ID == 0 {
+			r.Actions = append(r.Actions, fmt.Sprintf("⚠️ 用户 %s ID 未回填", users[i].Phone))
+		}
 	}
 	r.Users = len(users)
 	r.Actions = append(r.Actions, fmt.Sprintf("创建 %d 个演示用户（甲方3/服务方3/管理员1）", r.Users))
@@ -156,10 +162,15 @@ func seedByMode(mode string) seedResult {
 			model.Project{UserID: clientID, ProjectType: "design", ServiceType: "design", Title: "教学楼建筑方案", Description: "九年一贯制学校方案设计", Address: "滁州市来安县", BudgetMin: 80000, BudgetMax: 200000, Status: 1, PublishScope: "public", PublishTime: &now},
 		)
 	}
+	projectOK := 0
 	for i := range projects {
-		model.DB.Create(&projects[i])
+		if err := model.DB.Create(&projects[i]).Error; err != nil {
+			r.Actions = append(r.Actions, fmt.Sprintf("⚠️ 项目创建失败: %v", err))
+			continue
+		}
+		projectOK++
 	}
-	r.Projects = len(projects)
+	r.Projects = projectOK
 	r.Actions = append(r.Actions, fmt.Sprintf("创建 %d 个项目（覆盖造价/监理/地勘/设计）", r.Projects))
 
 	// ===== 报价与订单（按模式生成不同数量的闭环订单） =====
