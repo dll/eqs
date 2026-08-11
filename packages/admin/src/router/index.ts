@@ -23,6 +23,7 @@ const router = createRouter({
         { path: 'dispute', name: 'Dispute', component: () => import('@/views/dispute/index.vue'), meta: { titleKey: 'dispute' } },
         { path: 'user', name: 'User', component: () => import('@/views/user/index.vue'), meta: { titleKey: 'user' } },
         { path: 'settings', name: 'Settings', component: () => import('@/views/settings/index.vue'), meta: { titleKey: 'settings' } },
+        { path: 'log', name: 'Log', component: () => import('@/views/log/index.vue'), meta: { titleKey: 'log' } },
       ],
     },
     { path: '/:pathMatch(.*)*', redirect: '/dashboard' },

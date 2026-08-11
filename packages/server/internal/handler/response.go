@@ -1,10 +1,19 @@
 package handler
 
 import (
+	"encoding/json"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
+
+// parseJSONString 解析 JSON 字符串到目标结构
+func parseJSONString(s string, v interface{}) error {
+	if s == "" {
+		return nil
+	}
+	return json.Unmarshal([]byte(s), v)
+}
 
 // ok 统一成功响应
 func ok(c *gin.Context, data gin.H) {

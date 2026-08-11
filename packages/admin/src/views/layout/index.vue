@@ -39,6 +39,10 @@
           <el-icon><Setting /></el-icon>
           <span>{{ $t('menu.settings') }}</span>
         </el-menu-item>
+        <el-menu-item index="/log">
+          <el-icon><Document /></el-icon>
+          <span>{{ $t('menu.log') }}</span>
+        </el-menu-item>
       </el-menu>
     </el-aside>
 

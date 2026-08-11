@@ -65,6 +65,12 @@ func setupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 		auth := api.Group("")
 		auth.Use(middleware.Auth(cfg))
 		{
+			// Progress（单项目进度甘特图，需登录）
+			auth.GET("/project/:id/progress", handler.GetProjectProgress)
+			// V8 AI 单项目问题解析
+			auth.POST("/project/:id/ai-analysis", handler.AIAnalyzeProject)
+			// V8 个人日志
+			auth.GET("/log/list", handler.ListMyLogs)
 			// User
 			auth.GET("/user/info", handler.GetUserInfo)
 			auth.PUT("/user/info", handler.UpdateUserInfo)
@@ -169,6 +175,13 @@ func setupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 			// 佣金管理（SRC-BIZ-01）
 			admin.GET("/admin/commission/list", handler.AdminListCommissions)
 			admin.POST("/admin/commission/:id/collect", handler.AdminCollectCommission)
+			// V8 数据看板（甘特图/看板）
+			admin.GET("/admin/project-progress", handler.ListProjectProgress)
+			// V8 AI 全量项目分析
+			admin.POST("/admin/ai/project-analysis", handler.AIAnalyzeAllProjects)
+			// V8 日志管理（管理员查看/恢复）
+			admin.GET("/admin/log/list", handler.AdminListLogs)
+			admin.POST("/admin/log/restore-config", handler.AdminRestoreConfig)
 		}
 	}
 
