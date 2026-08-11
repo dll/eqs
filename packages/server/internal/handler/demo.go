@@ -12,11 +12,11 @@ import (
 func DemoSeedHandler(c *gin.Context) {
 	mode := c.DefaultQuery("mode", "demo")
 	if mode != "demo" && mode != "test" && mode != "training" {
-		badRequest(c, "mode 参数错误")
+		badRequest(c, "mode 参数无效")
 		return
 	}
 	result := seedByMode(mode)
-	ok(c, gin.H{"message": "演示数据生成完成", "mode": mode, "result": result})
+	ok(c, gin.H{"message": "演示数据生成成功", "mode": mode, "result": result})
 }
 
 func DemoCleanHandler(c *gin.Context) {
@@ -34,7 +34,7 @@ func DemoToggleHandler(c *gin.Context) {
 	}
 	enable := *req.Enable
 
-	// 持久化到 system_configs 表
+	// 持久化到 system_configs
 	var cfg model.SystemConfig
 	err := model.DB.Where("config_key = ?", "demo.enabled").First(&cfg).Error
 	now := time.Now()
@@ -98,88 +98,210 @@ type seedResult struct {
 	Actions    []string `json:"actions"`
 }
 
+// 演示数据手机号前缀，seed 前清理，保证幂等
+var demoPhones = []string{
+	"13900001111", "13900002222", "13900003333",
+	"13900004444", "13900005555", "13900006666", "13900007777",
+}
+
+// seedByMode 按模式生成演示数据，幂等（先清理演示用户及其关联数据）
 func seedByMode(mode string) seedResult {
 	r := seedResult{Actions: []string{}}
 	rng := rand.New(rand.NewSource(time.Now().UnixNano()))
+	now := time.Now()
+
+	// ===== 幂等清理：删除演示手机号用户及其关联数据 =====
+	cleanDemoUsers()
+
+	// ===== 用户：甲方3 / 服务方3 / 管理员1 =====
+	type seededUser struct {
+		u      model.User
+		client bool
+	}
 	users := []model.User{
-		{Phone: "13900001111", UserType: 1, Status: 1, CreditScore: 100, CompanyName: "演示甲方企业"},
-		{Phone: "13900002222", UserType: 2, Status: 1, CreditScore: 100, CompanyName: "演示服务方企业"},
-		{Phone: "13900003333", UserType: 3, Status: 1, CreditScore: 100, CompanyName: "平台管理"},
+		{Phone: "13900001111", UserType: 1, Status: 1, CreditScore: 100, CompanyName: "滁州城投建设有限公司"},
+		{Phone: "13900002222", UserType: 1, Status: 1, CreditScore: 92, CompanyName: "南京市政设计研究院"},
+		{Phone: "13900003333", UserType: 3, Status: 1, CreditScore: 100, CompanyName: "EQS平台运营"},
+		{Phone: "13900004444", UserType: 2, Status: 1, CreditScore: 98, CompanyName: "安徽地勘勘察院"},
+		{Phone: "13900005555", UserType: 2, Status: 1, CreditScore: 95, CompanyName: "江苏中衡造价咨询"},
+		{Phone: "13900006666", UserType: 2, Status: 1, CreditScore: 88, CompanyName: "金陵工程监理有限公司"},
+		{Phone: "13900007777", UserType: 2, Status: 1, CreditScore: 76, CompanyName: "远东设计工作室"},
 	}
 	for i := range users {
 		model.DB.Create(&users[i])
 	}
 	r.Users = len(users)
-	r.Actions = append(r.Actions, fmt.Sprintf("创建 %d 个用户", r.Users))
-	clientID := users[0].ID
-	supplierID := users[1].ID
-	now := time.Now()
+	r.Actions = append(r.Actions, fmt.Sprintf("创建 %d 个演示用户（甲方3/服务方3/管理员1）", r.Users))
+
+	clientID := users[0].ID     // 甲方
+	client2ID := users[1].ID    // 甲方2
+	supplierID := users[3].ID   // 地勘
+	supplier2ID := users[4].ID  // 造价
+	supplier3ID := users[5].ID  // 监理
+	supplier4ID := users[6].ID  // 设计
+
+	// ===== 项目（按模式数量不同） =====
 	projects := []model.Project{
-		{UserID: clientID, ProjectType: "cost", ServiceType: "cost", Title: "招标控制价编制项目", BudgetMin: 20000, BudgetMax: 60000, Status: 1, PublishScope: "public", PublishTime: &now},
-		{UserID: clientID, ProjectType: "supervision", ServiceType: "supervision", Title: "住宅楼工程监理项目", BudgetMin: 50000, BudgetMax: 150000, Status: 1, PublishScope: "public", PublishTime: &now},
-		{UserID: clientID, ProjectType: "geotech", ServiceType: "geotech", Title: "地块地质勘察项目", BudgetMin: 30000, BudgetMax: 80000, Status: 1, PublishScope: "public", PublishTime: &now},
+		{UserID: clientID, ProjectType: "cost", ServiceType: "cost", Title: "办公楼造价编制项目", Description: "编制办公楼土建安装工程预算", Address: "滁州市琅琊区", BudgetMin: 20000, BudgetMax: 60000, Status: 1, PublishScope: "public", PublishTime: &now},
+		{UserID: clientID, ProjectType: "supervision", ServiceType: "supervision", Title: "住宅楼工程监理项目", Description: "小区1-3号楼施工监理", Address: "南京市江宁区", BudgetMin: 50000, BudgetMax: 150000, Status: 1, PublishScope: "public", PublishTime: &now},
+		{UserID: clientID, ProjectType: "geotech", ServiceType: "geotech", Title: "地块地质勘察项目", Description: "商业地块岩土工程勘察", Address: "滁州市南谯区", BudgetMin: 30000, BudgetMax: 80000, Status: 1, PublishScope: "public", PublishTime: &now},
+		{UserID: client2ID, ProjectType: "design", ServiceType: "design", Title: "市政道路初步设计", Description: "城市主干道方案设计与初设", Address: "合肥市包河区", BudgetMin: 40000, BudgetMax: 120000, Status: 1, PublishScope: "public", PublishTime: &now},
+		{UserID: client2ID, ProjectType: "cost", ServiceType: "cost", Title: "厂房改造结算审核", Description: "既有厂房改造工程结算审核", Address: "芜湖市镜湖区", BudgetMin: 15000, BudgetMax: 45000, Status: 1, PublishScope: "invited", PublishTime: &now},
 	}
-	if mode == "test" {
+	if mode != "demo" {
+		// test/training 增加项目量
 		projects = append(projects,
-			model.Project{UserID: clientID, ProjectType: "cost", ServiceType: "cost", Title: "边界测试-最小预算", BudgetMin: 100, BudgetMax: 200, Status: 1, PublishScope: "public", PublishTime: &now},
-			model.Project{UserID: clientID, ProjectType: "design", ServiceType: "design", Title: "工程设计测试", BudgetMin: 40000, BudgetMax: 120000, Status: 1, PublishScope: "public", PublishTime: &now},
+			model.Project{UserID: clientID, ProjectType: "cost", ServiceType: "cost", Title: "边界测试-小额预算", Description: "测试极小金额边界", Address: "测试地址", BudgetMin: 100, BudgetMax: 200, Status: 1, PublishScope: "public", PublishTime: &now},
+			model.Project{UserID: client2ID, ProjectType: "geotech", ServiceType: "geotech", Title: "滨江地块二期勘察", Description: "二期场地详勘", Address: "马鞍山市", BudgetMin: 60000, BudgetMax: 150000, Status: 1, PublishScope: "public", PublishTime: &now},
+			model.Project{UserID: clientID, ProjectType: "design", ServiceType: "design", Title: "教学楼建筑方案", Description: "九年一贯制学校方案设计", Address: "滁州市来安县", BudgetMin: 80000, BudgetMax: 200000, Status: 1, PublishScope: "public", PublishTime: &now},
 		)
 	}
 	for i := range projects {
 		model.DB.Create(&projects[i])
 	}
 	r.Projects = len(projects)
-	r.Actions = append(r.Actions, fmt.Sprintf("创建 %d 个项目", r.Projects))
+	r.Actions = append(r.Actions, fmt.Sprintf("创建 %d 个项目（覆盖造价/监理/地勘/设计）", r.Projects))
+
+	// ===== 报价与订单（按模式生成不同数量的闭环订单） =====
+	orderLimit := 3
+	if mode == "test" {
+		orderLimit = 4
+	}
+	if mode == "training" {
+		orderLimit = 5
+	}
+
+	orderCount := 0
 	for _, p := range projects {
-		bidAmount := p.BudgetMin + float64(rng.Int63n(int64(p.BudgetMax-p.BudgetMin)))
-		bid := model.Bid{ProjectID: p.ID, SupplierID: supplierID, Amount: float64(bidAmount), ServiceDays: 15 + rng.Intn(30), Status: "submitted"}
-		model.DB.Create(&bid)
-		r.Bids++
-		if r.Orders < 3 && mode != "test" {
-			model.DB.Model(&bid).Update("status", "selected")
-			order := model.Order{ProjectID: p.ID, SupplierID: supplierID, SelectedBidID: bid.ID, Amount: float64(bidAmount), Status: 0}
-			model.DB.Create(&order)
-			r.Orders++
-			model.DB.Create(&model.PaymentMilestone{OrderID: order.ID, Name: "开工款", Sequence: 1, Ratio: 40, Amount: float64(bidAmount) * 0.4, Status: "pending"})
-			model.DB.Create(&model.PaymentMilestone{OrderID: order.ID, Name: "中期款", Sequence: 2, Ratio: 30, Amount: float64(bidAmount) * 0.3, Status: "pending"})
-			model.DB.Create(&model.PaymentMilestone{OrderID: order.ID, Name: "验收款", Sequence: 3, Ratio: 30, Amount: float64(bidAmount) * 0.3, Status: "pending"})
-			contract := model.Contract{OrderID: order.ID, ContractNo: fmt.Sprintf("EQS-%d-%d", time.Now().Year(), order.ID), TemplateVersion: "1.0", SignProvider: "mock", Status: "signed", SignedAt: &now}
-			model.DB.Create(&contract)
-			txn := model.PaymentTransaction{UserID: supplierID, OrderID: order.ID, Amount: float64(bidAmount), Type: "payment", Channel: "mock", ExternalTransactionID: fmt.Sprintf("PAY-MOCK-%d-%d", order.ID, time.Now().UnixNano()), Status: 0}
-			model.DB.Create(&txn)
-			r.Payments++
-			r.Actions = append(r.Actions, fmt.Sprintf("订单 %d 完成", order.ID))
+		// 每个项目 1-3 个报价
+		suppliers := []model.User{users[3], users[4], users[5], users[6]}
+		for _, s := range suppliers[:1+rng.Intn(3)] {
+			bidAmount := p.BudgetMin + float64(rng.Int63n(int64(p.BudgetMax-p.BudgetMin)))
+			bid := model.Bid{ProjectID: p.ID, SupplierID: s.ID, Amount: float64(bidAmount), ServiceDays: 15 + rng.Intn(30), Status: "submitted"}
+			model.DB.Create(&bid)
+			r.Bids++
+		}
+		// 部分项目生成订单（完整闭环）
+		if orderCount < orderLimit {
+			var selected model.Bid
+			model.DB.Where("project_id = ?", p.ID).Order("amount ASC").First(&selected)
+			if selected.ID > 0 {
+				model.DB.Model(&selected).Update("status", "selected")
+				order := model.Order{ProjectID: p.ID, SupplierID: selected.SupplierID, SelectedBidID: selected.ID, Amount: selected.Amount, Status: 1}
+				model.DB.Create(&order)
+				orderCount++
+				r.Orders++
+
+				// 里程碑（节点金额合计=订单金额）
+				model.DB.Create(&model.PaymentMilestone{OrderID: order.ID, Name: "合同预付款", Sequence: 1, Ratio: 30, Amount: selected.Amount * 0.3, Status: "submitted"})
+				model.DB.Create(&model.PaymentMilestone{OrderID: order.ID, Name: "中期进度款", Sequence: 2, Ratio: 40, Amount: selected.Amount * 0.4, Status: "submitted"})
+				model.DB.Create(&model.PaymentMilestone{OrderID: order.ID, Name: "验收尾款", Sequence: 3, Ratio: 30, Amount: selected.Amount * 0.3, Status: "pending"})
+
+				// 合同（training 模式已签署）
+				contractStatus := "signed"
+				signedAt := &now
+				if mode == "test" {
+					contractStatus = "signing"
+					signedAt = nil
+				}
+				contract := model.Contract{OrderID: order.ID, ContractNo: fmt.Sprintf("EQS-%d-%04d", time.Now().Year(), order.ID), TemplateVersion: "1.0", SignProvider: "mock", Status: contractStatus, SignedAt: signedAt}
+				model.DB.Create(&contract)
+
+				// 支付流水
+				pt := float64(selected.Amount) * 0.3
+				model.DB.Create(&model.PaymentTransaction{UserID: selected.SupplierID, OrderID: order.ID, Amount: pt, Type: "payment", Channel: "mock", ExternalTransactionID: fmt.Sprintf("PAY-MOCK-%d-%d", order.ID, time.Now().UnixNano()), Status: 1})
+
+				// 交付物（training 模式含已交付）
+				if mode == "training" {
+					model.DB.Create(&model.Deliverable{OrderID: order.ID, MilestoneID: 0, Milestone: "预付款节点", FileURL: "/demo/report.pdf", FileName: "阶段性成果报告.pdf", Version: 1, Status: 1})
+				}
+				r.Payments++
+				r.Actions = append(r.Actions, fmt.Sprintf("生成订单#%d 含里程碑/合同/支付", order.ID))
+			}
 		}
 	}
-	qual := model.SupplierQualification{SupplierID: supplierID, QualificationType: "造价咨询甲级", CertificateNo: "ZZ-DEMO-" + fmt.Sprintf("%03d", rng.Intn(999)), Level: "甲级", Scope: "造价咨询", VerificationStatus: "pending"}
-	model.DB.Create(&qual)
-	r.Qualifiers++
-	r.Actions = append(r.Actions, "服务方提交资质: 造价咨询甲级")
-	if mode == "demo" {
-		var firstOrder model.Order
-		model.DB.First(&firstOrder)
-		if firstOrder.ID > 0 {
-			dispute := model.Dispute{OrderID: firstOrder.ID, InitiatorID: clientID, Reason: "交付物与合同约定不符", Claim: "要求重新核对", Status: "evidence"}
-			model.DB.Create(&dispute)
-			r.Disputes++
-			r.Actions = append(r.Actions, fmt.Sprintf("订单 %d 发起争议", firstOrder.ID))
-		}
+
+	// ===== 资质（各服务方提交不同资质） =====
+	qualTypes := []struct {
+		sid uint
+		t   string
+		lv  string
+	}{
+		{supplierID, "工程勘察综合资质", "甲级"},
+		{supplier2ID, "工程造价咨询", "甲级"},
+		{supplier3ID, "工程监理综合资质", "甲级"},
+		{supplier4ID, "工程设计行业资质", "乙级"},
 	}
+	for _, q := range qualTypes {
+		model.DB.Create(&model.SupplierQualification{
+			SupplierID: q.sid, QualificationType: q.t, CertificateNo: fmt.Sprintf("ZZ-DEMO-%03d", rng.Intn(999)),
+			Level: q.lv, Scope: q.t, VerificationStatus: "approved",
+		})
+		r.Qualifiers++
+	}
+	r.Actions = append(r.Actions, fmt.Sprintf("生成 %d 个服务方资质（已核验）", r.Qualifiers))
+
+	// ===== 打卡（demo/training） =====
 	if mode != "test" {
 		var firstOrder model.Order
 		model.DB.First(&firstOrder)
 		if firstOrder.ID > 0 {
-			att := model.AttendanceRecord{OrderID: firstOrder.ID, UserID: supplierID, CheckInAt: time.Now(), Longitude: 118.31, Latitude: 32.30}
-			model.DB.Create(&att)
+			model.DB.Create(&model.AttendanceRecord{OrderID: firstOrder.ID, UserID: supplierID, CheckInAt: time.Now(), Longitude: 118.31, Latitude: 32.30})
 			r.Attendance++
-			r.Actions = append(r.Actions, "服务方现场打卡")
+			r.Actions = append(r.Actions, "生成 1 条现场打卡记录")
 		}
 	}
-	if mode == "training" {
-		r.Actions = append(r.Actions, "培训模式：包含标准流程、部分完成、争议处理等教学案例")
+
+	// ===== 争议（demo/training 有案例，test 无争议便于干净测试） =====
+	if mode != "test" {
+		var firstOrder model.Order
+		model.DB.First(&firstOrder)
+		if firstOrder.ID > 0 {
+			dispute := model.Dispute{OrderID: firstOrder.ID, InitiatorID: clientID, Reason: "交付成果与合同约定不符", Claim: "要求重新核算并整改", Status: "evidence"}
+			model.DB.Create(&dispute)
+			r.Disputes++
+			// 争议证据
+			model.DB.Create(&model.DisputeEvidence{DisputeID: dispute.ID, UserID: clientID, FileID: 0, Content: "合同复印件与验收记录"})
+			// 专家指派（user_type=4 需要专家，动态创建或跳过）
+			r.Actions = append(r.Actions, fmt.Sprintf("生成 1 个争议案件#%d（含证据）", dispute.ID))
+		}
 	}
+
+	// ===== 评价（training 模式含已评价闭环） =====
+	if mode == "training" {
+		var completedOrder model.Order
+		model.DB.Where("status = ?", 1).First(&completedOrder)
+		if completedOrder.ID > 0 {
+			model.DB.Create(&model.Review{OrderID: completedOrder.ID, ReviewerID: clientID, RevieweeID: supplierID, Rating: 5, Content: "配合度高，成果专业"})
+			model.DB.Create(&model.Review{OrderID: completedOrder.ID, ReviewerID: supplierID, RevieweeID: clientID, Rating: 5, Content: "付款及时，沟通顺畅"})
+			r.Actions = append(r.Actions, "生成双方互评（培训教学用）")
+		}
+	}
+
+	if mode == "training" {
+		r.Actions = append(r.Actions, "培训模式：已含标准流程、完整闭环、结算与评价教学数据")
+	}
+
 	WriteAudit(nil, "admin.demo.seed", "system", 0, gin.H{"mode": mode, "result": r})
 	return r
+}
+
+// cleanDemoUsers 清理演示手机号用户及其关联数据（保证 seed 幂等）
+func cleanDemoUsers() {
+	var demoUserIDs []uint
+	model.DB.Model(&model.User{}).Where("phone IN ?", demoPhones).Pluck("id", &demoUserIDs)
+	if len(demoUserIDs) == 0 {
+		return
+	}
+	// 按用户清理关联数据（级联依赖顺序）
+	model.DB.Where("user_id IN ?", demoUserIDs).Delete(&model.AttendanceRecord{})
+	model.DB.Where("user_id IN ?", demoUserIDs).Delete(&model.Notification{})
+	model.DB.Where("sender_id IN ? OR receiver_id IN ?", demoUserIDs, demoUserIDs).Delete(&model.Message{})
+	model.DB.Where("reviewer_id IN ? OR reviewee_id IN ?", demoUserIDs, demoUserIDs).Delete(&model.Review{})
+	model.DB.Where("supplier_id IN ?", demoUserIDs).Delete(&model.SupplierQualification{})
+	model.DB.Where("supplier_id IN ?", demoUserIDs).Delete(&model.Bid{})
+	model.DB.Where("user_id IN ?", demoUserIDs).Delete(&model.Project{})
+	model.DB.Where("user_id IN ?", demoUserIDs).Delete(&model.User{})
 }
 
 func cleanAll() {
@@ -197,6 +319,9 @@ func cleanAll() {
 	model.DB.Where("1 = 1").Delete(&model.Order{})
 	model.DB.Where("1 = 1").Delete(&model.SupplierQualification{})
 	model.DB.Where("1 = 1").Delete(&model.Project{})
+	model.DB.Where("1 = 1").Delete(&model.Review{})
+	model.DB.Where("1 = 1").Delete(&model.Message{})
+	model.DB.Where("1 = 1").Delete(&model.Notification{})
 	model.DB.Where("1 = 1").Delete(&model.User{})
 	model.DB.Where("1 = 1").Delete(&model.AuditLog{})
 }
