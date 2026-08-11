@@ -78,6 +78,46 @@ func UploadProjectFile(c *gin.Context) {
 	ok(c, gin.H{"file_id": file.ID, "original_name": file.OriginalName, "storage_key": file.StorageKey})
 }
 
+// serviceChecklistTemplates 按服务类型预置的标准交付清单（智能发单用）
+var serviceChecklistTemplates = map[string][]string{
+	"cost": {
+		"工程量清单（GB50500）",
+		"招标控制价编制说明",
+		"计价软件源文件",
+		"主要材料/设备询价单",
+	},
+	"supervision": {
+		"监理规划/监理实施细则",
+		"监理日志（每日）",
+		"旁站记录",
+		"监理月报",
+	},
+	"geotech": {
+		"岩土工程勘察报告",
+		"钻孔柱状图/剖面图",
+		"土工试验成果表",
+		"勘察资质页扫描件",
+	},
+	"design": {
+		"方案设计文件（PDF/DWG）",
+		"施工图设计文件",
+		"设计变更通知单",
+		"设计说明与计算书",
+	},
+}
+
+// GetServiceChecklist 智能发单：按服务类型返回标准交付清单（AC-01）
+// GET /api/v1/project/checklist?service_type=cost
+func GetServiceChecklist(c *gin.Context) {
+	st := c.Query("service_type")
+	items := serviceChecklistTemplates[st]
+	if items == nil {
+		// 未知类型返回通用清单
+		items = []string{"项目需求说明", "现场照片/资料包", "成果文件（PDF）", "验收确认单"}
+	}
+	ok(c, gin.H{"service_type": st, "checklist": items, "count": len(items)})
+}
+
 type CreateProjectRequest struct {
 	ProjectType  string  `json:"project_type" binding:"required"`
 	ServiceType  string  `json:"service_type"`

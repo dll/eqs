@@ -62,6 +62,7 @@
   "project.uploadAttachment": "Upload attachment",
   "project.uploading": "Uploading...",
   "project.uploadFail": "Upload failed",
+  "project.smartChecklist": "Smart Delivery Checklist (auto)",
   "project.list": "Project List",
   "project.detail": "Project Detail",
   "project.type": "Type",

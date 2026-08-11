@@ -26,6 +26,28 @@
         >
       </view>
 
+      <!-- 智能服务清单（按所选类型自动生成） -->
+      <view
+        v-if="checklist.length"
+        class="form-item"
+      >
+        <text class="label">
+          {{ $t('project.smartChecklist') }}
+        </text>
+        <view class="checklist-box">
+          <view
+            v-for="(item, i) in checklist"
+            :key="i"
+            class="checklist-item"
+          >
+            <text class="cl-dot">✓</text>
+            <text class="cl-text">
+              {{ item }}
+            </text>
+          </view>
+        </view>
+      </view>
+
       <view class="form-item">
         <text class="label">
           {{ $t('project.budgetRange') }}
@@ -183,6 +205,23 @@ const chooseAndUpload = async () => {
 
 const onTypeChange = (e: any) => {
   form.value.projectType = projectTypes[e.detail.value]
+  loadChecklist()
+}
+
+// V10：智能服务清单（按服务类型自动生成，AC-01）
+const checklist = ref<string[]>([])
+const loadChecklist = async () => {
+  const code = toTypeCode(form.value.projectType)
+  if (!code) {
+    checklist.value = []
+    return
+  }
+  try {
+    const res = await request.get(`/api/v1/project/checklist?service_type=${code}`)
+    checklist.value = (res && res.checklist) || []
+  } catch {
+    checklist.value = []
+  }
 }
 
 // 编辑模式：加载项目详情回填表单

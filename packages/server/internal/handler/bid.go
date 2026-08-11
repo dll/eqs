@@ -206,6 +206,10 @@ func SelectBid(c *gin.Context) {
 		return
 	}
 
+	// V10：接单通知——报价被中选后通知服务方（在 order 生成后）
+	CreateNotification(bid.SupplierID, "报价已中选",
+		"您在项目「"+project.Title+"」的报价已被甲方中选，请前往订单列表确认并签约。", "order")
+
 	WriteAudit(c, "bid.select", "project", bid.ProjectID, gin.H{"bid_id": bidID, "supplier_id": bid.SupplierID, "amount": bid.Amount})
 	ok(c, gin.H{"message": "中选成功，待签约"})
 }

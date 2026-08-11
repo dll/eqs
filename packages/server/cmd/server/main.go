@@ -141,6 +141,7 @@ func setupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 			auth.POST("/project/create", handler.CreateProject)
 			auth.GET("/project/list", handler.ListProjects)
 			auth.GET("/project/mine", handler.ListMyProjects)
+			auth.GET("/project/checklist", handler.GetServiceChecklist)
 			auth.POST("/project/upload", handler.UploadProjectFile)
 			auth.GET("/project/:id/recommend", handler.GetRecommendations)
 			auth.GET("/project/:id", handler.GetProject)

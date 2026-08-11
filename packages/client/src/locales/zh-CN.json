@@ -62,6 +62,7 @@
   "project.uploadAttachment": "上传附件",
   "project.uploading": "上传中...",
   "project.uploadFail": "上传失败",
+  "project.smartChecklist": "智能服务清单（自动生成）",
   "project.list": "项目列表",
   "project.detail": "项目详情",
   "project.type": "类型",
