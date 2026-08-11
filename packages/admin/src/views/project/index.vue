@@ -43,7 +43,9 @@
           width="100"
         >
           <template #default="{ row }">
-            <el-tag :type="row.status === 5 ? 'info' : ''">{{ statusText(row.status) }}</el-tag>
+            <el-tag :type="row.status === 5 ? 'info' : ''">
+              {{ statusText(row.status) }}
+            </el-tag>
           </template>
         </el-table-column>
         <el-table-column
@@ -108,7 +110,9 @@
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="editVisible = false">{{ $t('common.cancel') }}</el-button>
+        <el-button @click="editVisible = false">
+          {{ $t('common.cancel') }}
+        </el-button>
         <el-button
           type="primary"
           @click="saveEdit"

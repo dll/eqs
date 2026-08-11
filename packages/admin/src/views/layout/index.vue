@@ -100,7 +100,9 @@
             text
             @click="logout"
           >
-            <el-icon style="margin-right: 4px"><SwitchButton /></el-icon>
+            <el-icon style="margin-right: 4px">
+              <SwitchButton />
+            </el-icon>
             {{ $t('common.logout') }}
           </el-button>
         </div>

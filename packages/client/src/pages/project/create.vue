@@ -40,7 +40,9 @@
             :key="i"
             class="checklist-item"
           >
-            <text class="cl-dot">✓</text>
+            <text class="cl-dot">
+              ✓
+            </text>
             <text class="cl-text">
               {{ item }}
             </text>
