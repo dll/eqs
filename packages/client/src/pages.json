@@ -65,6 +65,18 @@
       "style": {
         "navigationBarTitleText": "消息通知"
       }
+    },
+    {
+      "path": "pages/dispute/list",
+      "style": {
+        "navigationBarTitleText": "我的争议"
+      }
+    },
+    {
+      "path": "pages/dispute/detail",
+      "style": {
+        "navigationBarTitleText": "争议详情"
+      }
     }
   ],
   "tabBar": {

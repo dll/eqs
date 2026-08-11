@@ -110,6 +110,7 @@ func setupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 			// Dispute（专家评审+平台调解）
 			auth.POST("/dispute/create", handler.CreateDispute)
 			auth.GET("/order/:id/disputes", handler.ListDisputes)
+			auth.GET("/dispute/mine", handler.ListMyDisputes)
 			auth.POST("/dispute/:id/evidence", handler.UploadDisputeEvidence)
 			auth.GET("/dispute/:id", handler.GetDispute)
 			auth.POST("/dispute/:id/expert", handler.AssignDisputeExpert)

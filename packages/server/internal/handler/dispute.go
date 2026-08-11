@@ -240,3 +240,21 @@ func GetDispute(c *gin.Context) {
 		"assignments": assignments,
 	})
 }
+
+// ListMyDisputes 我的争议列表（我发起或作为订单参与方）
+// GET /api/v1/dispute/mine
+func ListMyDisputes(c *gin.Context) {
+	userID := c.GetUint("user_id")
+
+	var disputes []model.Dispute
+	// 我发起的，或我参与的订单（甲方=项目创建者 / 服务方=supplier）的争议
+	model.DB.Where("initiator_id = ? OR order_id IN (?)", userID,
+		model.DB.Model(&model.Order{}).
+			Select("DISTINCT o.id").
+			Table("orders o").
+			Joins("JOIN projects p ON p.id = o.project_id").
+			Where("o.supplier_id = ? OR p.user_id = ?", userID, userID),
+	).Order("created_at DESC").Find(&disputes)
+
+	ok(c, gin.H{"disputes": disputes, "count": len(disputes)})
+}

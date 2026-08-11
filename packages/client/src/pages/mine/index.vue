@@ -18,6 +18,15 @@
     <view class="menu-list">
       <view
         class="menu-item"
+        @tap="goTo('/pages/message/index')"
+      >
+        <text>{{ $t('mine.notice') }}</text>
+        <text class="arrow">
+          >
+        </text>
+      </view>
+      <view
+        class="menu-item"
         @tap="goTo('/pages/order/list')"
       >
         <text>{{ $t('mine.myOrders') }}</text>
@@ -30,6 +39,15 @@
         @tap="goTo('/pages/project/list')"
       >
         <text>{{ $t('mine.myProjects') }}</text>
+        <text class="arrow">
+          >
+        </text>
+      </view>
+      <view
+        class="menu-item"
+        @tap="goTo('/pages/dispute/list')"
+      >
+        <text>{{ $t('mine.disputes') }}</text>
         <text class="arrow">
           >
         </text>
