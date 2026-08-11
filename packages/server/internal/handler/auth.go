@@ -64,13 +64,15 @@ func SendSMS(c *gin.Context) {
 
 	code := "123456"
 	if cfg.IsProduction() {
-		// 生产环境：固定验证码禁用；未配置 SMS 时拒绝发送（避免固定码泄漏）
-		if cfg.SMSAppKey == "" {
-			badRequest(c, "短信服务未配置")
-			return
+		// 生产环境：非演示手机号必须真实 SMS（未配置时拒绝）；演示手机号走固定码（受控例外）
+		if !isDemoPhone(req.Phone) {
+			if cfg.SMSAppKey == "" {
+				badRequest(c, "短信服务未配置")
+				return
+			}
+			code = fmt.Sprintf("%06d", time.Now().UnixNano()%1000000)
+			// TODO: 对接腾讯云 SMS 实际发送
 		}
-		code = fmt.Sprintf("%06d", time.Now().UnixNano()%1000000)
-		// TODO: 对接腾讯云 SMS 实际发送
 	}
 
 	if model.RDB != nil {
@@ -82,13 +84,19 @@ func SendSMS(c *gin.Context) {
 	ok(c, gin.H{"message": "验证码已发送"})
 }
 
-// verifySMS 校验验证码；生产环境禁止固定码，校验失败记录并锁定
+// verifySMS 校验验证码；生产环境仅演示手机号允许固定测试码（受控例外），其余必须真实验证码
 func verifySMS(phone, code string) bool {
 	cfg := config.Load()
 
-	// 非生产环境允许固定测试码
-	if !cfg.IsProduction() && code == "123456" {
-		return true
+	// 非生产环境允许固定测试码；生产仅演示手机号允许（受控降级，便于演示验收）
+	if code == "123456" {
+		if !cfg.IsProduction() {
+			return true
+		}
+		if isDemoPhone(phone) {
+			return true
+		}
+		return false
 	}
 
 	if model.RDB == nil {
@@ -110,6 +118,11 @@ func verifySMS(phone, code string) bool {
 	model.RDB.Del(nil, "sms:"+phone)
 	model.RDB.Del(nil, "sms:fail:"+phone)
 	return true
+}
+
+// isDemoPhone 是否为演示手机号（1390000 前缀）
+func isDemoPhone(phone string) bool {
+	return len(phone) == 11 && (phone[:7] == "1390000")
 }
 
 // issueToken 签发JWT（HS256）
