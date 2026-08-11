@@ -137,6 +137,16 @@ jobs:
         run: go test ./...
         working-directory: packages/server
 
+      - name: Coverage gate (>= 60%)
+        run: |
+          go test ./... -coverprofile=cover.out > /dev/null
+          total=$(go tool cover -func=cover.out | tail -1 | grep -oE '[0-9.]+%' | tr -d '%')
+          echo "总覆盖率: ${total}%"
+          threshold=60
+          awk "BEGIN{exit !(${total} >= ${threshold})}" || { echo "覆盖率 ${total}% 低于门槛 ${threshold}%"; exit 1; }
+          echo "覆盖率门禁通过"
+        working-directory: packages/server
+
   test-client:
     name: Test Client (Vitest)
     runs-on: ubuntu-latest

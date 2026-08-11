@@ -4,14 +4,20 @@ After=network.target mysql.service redis.service
 
 [Service]
 Type=simple
-User=root
+User=eqs
+Group=eqs
 WorkingDirectory=/opt/eqs/packages/server
 ExecStart=/opt/eqs/packages/server/server
 Restart=always
 RestartSec=5
 KillSignal=SIGTERM
 TimeoutStopSec=15
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/eqs/packages/server
 Environment=SERVER_PORT=8090
+Environment=APP_ENV=production
 Environment=DB_DRIVER=mysql
 Environment=DB_HOST=localhost
 Environment=DB_PORT=3306
