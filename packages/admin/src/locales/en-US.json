@@ -232,5 +232,6 @@
   "log.restoreSuccess": "Config restored",
   "log.filterUser": "User ID",
   "log.filterAction": "Action keyword",
-  "common.search": "Search"
+  "common.search": "Search",
+  "dispute.filterStatus": "Filter status"
 }

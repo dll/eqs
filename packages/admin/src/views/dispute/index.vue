@@ -1,7 +1,14 @@
 <template>
   <div>
     <el-card>
-      <template #header>{{ $t('dispute.title') }}</template>
+      <template #header>
+        <div class="dispute-head">
+          <span>{{ $t('dispute.title') }}</span>
+          <el-select v-model="statusFilter" size="small" style="width: 160px" clearable :placeholder="$t('dispute.filterStatus')" @change="onFilter">
+            <el-option v-for="s in statusOptions" :key="s.value" :label="s.label" :value="s.value" />
+          </el-select>
+        </div>
+      </template>
       <el-table :data="disputes" style="width: 100%">
         <el-table-column prop="id" :label="$t('dispute.id')" width="80" />
         <el-table-column prop="order_id" :label="$t('dispute.orderId')" width="80" />
@@ -39,6 +46,15 @@
           </template>
         </el-table-column>
       </el-table>
+
+      <el-pagination
+        class="dispute-pager"
+        layout="total, prev, pager, next"
+        :total="total"
+        :page-size="size"
+        :current-page="page"
+        @current-change="load"
+      />
     </el-card>
 
     <el-dialog v-model="expertDialog.visible" :title="$t('dispute.assignExpert')" width="420px">
@@ -91,6 +107,14 @@ const { $t } = useI18n()
 
 const disputes = ref<any[]>([])
 
+const statusOptions = [
+  { value: 'evidence', label: $t('dispute.status.evidence') },
+  { value: 'review', label: $t('dispute.status.review') },
+  { value: 'mediation', label: $t('dispute.status.mediation') },
+  { value: 'reconsideration', label: $t('dispute.status.reconsideration') },
+  { value: 'closed', label: $t('dispute.status.closed') },
+]
+
 const expertDialog = reactive({
   visible: false,
   disputeId: 0,
@@ -106,16 +130,27 @@ const closeDialog = reactive({
   loading: false,
 })
 
-const load = async () => {
+const statusFilter = ref('')
+const page = ref(1)
+const size = 20
+const total = ref(0)
+
+const load = async (p = 1) => {
+  page.value = p
   try {
-    const res = await api.get<{ disputes: any[] }>('/api/v1/admin/disputes')
+    const params: any = { page: p, size }
+    if (statusFilter.value) params.status = statusFilter.value
+    const res = await api.get<{ disputes: any[]; total: number }>('/api/v1/admin/disputes', { params })
     disputes.value = res.disputes || []
+    total.value = res.total || 0
   } catch {
     // interceptor 已提示
   }
 }
 
-onMounted(load)
+const onFilter = () => load(1)
+
+onMounted(() => load(1))
 
 const openExpertDialog = (row: any) => {
   expertDialog.disputeId = row.id
@@ -183,3 +218,15 @@ const statusType = (status: string) => {
   return 'info'
 }
 </script>
+
+<style scoped>
+.dispute-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.dispute-pager {
+  margin-top: 16px;
+  justify-content: flex-end;
+}
+</style>

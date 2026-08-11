@@ -232,5 +232,6 @@
   "log.restoreSuccess": "配置已恢复",
   "log.filterUser": "用户ID",
   "log.filterAction": "操作关键字",
-  "common.search": "查询"
+  "common.search": "查询",
+  "dispute.filterStatus": "状态筛选"
 }

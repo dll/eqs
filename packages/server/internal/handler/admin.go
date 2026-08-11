@@ -21,11 +21,34 @@ func ListMyOrders(c *gin.Context) {
 	ok(c, gin.H{"orders": orders, "count": len(orders)})
 }
 
-// AdminListDisputes 平台争议列表（含专家评审与调解状态）
+// AdminListDisputes 平台争议列表（支持状态筛选+分页）
+// GET /api/v1/admin/disputes?status=&page=&size=
 func AdminListDisputes(c *gin.Context) {
+	query := model.DB.Model(&model.Dispute{})
+
+	if status := c.Query("status"); status != "" {
+		query = query.Where("status = ?", status)
+	}
+
+	var total int64
+	query.Count(&total)
+
+	page := 1
+	size := 20
+	if p := c.Query("page"); p != "" {
+		if v, err := parseUint(p); err == nil && v > 0 {
+			page = int(v)
+		}
+	}
+	if s := c.Query("size"); s != "" {
+		if v, err := parseUint(s); err == nil && v > 0 && v <= 100 {
+			size = int(v)
+		}
+	}
+
 	var disputes []model.Dispute
-	model.DB.Order("created_at DESC").Find(&disputes)
-	ok(c, gin.H{"disputes": disputes, "count": len(disputes)})
+	query.Order("created_at DESC").Offset((page - 1) * size).Limit(size).Find(&disputes)
+	ok(c, gin.H{"disputes": disputes, "count": len(disputes), "total": total, "page": page, "size": size})
 }
 
 // ListDisputes 争议列表（按订单过滤，含证据与专家指派）
