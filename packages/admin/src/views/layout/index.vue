@@ -1,8 +1,8 @@
 <template>
   <el-container class="layout">
     <el-aside width="200px" class="aside">
-      <div class="logo">{{ $t('app.title') }}</div>
-      <el-menu :default-active="route.path" router background-color="#304156" text-color="#bfcbd9" active-text-color="#409EFF">
+      <div class="logo">⚡ {{ $t('app.title') }}</div>
+      <el-menu :default-active="route.path" router class="side-menu" background-color="transparent" text-color="rgba(255,255,255,.75)" active-text-color="#fff">
         <el-menu-item index="/dashboard">
           <el-icon><DataAnalysis /></el-icon>
           <span>{{ $t('menu.dashboard') }}</span>
@@ -90,7 +90,7 @@ const logout = () => {
 }
 
 .aside {
-  background: #304156;
+  background: linear-gradient(180deg, #1e3a8a 0%, #2563eb 45%, #06b6d4 100%);
 }
 
 .logo {
@@ -100,6 +100,23 @@ const logout = () => {
   color: #fff;
   font-size: 18px;
   font-weight: bold;
+  letter-spacing: 1px;
+  background: rgba(255, 255, 255, .08);
+}
+
+.side-menu {
+  border-right: none;
+}
+
+.side-menu :deep(.el-menu-item.is-active) {
+  background: rgba(255, 255, 255, .18) !important;
+  border-radius: 8px;
+  margin: 4px 8px;
+  width: auto;
+}
+
+.side-menu :deep(.el-menu-item:hover) {
+  background: rgba(255, 255, 255, .12) !important;
 }
 
 .header {

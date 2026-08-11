@@ -1,0 +1,78 @@
+/* EQS 敏捷风格主题
+ * 品牌色：工程蓝 #2563EB → 科技青 #06B6D4 渐变
+ * AI 元素：渐变光晕、玻璃拟态、发光强调
+ * 敏捷风格：圆角、柔和阴影、紧凑间距
+ */
+:root {
+  /* EQS 品牌色板 */
+  --eqs-primary: #2563eb;
+  --eqs-primary-light: #60a5fa;
+  --eqs-accent: #06b6d4;
+  --eqs-gradient: linear-gradient(135deg, #2563eb 0%, #06b6d4 100%);
+  --eqs-gradient-soft: linear-gradient(135deg, rgba(37, 99, 235, .08) 0%, rgba(6, 182, 212, .08) 100%);
+  --eqs-bg: #f5f7fb;
+  --eqs-card-bg: #ffffff;
+  --eqs-border: #e5e9f2;
+  --eqs-text: #1e293b;
+  --eqs-text-secondary: #64748b;
+  --eqs-radius: 12px;
+  --eqs-shadow: 0 2px 8px rgba(30, 41, 59, .06);
+  --eqs-shadow-hover: 0 6px 20px rgba(37, 99, 235, .12);
+  --eqs-glow: 0 0 20px rgba(37, 99, 235, .25);
+}
+
+/* Element Plus 主题覆盖 */
+html, body {
+  background: var(--eqs-bg);
+  color: var(--eqs-text);
+}
+
+.el-card {
+  border-radius: var(--eqs-radius) !important;
+  border-color: var(--eqs-border) !important;
+  box-shadow: var(--eqs-shadow) !important;
+  transition: box-shadow .25s ease, transform .25s ease;
+}
+
+.el-card:hover {
+  box-shadow: var(--eqs-shadow-hover) !important;
+}
+
+.el-button--primary {
+  background: var(--eqs-gradient) !important;
+  border: none !important;
+}
+
+.el-table {
+  border-radius: var(--eqs-radius);
+  overflow: hidden;
+}
+
+/* 统计卡数字渐变 */
+.stat-value {
+  background: var(--eqs-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* AI 面板光晕 */
+.ai-body {
+  position: relative;
+  border-radius: var(--eqs-radius);
+  padding: 14px;
+  background: var(--eqs-gradient-soft);
+}
+
+/* 滚动条（敏捷风） */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--eqs-primary-light);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--eqs-primary);
+}
