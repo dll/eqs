@@ -9,8 +9,12 @@ build/
 
 # Go
 packages/server/server
+packages/server/server.linux
 packages/server/tmp/
 packages/server/cover
+
+# 工具产物
+atomcode-*.exe
 
 # SQLite runtime database
 packages/server/*.db
