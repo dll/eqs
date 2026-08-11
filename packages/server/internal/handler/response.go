@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/eqs/server/internal/config"
 	"github.com/gin-gonic/gin"
 )
 
@@ -50,10 +51,15 @@ func notFound(c *gin.Context, message string) {
 }
 
 // serverError 服务器错误
+// P1 修复：生产环境不向客户端回显内部错误（err.Error() 可能泄露数据库/内部实现细节），
+// 统一返回通用文案；开发环境仍返回具体错误便于调试。完整错误写入 gin 错误日志（c.Error）。
 func serverError(c *gin.Context, err error) {
 	if err != nil {
-		fail(c, http.StatusInternalServerError, "internal_error", err.Error())
-		return
+		c.Error(err)
+		if !config.Get().IsProduction() {
+			fail(c, http.StatusInternalServerError, "internal_error", err.Error())
+			return
+		}
 	}
 	fail(c, http.StatusInternalServerError, "internal_error", "服务器内部错误")
 }

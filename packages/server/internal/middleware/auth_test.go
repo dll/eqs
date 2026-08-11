@@ -136,10 +136,13 @@ func TestLogger_Run(t *testing.T) {
 }
 
 func TestCORS_Headers(t *testing.T) {
+	t.Setenv("APP_ENV", "development")
+	config.ResetCache()
 	r := setup()
 	r.Use(CORS())
 	r.GET("/ping", func(c *gin.Context) { c.Status(http.StatusOK) })
 
+	// 开发环境带来源：应回显该来源（非通配），保证凭证与调试可用
 	req := httptest.NewRequest("GET", "/ping", nil)
 	req.Header.Set("Origin", "https://eqs.example.com")
 	w := httptest.NewRecorder()
@@ -148,8 +151,83 @@ func TestCORS_Headers(t *testing.T) {
 	if w.Code != http.StatusOK {
 		t.Fatalf("期望200，得到 %d", w.Code)
 	}
-	if w.Header().Get("Access-Control-Allow-Origin") != "*" {
-		t.Fatalf("缺少CORS头: %v", w.Header())
+	if got := w.Header().Get("Access-Control-Allow-Origin"); got != "https://eqs.example.com" {
+		t.Fatalf("开发环境应回显来源，得到 %q", got)
+	}
+}
+
+func TestCORS_NoOrigin(t *testing.T) {
+	t.Setenv("APP_ENV", "development")
+	config.ResetCache()
+	r := setup()
+	r.Use(CORS())
+	r.GET("/ping", func(c *gin.Context) { c.Status(http.StatusOK) })
+
+	// 无 Origin（同源/curl）：应返回通配，不拦截
+	req := httptest.NewRequest("GET", "/ping", nil)
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("期望200，得到 %d", w.Code)
+	}
+	if got := w.Header().Get("Access-Control-Allow-Origin"); got != "*" {
+		t.Fatalf("无Origin应通配，得到 %q", got)
+	}
+}
+
+func TestCORS_ProductionWhitelist(t *testing.T) {
+	// 生产环境：白名单内放行、白名单外 403
+	t.Setenv("APP_ENV", "production")
+	t.Setenv("CORS_ALLOW_ORIGINS", "https://eqs-chzu.tech,https://www.eqs-chzu.tech")
+	config.ResetCache()
+
+	r := setup()
+	r.Use(CORS())
+	r.GET("/ping", func(c *gin.Context) { c.Status(http.StatusOK) })
+
+	// 白名单来源
+	req := httptest.NewRequest("GET", "/ping", nil)
+	req.Header.Set("Origin", "https://eqs-chzu.tech")
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+	if w.Code != http.StatusOK {
+		t.Fatalf("白名单来源应放行，得到 %d", w.Code)
+	}
+	if got := w.Header().Get("Access-Control-Allow-Origin"); got != "https://eqs-chzu.tech" {
+		t.Fatalf("白名单来源应回显，得到 %q", got)
+	}
+
+	// 恶意来源
+	req = httptest.NewRequest("GET", "/ping", nil)
+	req.Header.Set("Origin", "https://evil.example.com")
+	w = httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+	if w.Code != http.StatusForbidden {
+		t.Fatalf("非白名单来源应403，得到 %d", w.Code)
+	}
+}
+
+func TestCORS_ProductionSameOriginIgnoringPort(t *testing.T) {
+	// 生产环境经 nginx 代理：后端 Host 不带端口（$host），浏览器 Origin 带端口（:8091）
+	// 必须按主机名判定同源并放行，否则同源登录会被误判为跨域 403
+	t.Setenv("APP_ENV", "production")
+	config.ResetCache()
+
+	r := setup()
+	r.Use(CORS())
+	r.GET("/ping", func(c *gin.Context) { c.Status(http.StatusOK) })
+
+	req := httptest.NewRequest("GET", "/ping", nil)
+	req.Host = "129.211.223.113" // nginx $host 去掉端口
+	req.Header.Set("Origin", "http://129.211.223.113:8091")
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+	if w.Code != http.StatusOK {
+		t.Fatalf("同源(去端口Host+带端口Origin)应放行，得到 %d", w.Code)
+	}
+	if got := w.Header().Get("Access-Control-Allow-Origin"); got != "http://129.211.223.113:8091" {
+		t.Fatalf("应回显来源，得到 %q", got)
 	}
 }
 

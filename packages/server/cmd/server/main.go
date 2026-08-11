@@ -45,6 +45,13 @@ func main() {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}
 
+	// P2-08：版本化数据库迁移（仅 MySQL 驱动执行；SQLite 由 AutoMigrate 维护）
+	if cfg.DBDriver == "mysql" {
+		if err := model.ApplyMigrations(db, ""); err != nil {
+			log.Printf("[migration] 迁移执行失败（继续启动）: %v", err)
+		}
+	}
+
 	if cfg.DBDriver == "sqlite" {
 		log.Printf("SQLite 模式：使用本地文件库 %s，Redis 校验降级为内置模拟", cfg.DBName)
 	} else {

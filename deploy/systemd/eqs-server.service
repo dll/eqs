@@ -27,6 +27,7 @@ Environment=DB_NAME=eqs
 Environment=REDIS_ADDR=localhost:6379
 Environment=REDIS_PASS=
 Environment=JWT_SECRET=${JWT_SECRET}
+Environment=DATA_ENCRYPTION_KEY=${DATA_ENCRYPTION_KEY}
 
 [Install]
 WantedBy=multi-user.target
