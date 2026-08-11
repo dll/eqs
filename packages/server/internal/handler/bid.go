@@ -95,6 +95,31 @@ func ListBids(c *gin.Context) {
 	ok(c, gin.H{"bids": bids})
 }
 
+// ListMyBids 服务方"我的报价"列表（跨项目汇总自己提交的报价）
+func ListMyBids(c *gin.Context) {
+	userID := c.GetUint("user_id")
+	// 仅服务方可查看自己的报价
+	if c.GetInt("user_type") != 2 && !isAdmin(c) {
+		forbidden(c, "仅服务方可查看报价记录")
+		return
+	}
+
+	q := model.DB.Preload("Supplier").Where("supplier_id = ?", userID)
+	if s := c.Query("status"); s != "" {
+		q = q.Where("status = ?", s)
+	}
+	page, size := parsePage(c)
+	var total int64
+	q.Model(&model.Bid{}).Count(&total)
+
+	var bids []model.Bid
+	if err := q.Order("created_at DESC").Offset((page - 1) * size).Limit(size).Find(&bids).Error; err != nil {
+		serverError(c, err)
+		return
+	}
+	ok(c, gin.H{"bids": bids, "total": total, "page": page, "size": size})
+}
+
 // WithdrawBid 截止前撤回未中选报价
 func WithdrawBid(c *gin.Context) {
 	bidID, err := parseUint(c.Param("id"))

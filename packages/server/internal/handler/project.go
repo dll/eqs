@@ -102,6 +102,26 @@ func ListProjects(c *gin.Context) {
 	ok(c, gin.H{"projects": projects, "total": total, "page": page, "size": size})
 }
 
+// ListMyProjects 甲方"我的发单"列表（仅当前用户发布的项目，含分页与状态过滤）
+func ListMyProjects(c *gin.Context) {
+	userID := c.GetUint("user_id")
+
+	q := model.DB.Where("user_id = ?", userID)
+	if s := c.Query("status"); s != "" {
+		q = q.Where("status = ?", s)
+	}
+	page, size := parsePage(c)
+	var total int64
+	q.Model(&model.Project{}).Count(&total)
+
+	var projects []model.Project
+	if err := q.Preload("User").Order("created_at DESC").Offset((page - 1) * size).Limit(size).Find(&projects).Error; err != nil {
+		serverError(c, err)
+		return
+	}
+	ok(c, gin.H{"projects": projects, "total": total, "page": page, "size": size})
+}
+
 // GetProject 项目详情
 func GetProject(c *gin.Context) {
 	id := c.Param("id")

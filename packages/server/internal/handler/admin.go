@@ -121,6 +121,44 @@ func AdminListUsers(c *gin.Context) {
 	ok(c, gin.H{"users": dto, "count": len(dto)})
 }
 
+// AdminGetUser 后台用户详情（含项目/订单/资质/评价统计）
+func AdminGetUser(c *gin.Context) {
+	userID, err := parseUint(c.Param("id"))
+	if err != nil {
+		badRequest(c, "用户ID无效")
+		return
+	}
+
+	var user model.User
+	if err := model.DB.First(&user, userID).Error; err != nil {
+		notFound(c, "用户不存在")
+		return
+	}
+
+	var projectCount, orderAsOwner, orderAsSupplier, reviewCount, qualCount int64
+	model.DB.Model(&model.Project{}).Where("user_id = ?", userID).Count(&projectCount)
+	model.DB.Model(&model.Order{}).Where("supplier_id = ?", userID).Count(&orderAsSupplier)
+	model.DB.Model(&model.Review{}).Where("reviewee_id = ?", userID).Count(&reviewCount)
+	model.DB.Model(&model.SupplierQualification{}).Where("supplier_id = ?", userID).Count(&qualCount)
+	// 甲方订单数：作为项目创建者的订单
+	model.DB.Model(&model.Order{}).
+		Joins("JOIN projects ON projects.id = orders.project_id").
+		Where("projects.user_id = ?", userID).Count(&orderAsOwner)
+
+	ok(c, gin.H{
+		"user": gin.H{
+			"id": user.ID, "phone": model.MaskPhone(user.Phone), "user_type": user.UserType,
+			"company_name": user.CompanyName, "credit_score": user.CreditScore,
+			"status": user.Status, "created_at": user.CreatedAt.Format("2006-01-02 15:04:05"),
+		},
+		"stats": gin.H{
+			"projects": projectCount, "orders_as_owner": orderAsOwner,
+			"orders_as_supplier": orderAsSupplier, "reviews": reviewCount,
+			"qualifications": qualCount,
+		},
+	})
+}
+
 // AdminUpdateUserStatus 后台启用/禁用用户
 // PUT /api/v1/admin/users/:id/status  { "status": 1|0 }
 func AdminUpdateUserStatus(c *gin.Context) {

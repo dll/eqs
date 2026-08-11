@@ -49,9 +49,16 @@
         </el-table-column>
         <el-table-column
           :label="$t('user.actions')"
-          width="110"
+          width="170"
         >
           <template #default="{ row }">
+            <el-button
+              type="info"
+              size="small"
+              @click="viewDetail(row)"
+            >
+              {{ $t('user.detail') }}
+            </el-button>
             <el-button
               :type="row.status === 1 ? 'danger' : 'success'"
               size="small"
@@ -63,6 +70,76 @@
         </el-table-column>
       </el-table>
     </el-card>
+
+    <!-- 用户详情 -->
+    <el-dialog
+      v-model="detailVisible"
+      :title="$t('user.detail')"
+      width="520px"
+    >
+      <template v-if="detail">
+        <el-descriptions
+          :column="2"
+          border
+        >
+          <el-descriptions-item :label="$t('user.id')">
+            #{{ detail.user.id }}
+          </el-descriptions-item>
+          <el-descriptions-item :label="$t('user.phone')">
+            {{ detail.user.phone }}
+          </el-descriptions-item>
+          <el-descriptions-item :label="$t('user.type')">
+            {{ userTypeText(detail.user.user_type) }}
+          </el-descriptions-item>
+          <el-descriptions-item :label="$t('user.company')">
+            {{ detail.user.company_name || '-' }}
+          </el-descriptions-item>
+          <el-descriptions-item :label="$t('user.creditScore')">
+            {{ detail.user.credit_score }}
+          </el-descriptions-item>
+          <el-descriptions-item :label="$t('user.status')">
+            <el-tag :type="detail.user.status === 1 ? 'success' : 'danger'">
+              {{ detail.user.status === 1 ? $t('user.status.active') : $t('user.status.disabled') }}
+            </el-tag>
+          </el-descriptions-item>
+        </el-descriptions>
+        <el-divider />
+        <div class="stat-grid">
+          <div class="stat-item">
+            <div class="stat-num">
+              {{ detail.stats.projects }}
+            </div>
+            <div class="stat-label">
+              {{ $t('user.statProjects') }}
+            </div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-num">
+              {{ detail.stats.orders_as_owner }}
+            </div>
+            <div class="stat-label">
+              {{ $t('user.statOrdersOwner') }}
+            </div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-num">
+              {{ detail.stats.orders_as_supplier }}
+            </div>
+            <div class="stat-label">
+              {{ $t('user.statOrdersSupplier') }}
+            </div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-num">
+              {{ detail.stats.qualifications }}
+            </div>
+            <div class="stat-label">
+              {{ $t('user.statQualifications') }}
+            </div>
+          </div>
+        </div>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -75,6 +152,8 @@ import { useI18n } from '@/utils/i18n'
 const { $t } = useI18n()
 
 const users = ref<any[]>([])
+const detailVisible = ref(false)
+const detail = ref<any>(null)
 
 const load = async () => {
   try {
@@ -86,6 +165,15 @@ const load = async () => {
 }
 
 onMounted(load)
+
+const viewDetail = async (row: any) => {
+  try {
+    detail.value = await api.get(`/api/v1/admin/users/${row.id}`)
+    detailVisible.value = true
+  } catch {
+    // interceptor 已提示
+  }
+}
 
 const toggleStatus = (row: any) => {
   const next = row.status === 1 ? 0 : 1
@@ -108,3 +196,27 @@ const userTypeText = (t: number) => {
   return map[t] || $t('role.unknown')
 }
 </script>
+
+<style scoped>
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+.stat-item {
+  background: var(--eqs-gradient-soft, #f5f7fb);
+  border-radius: 10px;
+  padding: 14px;
+  text-align: center;
+}
+.stat-num {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--eqs-primary, #2563eb);
+}
+.stat-label {
+  font-size: 12px;
+  color: var(--eqs-text-secondary, #64748b);
+  margin-top: 4px;
+}
+</style>

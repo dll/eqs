@@ -35,10 +35,21 @@
         </text>
       </view>
       <view
+        v-if="!isSupplier"
         class="menu-item"
-        @tap="goTo('/pages/project/list')"
+        @tap="goTo('/pages/project/mine')"
       >
         <text>{{ $t('mine.myProjects') }}</text>
+        <text class="arrow">
+          >
+        </text>
+      </view>
+      <view
+        v-if="isSupplier"
+        class="menu-item"
+        @tap="goTo('/pages/bid/mine')"
+      >
+        <text>{{ $t('mine.myBids') }}</text>
         <text class="arrow">
           >
         </text>

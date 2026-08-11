@@ -31,6 +31,18 @@
       }
     },
     {
+      "path": "pages/project/mine",
+      "style": {
+        "navigationBarTitleText": "我的发单"
+      }
+    },
+    {
+      "path": "pages/bid/mine",
+      "style": {
+        "navigationBarTitleText": "我的报价"
+      }
+    },
+    {
       "path": "pages/provider/list",
       "style": {
         "navigationBarTitleText": "服务商"

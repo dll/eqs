@@ -140,6 +140,7 @@ func setupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 			// Project
 			auth.POST("/project/create", handler.CreateProject)
 			auth.GET("/project/list", handler.ListProjects)
+			auth.GET("/project/mine", handler.ListMyProjects)
 			auth.GET("/project/:id/recommend", handler.GetRecommendations)
 			auth.GET("/project/:id", handler.GetProject)
 			auth.PUT("/project/:id", handler.UpdateProject)
@@ -150,6 +151,7 @@ func setupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 			// Bid
 			auth.POST("/bid/submit", handler.SubmitBid)
 			auth.GET("/project/:id/bids", handler.ListBids)
+			auth.GET("/bid/mine", handler.ListMyBids)
 			auth.PUT("/bid/:id/withdraw", handler.WithdrawBid)
 			auth.POST("/bid/:id/select", handler.SelectBid)
 
@@ -232,6 +234,7 @@ func setupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 		{
 			admin.GET("/admin/stats", handler.AdminDashboardStats)
 			admin.GET("/admin/users", handler.AdminListUsers)
+			admin.GET("/admin/users/:id", handler.AdminGetUser)
 			admin.PUT("/admin/users/:id/status", handler.AdminUpdateUserStatus)
 			admin.GET("/admin/orders", handler.AdminListOrders)
 			admin.GET("/admin/transactions", handler.AdminListTransactions)
