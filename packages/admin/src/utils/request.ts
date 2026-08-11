@@ -20,7 +20,7 @@ request.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       localStorage.removeItem('token')
-      window.location.href = '/login'
+      window.location.href = `${import.meta.env.BASE_URL}login`
     }
     const msg = error.response?.data?.message || '请求失败'
     return Promise.reject(new Error(msg))
