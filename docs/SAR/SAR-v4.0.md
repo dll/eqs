@@ -106,7 +106,14 @@ V3.0 提出 GAP-08-01~10 十项缺口，并暴露部署管线（scp-action 卡�
 | demo | 7 用户/5 项目/3 订单/里程碑/合同/支付/资质/打卡/争议 | ✅ |
 | test | demo + 边界项目（小额/多报价）+ 无争议 | ✅ |
 | training | demo + 更多订单 + 已交付/评价教学数据 | ✅ |
-| 幂等 | cleanDemoUsers 按演示手机号清理，避免唯一索引冲突 | ✅ 生产验证 7/5/3/9/9 |
+| 幂等 | seed 开头 `cleanAll()` 完整清空业务表（先子表后主表，避免外键残留），Create 加错误检查 | ✅ 生产验证 7/5/3/9 |
+
+**V4.0 修复记录（2026-08-11）**：
+
+| 问题 | 根因 | 修复 | 验证 |
+|------|------|------|------|
+| 演示数据"无效"、seed 后 orders=0 | MySQL 外键（fk_projects_user / fk_bids_supplier）因 cleanDemoUsers 未清理 Orders/Milestones 残留，导致用户重建后旧外键悬空、新插入 user_id=0 失败 | seed 开头改 `cleanAll()` 完整清空全部业务表；用户/项目 Create 增加错误检查与 ID 回填校验 | 生产：demo 3订单/5项目/7用户、test 4/8、training 5/8 全部正常 |
+| 网络层无法访问 | 本机网络对 `eqs-chzu.tech` 的 SNI/TLS 阻断（同 IP 的 wxx-agent.online 正常） | 非代码问题；建议手机流量访问 | wxx 200、eqs 握手 reset（网络环境限制） |
 
 ---
 
