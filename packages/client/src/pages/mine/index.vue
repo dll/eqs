@@ -17,6 +17,16 @@
 
     <view class="menu-list">
       <view
+        v-if="userStore.user?.user_type === 3"
+        class="menu-item"
+        @tap="goTo('/pages/admin/index')"
+      >
+        <text>{{ $t('mine.adminCenter') }}</text>
+        <text class="arrow">
+          >
+        </text>
+      </view>
+      <view
         class="menu-item"
         @tap="goTo('/pages/message/index')"
       >

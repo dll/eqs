@@ -67,6 +67,12 @@
             >
               {{ $t('login.supplier') }}
             </view>
+            <view
+              :class="['role-item', form.userType === 3 ? 'active' : '']"
+              @tap="form.userType = 3"
+            >
+              {{ $t('login.admin') }}
+            </view>
           </view>
         </view>
         <button

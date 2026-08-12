@@ -101,6 +101,48 @@
       "style": {
         "navigationBarTitleText": "我的资质"
       }
+    },
+    {
+      "path": "pages/admin/index",
+      "style": {
+        "navigationBarTitleText": "管理后台"
+      }
+    },
+    {
+      "path": "pages/admin/users",
+      "style": {
+        "navigationBarTitleText": "用户管理"
+      }
+    },
+    {
+      "path": "pages/admin/audit",
+      "style": {
+        "navigationBarTitleText": "资质审核"
+      }
+    },
+    {
+      "path": "pages/admin/projects",
+      "style": {
+        "navigationBarTitleText": "项目管理"
+      }
+    },
+    {
+      "path": "pages/admin/orders",
+      "style": {
+        "navigationBarTitleText": "订单管理"
+      }
+    },
+    {
+      "path": "pages/admin/settlement",
+      "style": {
+        "navigationBarTitleText": "结算中心"
+      }
+    },
+    {
+      "path": "pages/admin/disputes",
+      "style": {
+        "navigationBarTitleText": "争议管理"
+      }
     }
   ],
   "tabBar": {
