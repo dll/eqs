@@ -297,8 +297,9 @@ func UpdateProject(c *gin.Context) {
 	ok(c, gin.H{"message": "项目已更新", "locked": locked})
 }
 
-// DeleteProject 下架/删除项目（仅发布者本人；已有报价或订单时禁止删除，仅可下架）
-func DeleteProject(c *gin.Context) {
+// WithdrawProject 撤销项目（软删除）：仅无报价/订单时可撤销，数据保留、不再对外展示
+// PUT /api/v1/project/:id/withdraw
+func WithdrawProject(c *gin.Context) {
 	userID := c.GetUint("user_id")
 	id, err := parseUint(c.Param("id"))
 	if err != nil {
@@ -312,27 +313,83 @@ func DeleteProject(c *gin.Context) {
 		return
 	}
 	if project.UserID != userID && !isAdmin(c) {
-		forbidden(c, "仅发布者可删除项目")
+		forbidden(c, "仅发布者可撤销项目")
 		return
 	}
 
-	// 存在报价或订单：不允许物理删除，改为下架状态
+	// 有报价或订单：不允许撤销，应走废除流程
 	var bidCount, orderCount int64
 	model.DB.Model(&model.Bid{}).Where("project_id = ?", id).Count(&bidCount)
 	model.DB.Model(&model.Order{}).Where("project_id = ?", id).Count(&orderCount)
 	if bidCount > 0 || orderCount > 0 {
-		model.DB.Model(&project).Update("status", 5) // 5 = 已下架
-		WriteAudit(c, "project.offline", "project", id, gin.H{"bids": bidCount, "orders": orderCount})
-		ok(c, gin.H{"message": "项目已有业务往来，已下架处理", "offline": true})
+		badRequest(c, "项目已有业务往来，不能撤销，请使用废除")
 		return
 	}
 
+	if err := model.DB.Model(&project).Update("status", 6).Error; err != nil { // 6 = 已撤销
+		serverError(c, err)
+		return
+	}
+	WriteAudit(c, "project.withdraw", "project", id, gin.H{})
+	ok(c, gin.H{"message": "项目已撤销，数据保留", "status": 6})
+}
+
+// AbolishProject 废除项目（软删除）：有报价/订单时作废，数据保留、不可再报价/接单
+// PUT /api/v1/project/:id/abolish
+func AbolishProject(c *gin.Context) {
+	userID := c.GetUint("user_id")
+	id, err := parseUint(c.Param("id"))
+	if err != nil {
+		badRequest(c, "项目ID无效")
+		return
+	}
+
+	var project model.Project
+	if err := model.DB.First(&project, id).Error; err != nil {
+		notFound(c, "项目不存在")
+		return
+	}
+	if project.UserID != userID && !isAdmin(c) {
+		forbidden(c, "仅发布者可废除项目")
+		return
+	}
+
+	if err := model.DB.Model(&project).Update("status", 7).Error; err != nil { // 7 = 已废除
+		serverError(c, err)
+		return
+	}
+	WriteAudit(c, "project.abolish", "project", id, gin.H{})
+	ok(c, gin.H{"message": "项目已废除，数据保留", "status": 7})
+}
+
+// DeleteProject 彻底删除项目（物理删除，仅管理员）：删除后无数据积累，请谨慎使用
+// DELETE /api/v1/project/:id
+func DeleteProject(c *gin.Context) {
+	if !isAdmin(c) {
+		forbidden(c, "仅管理员可彻底删除项目，发布者请使用撤销/废除")
+		return
+	}
+	id, err := parseUint(c.Param("id"))
+	if err != nil {
+		badRequest(c, "项目ID无效")
+		return
+	}
+
+	var project model.Project
+	if err := model.DB.First(&project, id).Error; err != nil {
+		notFound(c, "项目不存在")
+		return
+	}
+
+	// 级联清理关联的报价/订单，避免孤儿数据
+	model.DB.Where("project_id = ?", id).Delete(&model.Bid{})
+	model.DB.Where("project_id = ?", id).Delete(&model.Order{})
 	if err := model.DB.Delete(&project).Error; err != nil {
 		serverError(c, err)
 		return
 	}
-	WriteAudit(c, "project.delete", "project", id, gin.H{})
-	ok(c, gin.H{"message": "项目已删除", "offline": false})
+	WriteAudit(c, "project.delete", "project", id, gin.H{"bids": true, "orders": true})
+	ok(c, gin.H{"message": "项目已彻底删除"})
 }
 
 // GetRecommendations 基于地区、资质和信用推荐服务方

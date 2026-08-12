@@ -146,6 +146,8 @@ func setupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 			auth.GET("/project/:id/recommend", handler.GetRecommendations)
 			auth.GET("/project/:id", handler.GetProject)
 			auth.PUT("/project/:id", handler.UpdateProject)
+			auth.PUT("/project/:id/withdraw", handler.WithdrawProject)
+			auth.PUT("/project/:id/abolish", handler.AbolishProject)
 			auth.DELETE("/project/:id", handler.DeleteProject)
 			auth.POST("/project/:id/invite", handler.InviteSuppliers)
 			auth.GET("/project/:id/reviews", handler.ListProjectReviews)

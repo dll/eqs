@@ -50,7 +50,7 @@
         </el-table-column>
         <el-table-column
           :label="$t('project.actions')"
-          width="160"
+          width="220"
         >
           <template #default="{ row }">
             <el-button
@@ -58,14 +58,21 @@
               size="small"
               @click="openEdit(row)"
             >
-              {{ $t('project.edit') }}
+              {{ $t('project.change') }}
+            </el-button>
+            <el-button
+              type="warning"
+              size="small"
+              @click="withdrawProject(row)"
+            >
+              {{ $t('project.withdraw') }}
             </el-button>
             <el-button
               type="danger"
               size="small"
-              @click="removeProject(row)"
+              @click="abolishProject(row)"
             >
-              {{ $t('project.delete') }}
+              {{ $t('project.abolish') }}
             </el-button>
           </template>
         </el-table-column>
@@ -75,7 +82,7 @@
     <!-- 编辑项目 -->
     <el-dialog
       v-model="editVisible"
-      :title="$t('project.edit')"
+      :title="$t('project.change')"
       width="480px"
     >
       <el-form
@@ -176,12 +183,26 @@ const saveEdit = async () => {
   }
 }
 
-const removeProject = (row: any) => {
-  ElMessageBox.confirm($t('project.deleteConfirm'), $t('project.delete'), { type: 'warning' })
+const withdrawProject = (row: any) => {
+  ElMessageBox.confirm($t('project.withdrawConfirm'), $t('project.withdraw'), { type: 'warning' })
     .then(async () => {
       try {
-        const res = await api.delete(`/api/v1/project/${row.id}`)
-        ElMessage.success((res as any)?.offline ? $t('project.offlined') : $t('project.deleted'))
+        await api.put(`/api/v1/project/${row.id}/withdraw`)
+        ElMessage.success($t('project.withdrawn'))
+        load()
+      } catch {
+        // interceptor 已提示
+      }
+    })
+    .catch(() => {})
+}
+
+const abolishProject = (row: any) => {
+  ElMessageBox.confirm($t('project.abolishConfirm'), $t('project.abolish'), { type: 'warning' })
+    .then(async () => {
+      try {
+        await api.put(`/api/v1/project/${row.id}/abolish`)
+        ElMessage.success($t('project.abolished'))
         load()
       } catch {
         // interceptor 已提示
@@ -192,7 +213,7 @@ const removeProject = (row: any) => {
 
 const statusText = (status: number) => {
   const map: Record<number, string> = {
-    0: $t('project.status.draft'), 1: $t('project.status.published'), 2: $t('project.status.assigned'), 3: $t('project.status.inProgress'), 4: $t('project.status.completed'), 5: $t('project.status.offline')
+    0: $t('project.status.draft'), 1: $t('project.status.published'), 2: $t('project.status.assigned'), 3: $t('project.status.inProgress'), 4: $t('project.status.completed'), 5: $t('project.status.offline'), 6: $t('project.status.withdrawn'), 7: $t('project.status.abolished')
   }
   return map[status] || $t('project.status.unknown')
 }

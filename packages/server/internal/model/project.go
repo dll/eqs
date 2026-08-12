@@ -3,7 +3,7 @@ package model
 import "time"
 
 // Project 项目表
-// status: 0-草稿 1-已发布 2-已接单 3-进行中 4-已完成
+// status: 0-草稿 1-已发布 2-已接单 3-进行中 4-已完成 5-已下架 6-已撤销 7-已废除
 type Project struct {
 	ID          uint      `json:"id" gorm:"primaryKey"`
 	UserID      uint      `json:"user_id" gorm:"index"`
