@@ -66,13 +66,13 @@ export const useSettingsStore = defineStore('settings', () => {
     // 统一品牌色：工程蓝 #2563EB / 科技青 #06B6D4 / AI 紫 #8B5CF6（与 Admin 设计系统一致）
     const vars: Record<string, Record<string, string>> = {
       print: {
-        '--bg-color': '#f4f6fb',
-        '--text-color': '#1e293b',
+        '--bg-color': '#ffffff',
+        '--text-color': '#000000',
         '--card-bg': '#ffffff',
-        '--border-color': '#e6eaf3',
-        '--muted-color': '#64748b',
-        '--primary-color': '#2563eb',
-        '--input-bg': '#f1f5f9',
+        '--border-color': '#e5e5e5',
+        '--muted-color': '#666666',
+        '--primary-color': '#1890ff',
+        '--input-bg': '#f5f5f5',
       },
       dark: {
         '--bg-color': '#0f172a',

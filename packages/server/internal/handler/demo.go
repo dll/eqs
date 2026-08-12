@@ -368,7 +368,7 @@ func cleanDemoUsers() {
 	model.DB.Where("supplier_id IN ?", demoUserIDs).Delete(&model.SupplierQualification{})
 	model.DB.Where("supplier_id IN ?", demoUserIDs).Delete(&model.Bid{})
 	model.DB.Where("user_id IN ?", demoUserIDs).Delete(&model.Project{})
-	model.DB.Where("user_id IN ?", demoUserIDs).Delete(&model.User{})
+	model.DB.Where("id IN ?", demoUserIDs).Delete(&model.User{})
 }
 
 // cleanAll 清理全部业务表；保留管理员账号（user_type=3）与系统配置，
