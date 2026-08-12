@@ -59,11 +59,20 @@ func TestDemo_Clean(t *testing.T) {
 		t.Fatalf("clean 失败: %d %s", w.Code, w.Body.String())
 	}
 
-	var users, projects int64
+	var users, projects, admins int64
 	model.DB.Model(&model.User{}).Count(&users)
+	model.DB.Model(&model.User{}).Where("user_type = ?", 3).Count(&admins)
 	model.DB.Model(&model.Project{}).Count(&projects)
-	if users != 0 || projects != 0 {
-		t.Fatalf("清理后应无用户/项目: users=%d projects=%d", users, projects)
+	if projects != 0 {
+		t.Fatalf("清理后应无项目: projects=%d", projects)
+	}
+	// 保留管理员账号（user_type=3），避免管理后台失效
+	if admins == 0 {
+		t.Fatalf("清理后应保留管理员账号")
+	}
+	nonAdmin := users - admins
+	if nonAdmin != 0 {
+		t.Fatalf("清理后非管理员用户应为0: users=%d admins=%d", users, admins)
 	}
 }
 

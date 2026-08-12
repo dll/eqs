@@ -110,7 +110,7 @@ func seedByMode(mode string) seedResult {
 	rng := rand.New(rand.NewSource(time.Now().UnixNano()))
 	now := time.Now()
 
-	// ===== 幂等清理：先清空全部业务表（彻底避免外键残留导致创建失败） =====
+	// ===== 幂等清理：先清空业务表（保留管理员账号，避免 seed 后管理后台失效） =====
 	cleanAll()
 
 	// ===== 用户：甲方3 / 服务方3 / 管理员1 =====
@@ -127,7 +127,13 @@ func seedByMode(mode string) seedResult {
 		{Phone: "13900006666", UserType: 2, Status: 1, CreditScore: 88, CompanyName: "金陵工程监理有限公司"},
 		{Phone: "13900007777", UserType: 2, Status: 1, CreditScore: 76, CompanyName: "远东设计工作室"},
 	}
+	// 存在（如保留的管理员账号）则复用，避免唯一键冲突
 	for i := range users {
+		var exist model.User
+		if err := model.DB.Where("phone = ?", users[i].Phone).First(&exist).Error; err == nil {
+			users[i].ID = exist.ID
+			continue
+		}
 		if err := model.DB.Create(&users[i]).Error; err != nil {
 			r.Actions = append(r.Actions, fmt.Sprintf("⚠️ 用户创建失败: %v", err))
 			continue
@@ -365,6 +371,8 @@ func cleanDemoUsers() {
 	model.DB.Where("user_id IN ?", demoUserIDs).Delete(&model.User{})
 }
 
+// cleanAll 清理全部业务表；保留管理员账号（user_type=3）与系统配置，
+// 避免演示数据重置导致管理后台账号失效、演示/测试/培训场景中断。
 func cleanAll() {
 	model.DB.Where("1 = 1").Delete(&model.AttendanceRecord{})
 	model.DB.Where("1 = 1").Delete(&model.DisputeExpertAssignment{})
@@ -383,6 +391,7 @@ func cleanAll() {
 	model.DB.Where("1 = 1").Delete(&model.Review{})
 	model.DB.Where("1 = 1").Delete(&model.Message{})
 	model.DB.Where("1 = 1").Delete(&model.Notification{})
-	model.DB.Where("1 = 1").Delete(&model.User{})
+	// 仅清理非管理员用户；管理员账号与系统配置、审计日志保留
+	model.DB.Where("user_type <> ?", 3).Delete(&model.User{})
 	model.DB.Where("1 = 1").Delete(&model.AuditLog{})
 }
