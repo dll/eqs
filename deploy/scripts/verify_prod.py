@@ -60,6 +60,100 @@ def main():
     print("EQS 生产环境演示账号实测")
     print("=" * 60)
 
+    # ---- 0. 甲方完整业务链路(发单→报价→中选→里程碑→签约→支付→交付→验收→结算→评价) ----
+    print("\n[0] 甲方完整业务链路审计")
+    s, client, _ = login("13900001111", 1)
+    s, sup, _ = login("13900004444", 2)
+    s, admin, _ = login("13900003333", 3)
+    if not client or not sup:
+        print("    登录失败")
+        return
+
+    # 1) 甲方发单
+    s, r = call("POST", "/project/create", {
+        "project_type": "cost", "service_type": "cost",
+        "title": "链路审计-造价咨询", "description": "全链路贯通测试",
+        "address": "滁州市", "budget_min": 10000, "budget_max": 50000,
+        "publish_scope": "public",
+    }, client)
+    pid = r.get("project", {}).get("id")
+    print(f"    ①发单: {s} project_id={pid}")
+    if not pid:
+        print("    发单失败,中止链路审计:", r)
+        return
+
+    # 2) 服务方报价
+    s, r = call("POST", "/bid/submit", {"project_id": pid, "amount": 30000, "service_days": 20}, sup)
+    bid = r.get("bid", {})
+    bid_id = bid.get("id")
+    print(f"    ②报价: {s} bid_id={bid_id}")
+
+    # 3) 甲方中选(生成订单)
+    s, r = call("POST", f"/bid/{bid_id}/select", {}, client)
+    print(f"    ③中选: {s} {r.get('message', r.get('error', ''))[:40]}")
+    s, r = call("GET", "/order/list", None, client)
+    orders = r.get("orders", [])
+    oid = orders[0]["id"] if orders else None
+    print(f"    订单生成: 订单ID={oid} 数量={len(orders)}")
+
+    # 4) 设置里程碑
+    s, r = call("PUT", f"/order/{oid}/milestones", {"milestones": [
+        {"name": "初稿", "ratio": 30}, {"name": "终稿", "ratio": 70},
+    ]}, client)
+    print(f"    ④里程碑: {s} {r.get('message', r.get('error', ''))[:40]}")
+
+    # 5) 生成合同 + 签署
+    s, r = call("POST", f"/order/{oid}/contract", {}, client)
+    contract = r.get("contract", {})
+    cid = contract.get("id")
+    print(f"    ⑤合同生成: {s} contract_id={cid}")
+    if cid:
+        s, r = call("POST", f"/contract/{cid}/sign", {}, sup)
+        print(f"    ⑥合同签署: {s} {r.get('message', r.get('error', ''))[:40]}")
+
+    # 6) 订单详情:里程碑/合同/支付贯通
+    s, r = call("GET", f"/order/{oid}", None, client)
+    detail = r.get("order", {})
+    print(f"    ⑦订单详情: {s} status={detail.get('status')} 里程碑数={len(r.get('milestones', []))} 合同={r.get('contract', {}).get('status')}")
+
+    # 7) 服务方交付(所有里程碑:交付→验收→结算)
+    s, r = call("GET", f"/order/{oid}", None, sup)
+    ms = r.get("milestones", [])
+    print(f"    里程碑数={len(ms)}")
+    for m in ms:
+        msid = m["id"]
+        s, r = call("POST", f"/milestone/{msid}/deliver", {"file_name": "report.pdf", "file_url": "/demo/report.pdf"}, sup)
+        print(f"    ⑧交付(ms{msid}): {s} {r.get('message', r.get('error', ''))[:30]}")
+        s, r = call("POST", f"/milestone/{msid}/accept", {"accept": True, "comment": "链路测试通过"}, client)
+        print(f"    ⑨验收(ms{msid}): {s} {r.get('message', r.get('error', ''))[:30]}")
+        s, r = call("POST", f"/milestone/{msid}/settle", {}, client)
+        print(f"    ⑩结算(ms{msid}): {s} {r.get('message', r.get('error', ''))[:30]}")
+    # 全部结算后订单应完成(3)
+    s, r = call("GET", f"/order/{oid}", None, client)
+    print(f"    全部结算后订单状态: {r.get('order', {}).get('status')} (3=已完成)")
+
+    # 10) 评价(信用联动)
+    s, r = call("POST", "/review/submit", {"order_id": oid, "reviewee_id": 4, "rating": 5, "content": "链路审计好评"}, client)
+    print(f"    ⑪评价: {s} {r.get('message', r.get('error', ''))[:40]}")
+    # 信用分联动确认(服务方用户信息)
+    s, r = call("GET", "/user/info", None, sup)
+    print(f"    服务方信用分: {r.get('user', {}).get('credit_score')}")
+
+    # ---- 0b. 服务方链路补充:接单通知 + 打卡 ----
+    print("\n[0b] 服务方链路(通知/打卡)")
+    s, r = call("GET", "/notification/list", None, sup)
+    notifs = r.get("notifications", [])
+    print(f"    接单通知: {s} 通知数={len(notifs)} 首条={notifs[0].get('title') if notifs else '无'}")
+    s, r = call("GET", f"/order/{oid}", None, sup)
+    ms2 = r.get("milestones", [])
+    if ms2:
+        msid2 = ms2[0]["id"]
+        # 打卡(经度/纬度)
+        s, r = call("POST", "/attendance/checkin", {"order_id": oid, "longitude": 118.31, "latitude": 32.30, "distance_meters": 0}, sup)
+        print(f"    打卡: {s} {r.get('message', r.get('error', ''))[:40]}")
+        s, r = call("GET", f"/order/{oid}/attendance", None, sup)
+        print(f"    打卡记录: {s} 条数={len(r.get('attendance', r.get('records', [])))}")
+
     # ---- 1. 管理员登录 + 播种(保留演示功能) ----
     s, admin, r = login("13900003333", 3)
     print(f"\n[1] 管理员登录: {s} token长度={len(admin)}")
@@ -138,15 +232,46 @@ def main():
             print(f"    资质详情: {s} 状态={r.get('qualification', {}).get('verification_status')}")
 
     # ---- 4. 平台方功能 ----
+    print("\n[4] 平台方完整链路审计")
+    s, admin, _ = login("13900003333", 3)
     s, r = call("GET", "/admin/operations-stats", None, admin)
-    print(f"\n[4] 运营看板: {s} 漏斗={r.get('funnel')} 活跃7d={r.get('active_suppliers_7d')}")
-    # 用户详情:从用户列表取真实 ID
+    print(f"    运营看板: {s} 漏斗={r.get('funnel')} 活跃7d={r.get('active_suppliers_7d')}")
+    # 用户列表/详情/状态切换
     s, r = call("GET", "/admin/users", None, admin)
     users = r.get("users", [])
     uid = users[0]["id"] if users else None
     if uid:
         s, r = call("GET", f"/admin/users/{uid}", None, admin)
         print(f"    用户详情: {s} id={uid} stats={r.get('stats')}")
+        s, r = call("PUT", f"/admin/users/{uid}/status", {"status": 1}, admin)
+        print(f"    用户状态更新(启用): {s}")
+    # 订单全量/取消
+    s, r = call("GET", "/admin/orders", None, admin)
+    print(f"    订单全量: {s} 数量={r.get('count')}")
+    # 争议:详情 + 结案
+    s, r = call("GET", "/admin/disputes", None, admin)
+    disputes = r.get("disputes", [])
+    did = disputes[0]["id"] if disputes else None
+    if did:
+        s, r = call("GET", f"/dispute/{did}", None, admin)
+        print(f"    争议详情: {s} 状态={r.get('dispute', {}).get('status')}")
+        s, r = call("POST", f"/dispute/{did}/close", {"resolution_type": "settlement", "settle_amount": 1000}, admin)
+        print(f"    争议结案: {s} {r.get('message', r.get('error', ''))[:40]}")
+    # 佣金列表/收取
+    s, r = call("GET", "/admin/commission/list", None, admin)
+    commissions = r.get("commissions", [])
+    print(f"    佣金列表: {s} 数量={len(commissions)}")
+    if commissions:
+        cid = commissions[0]["id"]
+        s, r = call("POST", f"/admin/commission/{cid}/collect", {}, admin)
+        print(f"    佣金收取: {s} {r.get('message', r.get('error', ''))[:40]}")
+    # 配置 CRUD
+    s, r = call("GET", "/admin/config/list", None, admin)
+    print(f"    配置列表: {s}")
+    s, r = call("POST", "/admin/config/upsert", {"config_key": "audit.test_key", "config_value": "1", "value_type": "string"}, admin)
+    print(f"    配置写入: {s} {r.get('message', r.get('error', ''))[:40]}")
+    s, r = call("DELETE", "/admin/config/delete/audit.test_key", None, admin)
+    print(f"    配置删除: {s} {r.get('message', r.get('error', ''))[:40]}")
 
     # ---- 5. 智能派单 match_score(公开接口,无需登录) ----
     pid = projects[0]["id"] if projects else None
