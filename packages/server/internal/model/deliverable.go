@@ -13,7 +13,7 @@ type Deliverable struct {
 	FileName   string    `json:"file_name" gorm:"size:200"`
 	Version    int       `json:"version" gorm:"default:1"`
 	Status     int       `json:"status" gorm:"default:0"`
-	ChecklistResult string `json:"checklist_result" gorm:"type:json"`
+	ChecklistResult string `json:"checklist_result" gorm:"type:text"`
 	CreatedAt  time.Time `json:"created_at"`
 	Order      Order     `json:"order" gorm:"foreignKey:OrderID"`
 }

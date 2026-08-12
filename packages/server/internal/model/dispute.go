@@ -12,7 +12,7 @@ type Dispute struct {
 	Reason            string     `json:"reason" gorm:"type:text"`
 	Claim             string     `json:"claim" gorm:"type:text"`
 	Status            string     `json:"status" gorm:"size:30;default:evidence"`
-	ExpertResult      string     `json:"expert_result" gorm:"type:json"`
+	ExpertResult      string     `json:"expert_result" gorm:"type:text"`
 	ResolutionType    string     `json:"resolution_type" gorm:"size:30"` // settlement/agreement/award/judgment
 	ResolutionFileID  uint       `json:"resolution_file_id"`
 	CreatedAt         time.Time  `json:"created_at"`

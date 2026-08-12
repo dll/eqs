@@ -10,7 +10,7 @@ type DeliveryTemplate struct {
 	Name        string     `json:"name" gorm:"size:100"`
 	Version     string     `json:"version" gorm:"size:20"`
 	FileID      uint       `json:"file_id"`
-	Checklist   string     `json:"checklist" gorm:"type:json"`
+	Checklist   string     `json:"checklist" gorm:"type:text"`
 	Status      string     `json:"status" gorm:"size:20;default:draft"`
 	EffectiveAt *time.Time `json:"effective_at"`
 	CreatedAt   time.Time  `json:"created_at"`
@@ -34,7 +34,7 @@ type AuditLog struct {
 	Action     string    `json:"action" gorm:"size:50"`
 	TargetType string    `json:"target_type" gorm:"size:50"`
 	TargetID   uint      `json:"target_id"`
-	Detail     string    `json:"detail" gorm:"type:json"`
+	Detail     string    `json:"detail" gorm:"type:text"`
 	IP         string    `json:"ip" gorm:"size:50"`
 	CreatedAt  time.Time `json:"created_at"`
 }
