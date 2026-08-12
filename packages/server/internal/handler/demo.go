@@ -279,16 +279,65 @@ func seedByMode(mode string) seedResult {
 		}
 	}
 
-	// ===== 评价（training 模式含已评价闭环） =====
-	if mode == "training" {
+	// ===== 评价（demo/training 模式含已评价闭环，测试界面有评分数据） =====
+	if mode != "test" {
 		var completedOrder model.Order
 		model.DB.Where("status = ?", 1).First(&completedOrder)
 		if completedOrder.ID > 0 {
 			model.DB.Create(&model.Review{OrderID: completedOrder.ID, ReviewerID: clientID, RevieweeID: supplierID, Rating: 5, Content: "配合度高，成果专业"})
 			model.DB.Create(&model.Review{OrderID: completedOrder.ID, ReviewerID: supplierID, RevieweeID: clientID, Rating: 5, Content: "付款及时，沟通顺畅"})
-			r.Actions = append(r.Actions, "生成双方互评（培训教学用）")
+			// 更多评分样本（供评分分布展示）
+			var order2 model.Order
+			model.DB.Where("status = ?", 1).Where("id <> ?", completedOrder.ID).First(&order2)
+			if order2.ID > 0 {
+				model.DB.Create(&model.Review{OrderID: order2.ID, ReviewerID: clientID, RevieweeID: supplier2ID, Rating: 4, Content: "专业细致，交付及时"})
+				model.DB.Create(&model.Review{OrderID: order2.ID, ReviewerID: supplier2ID, RevieweeID: clientID, Rating: 5, Content: "流程规范，配合顺畅"})
+			}
+			r.Actions = append(r.Actions, "生成双方互评与评分样本（演示/培训用）")
 		}
 	}
+
+	// ===== 交付模板（各服务类型标准模板，供模板库展示） =====
+	tpls := []struct {
+		svc, name, checklist string
+	}{
+		{"cost", "工程造价咨询交付模板", `["工程量清单（GB50500）","招标控制价编制说明","计价软件源文件","主要材料询价单"]`},
+		{"supervision", "工程监理交付模板", `["监理规划/实施细则","监理日志（每日）","旁站记录","监理月报"]`},
+		{"geotech", "岩土勘察交付模板", `["岩土工程勘察报告","钻孔柱状图/剖面图","土工试验成果表","勘察资质页"]`},
+		{"design", "工程设计交付模板", `["方案设计文件","施工图设计文件","设计变更通知单","设计说明与计算书"]`},
+	}
+	for _, t := range tpls {
+		model.DB.Create(&model.DeliveryTemplate{
+			ServiceType: t.svc, Name: t.name, Version: "1.0",
+			Checklist: t.checklist, Status: "active", EffectiveAt: &now,
+		})
+	}
+	r.Actions = append(r.Actions, fmt.Sprintf("生成 %d 个标准交付模板", len(tpls)))
+
+	// ===== 合同模板（电子签模板库） =====
+	model.DB.Create(&model.ContractTemplate{
+		ServiceType: "cost", Name: "工程造价咨询服务合同（标准版）", Version: "1.0",
+		Content: "本合同由甲方与乙方就工程造价咨询服务达成……（标准条款）", Status: "active",
+	})
+	model.DB.Create(&model.ContractTemplate{
+		ServiceType: "supervision", Name: "建设工程监理服务合同（标准版）", Version: "1.0",
+		Content: "本合同由甲方与乙方就建设工程监理服务达成……（标准条款）", Status: "active",
+	})
+	r.Actions = append(r.Actions, "生成 2 个合同模板（电子签模板库）")
+
+	// ===== 佣金（基于已生成订单，供结算中心展示） =====
+	var txnOrders []model.Order
+	model.DB.Where("status >= ?", 1).Limit(3).Find(&txnOrders)
+	commCreated := 0
+	for _, o := range txnOrders {
+		rate := 8.0 // 8% 平台佣金
+		model.DB.Create(&model.CommissionRecord{
+			OrderID: o.ID, SupplierID: o.SupplierID, ProjectID: o.ProjectID,
+			Amount: o.Amount, Rate: rate, Commission: o.Amount * rate / 100, Status: "pending",
+		})
+		commCreated++
+	}
+	r.Actions = append(r.Actions, fmt.Sprintf("生成 %d 条平台佣金记录（待收取）", commCreated))
 
 	if mode == "training" {
 		r.Actions = append(r.Actions, "培训模式：已含标准流程、完整闭环、结算与评价教学数据")
