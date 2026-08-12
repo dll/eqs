@@ -15,7 +15,7 @@
             {{ t.name }}
           </text>
           <text class="t-type">
-            {{ t.service_type || '-' }}
+            {{ toTypeName(t.service_type) }}
           </text>
         </view>
         <text class="t-desc">
@@ -98,6 +98,7 @@ import { ref, computed } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { request } from '@/utils/request'
 import { usePageTitle } from '@/utils/i18n'
+import { toTypeName } from '@/lib/service'
 
 usePageTitle('page.templates', { onShow })
 

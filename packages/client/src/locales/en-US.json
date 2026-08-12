@@ -1,5 +1,6 @@
 {
   "app.name": "EQS Engineering Quick Service",
+  "app.title": "EQS Engineering Quick Service",
   "common.login": "Login",
   "common.logout": "Logout",
   "common.confirm": "Confirm",

@@ -19,7 +19,7 @@
           </text>
         </view>
         <text class="p-type">
-          {{ p.service_type || p.project_type }}
+          {{ toTypeName(p.service_type || p.project_type) }}
         </text>
         <text class="p-budget">
           ¥{{ p.budget_min }} - ¥{{ p.budget_max }}
@@ -47,6 +47,7 @@ import { ref } from 'vue'
 import { onShow, onReachBottom } from '@dcloudio/uni-app'
 import { request } from '@/utils/request'
 import { useI18n, usePageTitle } from '@/utils/i18n'
+import { toTypeName } from '@/lib/service'
 
 const { $t } = useI18n()
 usePageTitle('page.projectMine', { onShow })

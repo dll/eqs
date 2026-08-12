@@ -20,10 +20,13 @@
           :label="$t('project.name')"
         />
         <el-table-column
-          prop="service_type"
           :label="$t('project.type')"
           width="120"
-        />
+        >
+          <template #default="{ row }">
+            {{ serviceTypeText(row.service_type) }}
+          </template>
+        </el-table-column>
         <el-table-column
           prop="user_id"
           :label="$t('project.ownerId')"
@@ -216,6 +219,16 @@ const statusText = (status: number) => {
     0: $t('project.status.draft'), 1: $t('project.status.published'), 2: $t('project.status.assigned'), 3: $t('project.status.inProgress'), 4: $t('project.status.completed'), 5: $t('project.status.offline'), 6: $t('project.status.withdrawn'), 7: $t('project.status.abolished')
   }
   return map[status] || $t('project.status.unknown')
+}
+
+const serviceTypeText = (t: string) => {
+  const map: Record<string, string> = {
+    cost: $t('project.serviceType.cost'),
+    design: $t('project.serviceType.design'),
+    supervision: $t('project.serviceType.supervision'),
+    geotech: $t('project.serviceType.geotech'),
+  }
+  return map[t] || $t('project.serviceType.unknown')
 }
 </script>
 

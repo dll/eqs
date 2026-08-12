@@ -105,7 +105,7 @@
         >
           <template #default="{ row }">
             <el-tag :type="row.status === 'collected' ? 'success' : 'warning'">
-              {{ row.status === 'collected' ? $t('settlement.collected') : row.status }}
+              {{ commissionStatusText(row.status) }}
             </el-tag>
           </template>
         </el-table-column>
@@ -182,5 +182,13 @@ const typeText = (t: string) => {
 const statusText = (s: number) => {
   const map: Record<number, string> = { 0: $t('settlement.status.processing'), 1: $t('settlement.status.success'), 2: $t('settlement.status.failed') }
   return map[s] || $t('settlement.status.unknown')
+}
+
+const commissionStatusText = (s: string) => {
+  const map: Record<string, string> = {
+    pending: $t('settlement.commission.pending'),
+    collected: $t('settlement.commission.collected'),
+  }
+  return map[s] || s
 }
 </script>

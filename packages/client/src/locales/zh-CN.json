@@ -1,5 +1,6 @@
 {
   "app.name": "工程快捷服务",
+  "app.title": "工程快捷服务",
   "common.login": "登录",
   "common.logout": "退出登录",
   "common.confirm": "确定",
