@@ -395,6 +395,19 @@ func TestCover_Progress(t *testing.T) {
 	if w.Code != http.StatusOK {
 		t.Fatalf("单项目进度失败: %d %s", w.Code, w.Body.String())
 	}
+	proj := decodeBody(t, w)["project"].(map[string]interface{})
+	if _, ok := proj["schedule_state"]; !ok {
+		t.Fatal("进度应包含 schedule_state")
+	}
+	if stg, ok := proj["stages"].([]interface{}); !ok || len(stg) != 5 {
+		t.Fatalf("进度应包含5个阶段，得到 %v", proj["stages"])
+	}
+	if _, ok := proj["plan_progress"]; !ok {
+		t.Fatal("进度应包含 plan_progress")
+	}
+	if _, ok := proj["schedule_text"]; !ok {
+		t.Fatal("进度应包含 schedule_text")
+	}
 	w = doJSONFull(t, r, "GET", "/api/v1/project/abc/progress", nil)
 	if w.Code != http.StatusBadRequest {
 		t.Fatalf("非法ID应400，得到 %d", w.Code)
@@ -768,6 +781,67 @@ func TestCover_HelperFuncs(t *testing.T) {
 	}
 	if fmtDateStr(&tm) == "未填写" {
 		t.Fatal("fmtDateStr 应返回日期")
+	}
+
+	// calcScheduleState 各分支：提前/按时/滞后/已完成
+	if st, txt := calcScheduleState(80, 30, 2); st != "ahead" || txt != "提前" {
+		t.Fatalf("提前分支失败: %s/%s", st, txt)
+	}
+	if st, txt := calcScheduleState(30, 80, 2); st != "late" || txt != "滞后" {
+		t.Fatalf("滞后分支失败: %s/%s", st, txt)
+	}
+	if st, txt := calcScheduleState(50, 50, 2); st != "on_time" || txt != "按时" {
+		t.Fatalf("按时分支失败: %s/%s", st, txt)
+	}
+	if st, _ := calcScheduleState(0, 0, 4); st != "ahead" {
+		t.Fatalf("已完成应提前: %s", st)
+	}
+
+	// calcPlanProgress：无计划时间/区间正常/已过期/已完成
+	pNil := model.Project{Status: 1}
+	if got := calcPlanProgress(pNil); got != 10 {
+		t.Fatalf("无计划时间应10，得到 %d", got)
+	}
+	startPast := time.Now().Add(-10 * 24 * time.Hour)
+	endFuture := time.Now().Add(10 * 24 * time.Hour)
+	pNormal := model.Project{Status: 1, PublishTime: &startPast, Deadline: &endFuture}
+	if got := calcPlanProgress(pNormal); got < 40 || got > 60 {
+		t.Fatalf("正常区间计划进度应约50，得到 %d", got)
+	}
+	endPast := time.Now().Add(-5 * 24 * time.Hour)
+	pExpired := model.Project{Status: 1, PublishTime: &startPast, Deadline: &endPast}
+	if got := calcPlanProgress(pExpired); got != 100 {
+		t.Fatalf("已过截止应100，得到 %d", got)
+	}
+	startFuture := time.Now().Add(5 * 24 * time.Hour)
+	pFuture := model.Project{Status: 1, PublishTime: &startFuture, Deadline: &endFuture}
+	if got := calcPlanProgress(pFuture); got != 0 {
+		t.Fatalf("未开始应0，得到 %d", got)
+	}
+	pDone := model.Project{Status: 4, PublishTime: &startPast, Deadline: &endFuture}
+	if got := calcPlanProgress(pDone); got != 100 {
+		t.Fatalf("已完成计划应100，得到 %d", got)
+	}
+
+	// calcProjectStages：已知类型/未知类型/无计划时间
+	pSt := model.Project{ServiceType: "cost", Status: 3, PublishTime: &startPast, Deadline: &endFuture}
+	stages := calcProjectStages(pSt, 50)
+	if len(stages) != 5 {
+		t.Fatalf("cost 阶段应5个，得到 %d", len(stages))
+	}
+	if stages[0].Order != 1 || stages[4].Name == "" {
+		t.Fatalf("阶段顺序/名称失败: %+v", stages[0])
+	}
+	pSt2 := model.Project{ServiceType: "unknown", Status: 3}
+	stages2 := calcProjectStages(pSt2, 30)
+	if len(stages2) != 5 {
+		t.Fatalf("未知类型应用通用阶段，得到 %d", len(stages2))
+	}
+	// 无计划时间：默认30天区间
+	pSt3 := model.Project{ServiceType: "geotech", Status: 1}
+	stages3 := calcProjectStages(pSt3, 10)
+	if len(stages3) != 5 || stages3[0].StartDate == nil {
+		t.Fatalf("无计划时间阶段生成失败: %+v", stages3)
 	}
 
 	if ids := allOrderIDs(nil); len(ids) != 1 || ids[0] != 0 {

@@ -93,9 +93,9 @@
           shadow="hover"
         >
           <template #header>
-            {{ $t('dashboard.kanbanProgress') }}
+            {{ $t('dashboard.kanbanStatus') }}
           </template>
-          <div class="chart-area">
+          <div class="chart-area kanban-area">
             <KanbanChart
               v-if="kanbanData.length"
               :items="kanbanData"
@@ -381,7 +381,10 @@ const loadProgress = async () => {
       const r = await api.get<{ projects: any[] }>('/api/v1/admin/project-progress')
       progressProjects.value = r.projects || []
       ganttData.value = r.projects || []
-      kanbanData.value = (r.projects || []).map((p) => ({ id: p.id, title: p.title, progress: p.progress, status: p.status }))
+      kanbanData.value = (r.projects || []).map((p) => ({
+        id: p.id, title: p.title, progress: p.progress, status: p.status,
+        start_date: p.start_date, end_date: p.end_date, schedule_state: p.schedule_state,
+      }))
       // 最近项目合并进度
       const pmap = new Map((r.projects || []).map((p) => [p.id, p.progress]))
       recentProjects.value = (recentProjects.value || []).map((p) => ({ ...p, progress: pmap.get(p.id) ?? 0 }))
@@ -495,6 +498,9 @@ const statusType = (status: number) => {
 }
 .chart-area {
   height: 360px;
+}
+.kanban-area {
+  height: 440px;
 }
 .ai-body .ai-summary {
   display: flex;

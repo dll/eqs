@@ -152,21 +152,55 @@ func seedByMode(mode string) seedResult {
 	supplier3ID := users[5].ID  // 监理
 	supplier4ID := users[6].ID  // 设计
 
-	// ===== 项目（按模式数量不同） =====
-	projects := []model.Project{
-		{UserID: clientID, ProjectType: "cost", ServiceType: "cost", Title: "办公楼造价编制项目", Description: "编制办公楼土建安装工程预算", Address: "滁州市琅琊区", BudgetMin: 20000, BudgetMax: 60000, Status: 1, PublishScope: "public", PublishTime: &now},
-		{UserID: clientID, ProjectType: "supervision", ServiceType: "supervision", Title: "住宅楼工程监理项目", Description: "小区1-3号楼施工监理", Address: "南京市江宁区", BudgetMin: 50000, BudgetMax: 150000, Status: 1, PublishScope: "public", PublishTime: &now},
-		{UserID: clientID, ProjectType: "geotech", ServiceType: "geotech", Title: "地块地质勘察项目", Description: "商业地块岩土工程勘察", Address: "滁州市南谯区", BudgetMin: 30000, BudgetMax: 80000, Status: 1, PublishScope: "public", PublishTime: &now},
-		{UserID: client2ID, ProjectType: "design", ServiceType: "design", Title: "市政道路初步设计", Description: "城市主干道方案设计与初设", Address: "合肥市包河区", BudgetMin: 40000, BudgetMax: 120000, Status: 1, PublishScope: "public", PublishTime: &now},
-		{UserID: client2ID, ProjectType: "cost", ServiceType: "cost", Title: "厂房改造结算审核", Description: "既有厂房改造工程结算审核", Address: "芜湖市镜湖区", BudgetMin: 15000, BudgetMax: 45000, Status: 1, PublishScope: "invited", PublishTime: &now},
+	// ===== 项目（按模式数量不同；时间错开以支撑甘特图/看板演示） =====
+	// 各项目发布日错开、截止日不同，制造提前/按时/滞后样本
+	pubOffset := []int{-20, -14, -9, -35, -6}   // 距今天数（负数=过去）
+	deadlineIn := []int{5, 10, 40, -3, 25}       // 距发布天数（正=未来，负=已过）
+	for i := range pubOffset {
+		pubOffset[i] = pubOffset[i] * 24
+	}
+	for i := range deadlineIn {
+		deadlineIn[i] = deadlineIn[i] * 24
+	}
+	projects := []model.Project{}
+	projDef := []struct {
+		uid        uint
+		pt, st, ti string
+		desc, addr string
+		bmin, bmax float64
+		scope      string
+		status     int
+	}{
+		{clientID, "cost", "cost", "办公楼造价编制项目", "编制办公楼土建安装工程预算", "滁州市琅琊区", 20000, 60000, "public", 3},
+		{clientID, "supervision", "supervision", "住宅楼工程监理项目", "小区1-3号楼施工监理", "南京市江宁区", 50000, 150000, "public", 1},
+		{clientID, "geotech", "geotech", "地块地质勘察项目", "商业地块岩土工程勘察", "滁州市南谯区", 30000, 80000, "public", 2},
+		{client2ID, "design", "design", "市政道路初步设计", "城市主干道方案设计与初设", "合肥市包河区", 40000, 120000, "public", 4},
+		{client2ID, "cost", "cost", "厂房改造结算审核", "既有厂房改造工程结算审核", "芜湖市镜湖区", 15000, 45000, "invited", 1},
+	}
+	for i, d := range projDef {
+		pub := now.Add(time.Duration(pubOffset[i]) * time.Hour)
+		dl := pub.Add(time.Duration(deadlineIn[i]) * time.Hour)
+		projects = append(projects, model.Project{
+			UserID: d.uid, ProjectType: d.pt, ServiceType: d.st, Title: d.ti,
+			Description: d.desc, Address: d.addr, BudgetMin: d.bmin, BudgetMax: d.bmax,
+			Status: d.status, PublishScope: d.scope, PublishTime: &pub, Deadline: &dl,
+		})
 	}
 	if mode != "demo" {
 		// test/training 增加项目量
-		projects = append(projects,
-			model.Project{UserID: clientID, ProjectType: "cost", ServiceType: "cost", Title: "边界测试-小额预算", Description: "测试极小金额边界", Address: "测试地址", BudgetMin: 100, BudgetMax: 200, Status: 1, PublishScope: "public", PublishTime: &now},
-			model.Project{UserID: client2ID, ProjectType: "geotech", ServiceType: "geotech", Title: "滨江地块二期勘察", Description: "二期场地详勘", Address: "马鞍山市", BudgetMin: 60000, BudgetMax: 150000, Status: 1, PublishScope: "public", PublishTime: &now},
-			model.Project{UserID: clientID, ProjectType: "design", ServiceType: "design", Title: "教学楼建筑方案", Description: "九年一贯制学校方案设计", Address: "滁州市来安县", BudgetMin: 80000, BudgetMax: 200000, Status: 1, PublishScope: "public", PublishTime: &now},
-		)
+		extraPub := []int{-2, -28, -1}
+		extraDL := []int{30, 15, 20}
+		for i, extra := range []model.Project{
+			{UserID: clientID, ProjectType: "cost", ServiceType: "cost", Title: "边界测试-小额预算", Description: "测试极小金额边界", Address: "测试地址", BudgetMin: 100, BudgetMax: 200, Status: 1, PublishScope: "public"},
+			{UserID: client2ID, ProjectType: "geotech", ServiceType: "geotech", Title: "滨江地块二期勘察", Description: "二期场地详勘", Address: "马鞍山市", BudgetMin: 60000, BudgetMax: 150000, Status: 1, PublishScope: "public"},
+			{UserID: clientID, ProjectType: "design", ServiceType: "design", Title: "教学楼建筑方案", Description: "九年一贯制学校方案设计", Address: "滁州市来安县", BudgetMin: 80000, BudgetMax: 200000, Status: 1, PublishScope: "public"},
+		} {
+			pub := now.Add(time.Duration(extraPub[i]) * 24 * time.Hour)
+			dl := pub.Add(time.Duration(extraDL[i]) * 24 * time.Hour)
+			extra.PublishTime = &pub
+			extra.Deadline = &dl
+			projects = append(projects, extra)
+		}
 	}
 	projectOK := 0
 	for i := range projects {
@@ -209,10 +243,19 @@ func seedByMode(mode string) seedResult {
 				orderCount++
 				r.Orders++
 
-				// 里程碑（节点金额合计=订单金额）
-				model.DB.Create(&model.PaymentMilestone{OrderID: order.ID, Name: "合同预付款", Sequence: 1, Ratio: 30, Amount: selected.Amount * 0.3, Status: "submitted"})
-				model.DB.Create(&model.PaymentMilestone{OrderID: order.ID, Name: "中期进度款", Sequence: 2, Ratio: 40, Amount: selected.Amount * 0.4, Status: "submitted"})
-				model.DB.Create(&model.PaymentMilestone{OrderID: order.ID, Name: "验收尾款", Sequence: 3, Ratio: 30, Amount: selected.Amount * 0.3, Status: "pending"})
+				// 里程碑（节点金额合计=订单金额；设置计划验收时间支撑甘特图）
+				m1 := model.PaymentMilestone{OrderID: order.ID, Name: "合同预付款", Sequence: 1, Ratio: 30, Amount: selected.Amount * 0.3, Status: "submitted"}
+				due1 := order.CreatedAt.Add(10 * 24 * time.Hour)
+				m1.AcceptanceDueAt = &due1
+				model.DB.Create(&m1)
+				m2 := model.PaymentMilestone{OrderID: order.ID, Name: "中期进度款", Sequence: 2, Ratio: 40, Amount: selected.Amount * 0.4, Status: "submitted"}
+				due2 := order.CreatedAt.Add(25 * 24 * time.Hour)
+				m2.AcceptanceDueAt = &due2
+				model.DB.Create(&m2)
+				m3 := model.PaymentMilestone{OrderID: order.ID, Name: "验收尾款", Sequence: 3, Ratio: 30, Amount: selected.Amount * 0.3, Status: "pending"}
+				due3 := order.CreatedAt.Add(40 * 24 * time.Hour)
+				m3.AcceptanceDueAt = &due3
+				model.DB.Create(&m3)
 
 				// 合同（training 模式已签署）
 				contractStatus := "signed"

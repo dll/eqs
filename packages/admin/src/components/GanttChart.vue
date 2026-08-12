@@ -1,5 +1,17 @@
 <template>
   <div class="gantt-wrap">
+    <!-- 进度状态图例 -->
+    <div class="gantt-legend">
+      <span class="legend-item">
+        <span class="dot ahead" />{{ $t('dashboard.scheduleAhead') }}
+      </span>
+      <span class="legend-item">
+        <span class="dot ontime" />{{ $t('dashboard.scheduleOnTime') }}
+      </span>
+      <span class="legend-item">
+        <span class="dot late" />{{ $t('dashboard.scheduleLate') }}
+      </span>
+    </div>
     <div
       ref="chartEl"
       class="gantt-chart"
@@ -10,11 +22,14 @@
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
 import * as echarts from 'echarts/core'
-import { BarChart } from 'echarts/charts'
+import { BarChart, LineChart, ScatterChart } from 'echarts/charts'
 import { GridComponent, TooltipComponent, DataZoomComponent } from 'echarts/components'
 import { CanvasRenderer } from 'echarts/renderers'
+import { useI18n } from '@/utils/i18n'
 
-echarts.use([BarChart, GridComponent, TooltipComponent, DataZoomComponent, CanvasRenderer])
+echarts.use([BarChart, LineChart, ScatterChart, GridComponent, TooltipComponent, DataZoomComponent, CanvasRenderer])
+
+const { $t } = useI18n()
 
 interface Milestone {
   id: number
@@ -22,6 +37,15 @@ interface Milestone {
   status: string
   ratio: number
   order_id: number
+}
+
+export interface GanttStage {
+  name: string
+  order: number
+  start_date: string | null
+  end_date: string | null
+  progress: number
+  done: boolean
 }
 
 export interface GanttItem {
@@ -33,6 +57,10 @@ export interface GanttItem {
   start_date: string | null
   end_date: string | null
   progress: number
+  plan_progress?: number
+  schedule_state?: string
+  schedule_text?: string
+  stages?: GanttStage[]
   milestones: Milestone[]
 }
 
@@ -78,7 +106,7 @@ function buildOption(): echarts.EChartsCoreOption {
       barWidth: 14,
       itemStyle: {
         borderRadius: 7,
-        color: ganttColor(p.status),
+        color: scheduleColor(p.schedule_state, p.status),
       },
       emphasis: {
         itemStyle: { shadowBlur: 10, shadowColor: 'rgba(64,158,255,.4)' },
@@ -86,11 +114,52 @@ function buildOption(): echarts.EChartsCoreOption {
       tooltip: {
         formatter: () => {
           const ms = p.milestones.map((m) => `${m.name}(${m.status})`).join('、')
-          return `<b>#${p.id} ${p.title}</b><br/>进度：${p.progress}%<br/>状态：${p.status_text}${ms ? `<br/>里程碑：${ms}` : ''}`
+          const stg = (p.stages || []).map((s) => (s.done ? '✅' : '⬜') + s.name).join(' ')
+          const sched = p.schedule_text || ''
+          return `<b>#${p.id} ${p.title}</b><br/>${$t('dashboard.columnProgress')}：${p.progress}%（计划${p.plan_progress ?? '-'}%）<br/>${$t('dashboard.columnStatus')}：${p.status_text}｜进度${sched}${stg ? `<br/>阶段：${stg}` : ''}${ms ? `<br/>里程碑：${ms}` : ''}`
         },
       },
     }
   })
+
+  // 阶段分段条（在时间轴内按阶段着色，覆盖主条上层）
+  const stageSeries = items.flatMap((p) =>
+    (p.stages || []).map((s) => {
+      const ss = s.start_date ? new Date(s.start_date).getTime() : minT
+      const se = s.end_date ? new Date(s.end_date).getTime() : maxT - pad
+      return {
+        type: 'bar' as const,
+        xAxisIndex: 0,
+        yAxisIndex: 0,
+        data: [[ss, se]],
+        barWidth: 6,
+        barGap: '-180%',
+        itemStyle: {
+          borderRadius: 3,
+          color: stageColor(s),
+        },
+        tooltip: {
+          formatter: `#${p.id} ${s.name}：${s.done ? $t('common.done') : $t('common.doing')}（${s.progress}%）`,
+        },
+      }
+    }),
+  )
+
+  // 计划进度参考线（虚线）
+  const planMark = items.map((p, i) => ({
+    type: 'line' as const,
+    xAxisIndex: 0,
+    yAxisIndex: 0,
+    data: [[minT + (maxT - minT) * ((p.plan_progress ?? 0) / 100), i]],
+    symbol: 'none',
+    lineStyle: {
+      type: 'dashed' as const,
+      width: 2,
+      color: '#909399',
+      opacity: 0.8,
+    },
+    tooltip: { show: false },
+  }))
 
   // 进度百分比条（时间轴右端标注数字）
   const progressSeries = items.map((p) => ({
@@ -125,7 +194,7 @@ function buildOption(): echarts.EChartsCoreOption {
   )
 
   return {
-    grid: { left: 120, right: 60, top: 10, bottom: 30 },
+    grid: { left: 120, right: 60, top: 30, bottom: 30 },
     tooltip: { trigger: 'item', triggerOn: 'mousemove' },
     xAxis: {
       type: 'time',
@@ -141,15 +210,22 @@ function buildOption(): echarts.EChartsCoreOption {
     dataZoom: [{ type: 'inside' }, { type: 'slider', height: 12, bottom: 2 }],
     animation: true,
     animationDuration: 800,
-    series: [...barSeries, ...progressSeries, ...msScatter],
+    series: [...barSeries, ...stageSeries, ...planMark, ...progressSeries, ...msScatter],
   }
 }
 
-function ganttColor(status: number): string {
+function scheduleColor(state?: string, status?: number): string {
   if (status === 4) return '#67C23A'
-  if (status >= 2) return '#409EFF'
+  if (state === 'ahead') return '#67C23A'
+  if (state === 'late') return '#F56C6C'
+  if (status === 2) return '#409EFF'
   if (status === 1) return '#E6A23C'
   return '#C0C4CC'
+}
+
+function stageColor(s: GanttStage): string {
+  if (s.done) return 'rgba(103, 194, 58, .85)'
+  return 'rgba(64, 158, 255, .55)'
 }
 
 function msColor(status: string): string {
@@ -195,9 +271,35 @@ watch(() => props.projects, render, { deep: true })
   height: 100%;
   min-height: 320px;
 }
+.gantt-legend {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 6px;
+  font-size: 12px;
+  color: var(--eqs-text-secondary, #606266);
+}
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+}
+.dot.ahead {
+  background: #67c23a;
+}
+.dot.ontime {
+  background: #409eff;
+}
+.dot.late {
+  background: #f56c6c;
+}
 .gantt-chart {
   width: 100%;
-  height: 100%;
-  min-height: 320px;
+  height: calc(100% - 24px);
+  min-height: 300px;
 }
 </style>
