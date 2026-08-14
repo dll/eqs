@@ -185,6 +185,38 @@ func PreviewFile(c *gin.Context) {
 		}
 	}
 
+	serveFilePreview(c, file)
+}
+
+// PreviewFilePublic 公开预览（带签名 token，供服务商主页案例图等未登录公开展示场景）
+// GET /api/v1/file/:id/preview/public?token=<exp.sign>
+// 签名由 signPreviewToken 生成，绑定 file_id 且 24h 过期；仅允许预览类型，不开放下载。
+func PreviewFilePublic(c *gin.Context) {
+	fileID, err := parseUint(c.Param("id"))
+	if err != nil {
+		badRequest(c, "文件ID无效")
+		return
+	}
+	token := c.Query("token")
+	if token == "" || !verifyPreviewToken(token, fileID) {
+		unauthorized(c, "预览链接无效或已过期")
+		return
+	}
+	var file model.ProjectFile
+	if err := model.DB.First(&file, fileID).Error; err != nil {
+		notFound(c, "文件不存在")
+		return
+	}
+	previewable := map[string]bool{"jpg": true, "jpeg": true, "png": true, "pdf": true, "dxf": true, "dwg": true}
+	if !previewable[file.FileType] {
+		badRequest(c, "该文件类型不支持在线预览，请下载查看")
+		return
+	}
+	serveFilePreview(c, file)
+}
+
+// serveFilePreview 文件预览内容服务（鉴权由调用方完成）
+func serveFilePreview(c *gin.Context, file model.ProjectFile) {
 	// URL 指向外部时直接重定向
 	if len(file.StorageKey) > 7 && (file.StorageKey[:7] == "http://" || file.StorageKey[:8] == "https://") {
 		c.Redirect(302, file.StorageKey)

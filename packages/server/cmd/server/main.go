@@ -122,6 +122,8 @@ func setupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 		api.GET("/provider/:id/cases", handler.ListProviderCases)
 		// V9 站内实时推送（SSE，token 走查询参数；EventSource 无法携带请求头）
 		api.GET("/notify/stream", handler.NotifyStream)
+		// V9 公开预览（签名 token，供服务商主页案例图等公开场景；仅预览不开放下载）
+		api.GET("/file/:id/preview/public", handler.PreviewFilePublic)
 
 		// Protected routes
 		auth := api.Group("")

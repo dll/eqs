@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/eqs/server/internal/model"
@@ -10,6 +11,7 @@ import (
 
 // ListProviderCases 服务商公开案例（服务超市/主页展示，仅 published）
 // GET /api/v1/provider/:id/cases（公开接口）
+// 返回含 image_urls：为成果图生成 24h 有效签名公开预览链接（未登录可浏览）
 func ListProviderCases(c *gin.Context) {
 	supplierID, err := parseUint(c.Param("id"))
 	if err != nil {
@@ -19,7 +21,38 @@ func ListProviderCases(c *gin.Context) {
 	var cases []model.CaseShowcase
 	model.DB.Where("supplier_id = ? AND status = ?", supplierID, "published").
 		Order("created_at DESC").Limit(20).Find(&cases)
-	ok(c, gin.H{"cases": cases, "count": len(cases)})
+
+	type caseItem struct {
+		model.CaseShowcase
+		ImageURLs []string `json:"image_urls"`
+	}
+	items := make([]caseItem, 0, len(cases))
+	for _, cs := range cases {
+		items = append(items, caseItem{CaseShowcase: cs, ImageURLs: signedCaseImageURLs(cs.ImageFileIDs)})
+	}
+	ok(c, gin.H{"cases": items, "count": len(items)})
+}
+
+// parseFileIDList 解析 JSON 数组形式的 file_id 列表
+func parseFileIDList(s string) []uint {
+	var ids []uint
+	if err := json.Unmarshal([]byte(s), &ids); err != nil {
+		return nil
+	}
+	return ids
+}
+
+// signedCaseImageURLs 为案例成果图生成签名公开预览链接
+func signedCaseImageURLs(idsJSON string) []string {
+	ids := parseFileIDList(idsJSON)
+	if len(ids) == 0 {
+		return nil
+	}
+	urls := make([]string, 0, len(ids))
+	for _, fid := range ids {
+		urls = append(urls, fmt.Sprintf("/api/v1/file/%d/preview/public?token=%s", fid, signPreviewToken(fid)))
+	}
+	return urls
 }
 
 // ListMyCases 我的案例（服务方本人或管理员）

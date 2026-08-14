@@ -140,16 +140,16 @@
             {{ cs.description }}
           </text>
           <view
-            v-if="csImages(cs).length"
+            v-if="cs.image_urls && cs.image_urls.length"
             class="case-imgs"
           >
             <image
-              v-for="fid in csImages(cs)"
-              :key="fid"
+              v-for="url in cs.image_urls"
+              :key="url"
               class="case-img"
-              :src="`/api/v1/file/${fid}/preview`"
+              :src="url"
               mode="aspectFill"
-              @tap="previewCase(fid)"
+              @tap="previewCase(cs.image_urls)"
             />
           </view>
         </view>
@@ -177,7 +177,7 @@ onLoad((options) => {
   }
 })
 
-// V9：服务案例（公开接口）
+// V9：服务案例（公开接口，image_urls 为签名公开预览链接）
 const loadCases = async (id: string) => {
   try {
     const res = await request.get(`/api/v1/provider/${id}/cases`, { silent401: true })
@@ -187,18 +187,10 @@ const loadCases = async (id: string) => {
   }
 }
 
-// 解析案例成果图 file_id 列表（后端以 JSON 字符串存储）
-const csImages = (cs: any): number[] => {
-  try {
-    const arr = JSON.parse(cs.image_file_ids || '[]')
-    return Array.isArray(arr) ? arr : []
-  } catch {
-    return []
-  }
-}
-
-const previewCase = (fid: number) => {
-  uni.previewImage({ urls: [`/api/v1/file/${fid}/preview`] })
+// 预览案例成果图（签名公开链接，无需登录）
+const previewCase = (urls: string[]) => {
+  if (!urls || !urls.length) return
+  uni.previewImage({ urls })
 }
 
 const loadProvider = async (id: string) => {
