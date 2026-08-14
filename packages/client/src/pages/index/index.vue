@@ -11,7 +11,9 @@
         Agile · AI · Engineering Service
       </text>
       <view class="search-bar">
-        <text class="search-icon">🔍</text>
+        <text class="search-icon">
+          🔍
+        </text>
         <input
           class="search-input"
           :placeholder="$t('home.searchPlaceholder')"

@@ -34,9 +34,10 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { onShow } from '@dcloudio/uni-app'
+import { onHide, onShow } from '@dcloudio/uni-app'
 import { request } from '@/utils/request'
 import { useI18n, usePageTitle } from '@/utils/i18n'
+import { connectNotify } from '@/utils/realtime'
 
 const { $t } = useI18n()
 usePageTitle('page.notice', { onShow })
@@ -51,7 +52,23 @@ interface Notice {
 }
 const messages = ref<Notice[]>([])
 
-onShow(() => load())
+// V9：实时推送——收到新通知事件立即刷新列表
+let disconnectNotify: (() => void) | null = null
+
+onShow(() => {
+  load()
+  disconnectNotify?.()
+  disconnectNotify = connectNotify((data) => {
+    if (data && data.type === 'notification') {
+      load()
+    }
+  })
+})
+
+onHide(() => {
+  disconnectNotify?.()
+  disconnectNotify = null
+})
 
 const load = async () => {
   try {

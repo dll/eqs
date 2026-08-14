@@ -118,6 +118,10 @@ func setupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 		// V8 服务超市（公开浏览）
 		api.GET("/provider/list", handler.ListProviders)
 		api.GET("/provider/:id", handler.GetProvider)
+		// V9 服务商公开案例（企业案例沉淀）
+		api.GET("/provider/:id/cases", handler.ListProviderCases)
+		// V9 站内实时推送（SSE，token 走查询参数；EventSource 无法携带请求头）
+		api.GET("/notify/stream", handler.NotifyStream)
 
 		// Protected routes
 		auth := api.Group("")
@@ -179,6 +183,8 @@ func setupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 			auth.POST("/milestone/:id/settle", handler.SettleMilestone)
 			auth.GET("/pay/transactions", handler.ListPaymentTransactions)
 			auth.GET("/pay/balance", handler.GetBalance)
+			// V9 资金托管台账（订单托管明细，参与方/管理员可见）
+			auth.GET("/order/:id/escrow", handler.GetOrderEscrow)
 
 			// Dispute（专家评审+平台调解）
 			auth.POST("/dispute/create", handler.CreateDispute)
@@ -218,6 +224,15 @@ func setupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 			// Review
 			auth.POST("/review/submit", handler.SubmitReview)
 			auth.GET("/user/:id/reviews", handler.GetUserReviews)
+
+			// V9 服务案例沉淀（企业案例库）
+			auth.POST("/case/create", handler.CreateCase)
+			auth.GET("/case/mine", handler.ListMyCases)
+			auth.PUT("/case/:id", handler.UpdateCase)
+			auth.DELETE("/case/:id", handler.DeleteCase)
+
+			// V9 轻量计价工具（清单计价估算）
+			auth.POST("/tools/cost-estimate", handler.CostEstimate)
 
 			// Message / Notification（V8 补齐）
 			auth.POST("/message/send", handler.SendMessage)
@@ -270,6 +285,8 @@ func setupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 			// V8 日志管理（管理员查看/恢复）
 			admin.GET("/admin/log/list", handler.AdminListLogs)
 			admin.POST("/admin/log/restore-config", handler.AdminRestoreConfig)
+			// V9 资金托管全量台账（平台对账）
+			admin.GET("/admin/escrow/ledger", handler.AdminListEscrowLedger)
 		}
 	}
 

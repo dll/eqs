@@ -78,6 +78,8 @@ func AutoMigrate(db *gorm.DB) error {
 		&UserSetting{},
 		&SystemVersion{},
 		&CommissionRecord{},
+		&CaseShowcase{},
+		&EscrowLedger{},
 	)
 }
 

@@ -13,6 +13,10 @@ packages/server/server.linux
 packages/server/tmp/
 packages/server/cover
 
+# 本机 Go 构建缓存（沙箱重定向）
+.gocache/
+.gopath/
+
 # 工具产物
 atomcode-*.exe
 

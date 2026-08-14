@@ -152,6 +152,48 @@
       </text>
     </view>
 
+    <!-- V9 资金托管台账：托管状态可视化 -->
+    <view
+      v-if="escrow"
+      class="milestone-card"
+    >
+      <text class="card-title">
+        {{ $t('order.escrow') }}
+      </text>
+      <view class="escrow-row">
+        <text class="escrow-label">
+          {{ $t('order.escrowTotal') }}
+        </text>
+        <text class="escrow-value">
+          ¥{{ escrow.escrow_total }}
+        </text>
+      </view>
+      <view class="escrow-row">
+        <text class="escrow-label">
+          {{ $t('order.escrowReleased') }}
+        </text>
+        <text class="escrow-value">
+          ¥{{ escrow.released }}
+        </text>
+      </view>
+      <view class="escrow-row">
+        <text class="escrow-label">
+          {{ $t('order.escrowFrozen') }}
+        </text>
+        <text class="escrow-value frozen">
+          ¥{{ escrow.frozen }}
+        </text>
+      </view>
+      <view class="escrow-row">
+        <text class="escrow-label">
+          {{ $t('order.escrowBalance') }}
+        </text>
+        <text class="escrow-value balance">
+          ¥{{ escrow.balance }}
+        </text>
+      </view>
+    </view>
+
     <view class="actions-card">
       <button
         v-if="order.status === 0"
@@ -189,6 +231,7 @@ const contract = ref<any>(null)
 const milestones = ref<any[]>([])
 const attendanceList = ref<any[]>([])
 const checkinStatus = ref('')
+const escrow = ref<any>(null)
 
 onLoad((options) => {
   if (options?.id) {
@@ -202,9 +245,20 @@ const loadOrder = async (id: string) => {
     order.value = res.order
     milestones.value = res.milestones || []
     contract.value = res.contract || null
+    loadEscrow(id)
     loadAttendance()
   } catch {
     // request 已提示
+  }
+}
+
+// V9：资金托管台账（参与方可见）
+const loadEscrow = async (id: string) => {
+  try {
+    const res = await request.get(`/api/v1/order/${id}/escrow`, { silent401: true })
+    escrow.value = res || null
+  } catch {
+    escrow.value = null
   }
 }
 
@@ -512,5 +566,29 @@ const goPay = async () => {
 .att-empty {
   font-size: 24rpx;
   color: var(--muted-color, #999);
+}
+
+.escrow-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 10rpx 0;
+  font-size: 26rpx;
+}
+
+.escrow-label {
+  color: var(--muted-color, #999);
+}
+
+.escrow-value {
+  color: var(--text-color, #333);
+  font-weight: 600;
+}
+
+.escrow-value.frozen {
+  color: #ef4444;
+}
+
+.escrow-value.balance {
+  color: var(--primary-color, #2563eb);
 }
 </style>

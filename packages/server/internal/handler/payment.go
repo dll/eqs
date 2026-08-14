@@ -213,6 +213,8 @@ func SettleMilestone(c *gin.Context) {
 	}
 
 	model.DB.Model(&ms).Update("status", "settled")
+	// 资金托管台账：节点验收结算，托管资金释放给服务方
+	recordEscrow(ms.OrderID, milestoneID, 0, order.SupplierID, "release", ms.Amount, "节点验收结算释放")
 	WriteAudit(c, "pay.settle", "milestone", milestoneID, gin.H{"amount": ms.Amount, "order_id": ms.OrderID, "transaction_id": txn.ID})
 
 	// 节点结算后重算服务方信用分（交付分加权）

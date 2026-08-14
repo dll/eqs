@@ -119,6 +119,37 @@ func GetServiceChecklist(c *gin.Context) {
 	ok(c, gin.H{"service_type": st, "checklist": items, "count": len(items)})
 }
 
+// projectApprovalThreshold 立项批文金额门槛（PRD 3.1.1：项目金额≥50万需上传立项批文）
+const projectApprovalThreshold = 500000.0
+
+// checkApprovalRequirement 校验立项批文：预算上限≥50万时必须携带本人上传的批文附件
+func checkApprovalRequirement(c *gin.Context, budgetMax float64, approvalFileID uint) bool {
+	if budgetMax < projectApprovalThreshold {
+		return true
+	}
+	if approvalFileID == 0 {
+		return false
+	}
+	var f model.ProjectFile
+	if err := model.DB.First(&f, approvalFileID).Error; err != nil {
+		return false
+	}
+	// 附件必须为当前用户上传（或已绑定本项目）
+	userID := c.GetUint("user_id")
+	if f.UploaderID != userID {
+		var pid uint
+		if pidStr := c.Param("id"); pidStr != "" {
+			if v, err := parseUint(pidStr); err == nil {
+				pid = v
+			}
+		}
+		if f.ProjectID != pid {
+			return false
+		}
+	}
+	return true
+}
+
 type CreateProjectRequest struct {
 	ProjectType  string  `json:"project_type" binding:"required"`
 	ServiceType  string  `json:"service_type"`
@@ -131,6 +162,8 @@ type CreateProjectRequest struct {
 	BudgetMax    float64 `json:"budget_max"`
 	PublishScope string  `json:"publish_scope"`
 	Deadline     string  `json:"deadline"`
+	// 立项批文附件（预算≥50万时必填）
+	ApprovalFileID uint `json:"approval_file_id"`
 }
 
 // CreateProject 发布项目
@@ -140,6 +173,12 @@ func CreateProject(c *gin.Context) {
 	var req CreateProjectRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		badRequest(c, "参数错误")
+		return
+	}
+
+	// PRD 3.1.1：项目金额≥50万需上传立项批文
+	if !checkApprovalRequirement(c, req.BudgetMax, req.ApprovalFileID) {
+		badRequest(c, "项目金额≥50万元需上传立项批文")
 		return
 	}
 
@@ -167,6 +206,7 @@ func CreateProject(c *gin.Context) {
 		Latitude:     req.Latitude,
 		BudgetMin:    req.BudgetMin,
 		BudgetMax:    req.BudgetMax,
+		ApprovalFileID: req.ApprovalFileID,
 		PublishScope: scope,
 		Status:       1, // 发布即上线（MVP：创建即为已发布，可进入报价）
 		PublishTime:  &now,
@@ -273,6 +313,16 @@ func UpdateProject(c *gin.Context) {
 
 	// 已进入报价/订单的项目不允许改预算与类型（防竞拍串通）
 	locked := project.Status >= 2
+
+	// PRD 3.1.1：金额≥50万时必须携带立项批文（预算可改时校验；有订单锁定预算后沿用已有批文）
+	if !locked {
+		if !checkApprovalRequirement(c, req.BudgetMax, req.ApprovalFileID) {
+			badRequest(c, "项目金额≥50万元需上传立项批文")
+			return
+		}
+	}
+
+	// 已进入报价/订单的项目不允许改预算与类型（防竞拍串通）
 	updates := map[string]interface{}{}
 	updates["title"] = req.Title
 	updates["description"] = req.Description
@@ -282,6 +332,7 @@ func UpdateProject(c *gin.Context) {
 		updates["service_type"] = req.ServiceType
 		updates["budget_min"] = req.BudgetMin
 		updates["budget_max"] = req.BudgetMax
+		updates["approval_file_id"] = req.ApprovalFileID
 	}
 	if req.Deadline != "" {
 		if t, err := time.Parse(time.RFC3339, req.Deadline); err == nil {

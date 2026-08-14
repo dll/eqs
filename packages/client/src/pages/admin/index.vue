@@ -3,20 +3,36 @@
     <!-- 数据概览 -->
     <view class="stats-grid">
       <view class="stat-card">
-        <text class="stat-num">{{ stats.user_count }}</text>
-        <text class="stat-label">{{ $t('admin.totalUsers') }}</text>
+        <text class="stat-num">
+          {{ stats.user_count }}
+        </text>
+        <text class="stat-label">
+          {{ $t('admin.totalUsers') }}
+        </text>
       </view>
       <view class="stat-card">
-        <text class="stat-num">{{ stats.project_count }}</text>
-        <text class="stat-label">{{ $t('admin.totalProjects') }}</text>
+        <text class="stat-num">
+          {{ stats.project_count }}
+        </text>
+        <text class="stat-label">
+          {{ $t('admin.totalProjects') }}
+        </text>
       </view>
       <view class="stat-card">
-        <text class="stat-num">{{ stats.order_count }}</text>
-        <text class="stat-label">{{ $t('admin.totalOrders') }}</text>
+        <text class="stat-num">
+          {{ stats.order_count }}
+        </text>
+        <text class="stat-label">
+          {{ $t('admin.totalOrders') }}
+        </text>
       </view>
       <view class="stat-card">
-        <text class="stat-num">¥{{ stats.settled_amount }}</text>
-        <text class="stat-label">{{ $t('admin.totalSettled') }}</text>
+        <text class="stat-num">
+          ¥{{ stats.settled_amount }}
+        </text>
+        <text class="stat-label">
+          {{ $t('admin.totalSettled') }}
+        </text>
       </view>
     </view>
 
@@ -28,9 +44,15 @@
         class="menu-card"
         @tap="goTo(m.url)"
       >
-        <text class="menu-icon">{{ m.icon }}</text>
-        <text class="menu-title">{{ m.title }}</text>
-        <text class="arrow">></text>
+        <text class="menu-icon">
+          {{ m.icon }}
+        </text>
+        <text class="menu-title">
+          {{ m.title }}
+        </text>
+        <text class="arrow">
+          >
+        </text>
       </view>
     </view>
   </view>

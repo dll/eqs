@@ -73,6 +73,39 @@
         </view>
       </view>
 
+      <!-- PRD 3.1.1：预算≥50万需上传立项批文 -->
+      <view
+        v-if="needsApproval"
+        class="form-item approval-box"
+      >
+        <text class="label approval-label">
+          ⚠️ {{ $t('project.approvalRequired') }}
+        </text>
+        <button
+          class="upload-btn"
+          :disabled="approvalUploading"
+          @tap="uploadApproval"
+        >
+          {{ approvalUploading ? $t('project.uploading') : (approvalFile ? $t('project.approvalReupload') : $t('project.approvalUpload')) }}
+        </button>
+        <view
+          v-if="approvalFile"
+          class="att-list"
+        >
+          <view class="att-item">
+            <text class="att-name">
+              ✅ {{ approvalFile.original_name }}
+            </text>
+            <text
+              class="att-del"
+              @tap="approvalFile = null"
+            >
+              ✕
+            </text>
+          </view>
+        </view>
+      </view>
+
       <view class="form-item">
         <text class="label">
           {{ $t('project.location') }}
@@ -139,7 +172,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { request } from '@/utils/request'
 import { useI18n, usePageTitle } from '@/utils/i18n'
@@ -159,6 +192,52 @@ const form = ref({
   address: '',
   description: '',
 })
+
+// PRD 3.1.1：预算≥50万需上传立项批文（approval_file_id 随项目提交）
+const approvalFile = ref<any>(null)
+const approvalUploading = ref(false)
+const needsApproval = computed(() => Number(form.value.budgetMax) >= 500000)
+
+const uploadApproval = async () => {
+  if (approvalUploading.value) return
+  approvalUploading.value = true
+  try {
+    const token = uni.getStorageSync('token')
+    const res: any = await new Promise((resolve, reject) => {
+      uni.chooseImage({
+        count: 1,
+        sizeType: ['original'],
+        success: (chooseRes: any) => {
+          const filePath = chooseRes.tempFilePaths[0]
+          uni.uploadFile({
+            url: `/api/v1/project/upload`,
+            filePath,
+            name: 'file',
+            header: { Authorization: `Bearer ${token}` },
+            success: (up: any) => {
+              try {
+                resolve(JSON.parse(up.data))
+              } catch {
+                reject(new Error('bad response'))
+              }
+            },
+            fail: reject,
+          })
+        },
+        fail: reject,
+      })
+    })
+    if (res && res.file_id) {
+      approvalFile.value = { file_id: res.file_id, original_name: res.original_name }
+    } else {
+      uni.showToast({ title: $t('project.uploadFail'), icon: 'none' })
+    }
+  } catch {
+    uni.showToast({ title: $t('project.uploadFail'), icon: 'none' })
+  } finally {
+    approvalUploading.value = false
+  }
+}
 
 // V10：附件上传（批文/CAD/PDF，≤50MB，先登记后随项目提交）
 const attachments = ref<any[]>([])
@@ -246,6 +325,10 @@ const loadProject = async (id: number) => {
       address: p.address || '',
       description: p.description || '',
     }
+    // 编辑模式回填已上传的立项批文
+    if (p.approval_file_id) {
+      approvalFile.value = { file_id: p.approval_file_id, original_name: '立项批文附件' }
+    }
   } catch {
     // request 已提示
   }
@@ -265,6 +348,7 @@ const submit = async () => {
     budget_max: Number(form.value.budgetMax) || 0,
     description: form.value.description,
     publish_scope: 'public',
+    approval_file_id: approvalFile.value ? approvalFile.value.file_id : 0,
   }
   try {
     if (editId.value) {

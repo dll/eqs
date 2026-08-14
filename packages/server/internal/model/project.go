@@ -16,6 +16,8 @@ type Project struct {
 	Latitude    float64   `json:"latitude"`
 	BudgetMin   float64   `json:"budget_min"`
 	BudgetMax   float64   `json:"budget_max"`
+	// ApprovalFileID 立项批文附件（PRD 3.1.1：项目金额≥50万必须上传立项批文）
+	ApprovalFileID uint      `json:"approval_file_id" gorm:"default:0"`
 	PublishScope string   `json:"publish_scope" gorm:"size:20;default:public"` // public/invited
 	Theme       string   `json:"theme" gorm:"size:20"`                        // 项目主题：空=跟随系统, print/dark/light
 	Status      int       `json:"status" gorm:"default:0"`

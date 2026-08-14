@@ -60,6 +60,24 @@ func CreateDispute(c *gin.Context) {
 		return
 	}
 
+	// 资金托管台账：争议发起冻结对应节点款项（未指定节点则冻结全部未结算节点）
+	if req.MilestoneID > 0 {
+		var ms model.PaymentMilestone
+		if err := model.DB.First(&ms, req.MilestoneID).Error; err == nil && ms.Amount > 0 {
+			recordEscrow(order.ID, req.MilestoneID, dispute.ID, userID, "freeze", ms.Amount, "争议发起冻结节点款项")
+		}
+	} else {
+		var msList []model.PaymentMilestone
+		model.DB.Where("order_id = ? AND status <> ?", order.ID, "settled").Find(&msList)
+		var amt float64
+		for _, m := range msList {
+			amt += m.Amount
+		}
+		if amt > 0 {
+			recordEscrow(order.ID, 0, dispute.ID, userID, "freeze", amt, "争议发起冻结全部未结算节点")
+		}
+	}
+
 	// 冻结对应节点：标记争议中（结算时检查 status<>closed 即拒绝）
 	WriteAudit(c, "dispute.create", "dispute", dispute.ID, gin.H{"order_id": req.OrderID, "milestone_id": req.MilestoneID, "reason": req.Reason})
 	ok(c, gin.H{"dispute": dispute, "message": "争议已发起，相关款项已冻结"})
@@ -351,6 +369,21 @@ func CloseDispute(c *gin.Context) {
 
 	// 争议结案后重算发起方信用分（纠纷分加权，幂等）
 	recalcUserCredit(dispute.InitiatorID)
+
+	// 资金托管台账：结案解冻（按结论类型释放给服务方或退款给甲方）
+	var frozenAmt float64
+	var frozenRows []model.EscrowLedger
+	model.DB.Where("dispute_id = ? AND type = ?", dispute.ID, "freeze").Find(&frozenRows)
+	for _, f := range frozenRows {
+		frozenAmt += f.Amount
+	}
+	if frozenAmt > 0 {
+		escrowType := "release"
+		if req.ResolutionType == "refund" {
+			escrowType = "refund"
+		}
+		recordEscrow(dispute.OrderID, dispute.MilestoneID, dispute.ID, c.GetUint("user_id"), escrowType, frozenAmt, "争议结案解冻")
+	}
 
 	WriteAudit(c, "dispute.close", "dispute", disputeID, gin.H{"resolution_type": req.ResolutionType, "settle_amount": req.SettleAmount})
 	ok(c, gin.H{"dispute": dispute, "message": "争议已结案，款项已解冻"})

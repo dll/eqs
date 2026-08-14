@@ -1,6 +1,8 @@
 <template>
   <view class="container">
-    <text class="section-title">{{ $t('admin.commission') }}</text>
+    <text class="section-title">
+      {{ $t('admin.commission') }}
+    </text>
     <view
       v-for="c in commissions"
       :key="c.id"
@@ -30,7 +32,9 @@
       </button>
     </view>
 
-    <text class="section-title">{{ $t('admin.transactions') }}</text>
+    <text class="section-title">
+      {{ $t('admin.transactions') }}
+    </text>
     <view
       v-for="t in transactions"
       :key="t.id"

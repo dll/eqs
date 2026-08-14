@@ -186,4 +186,6 @@ func CreateNotification(userID uint, title, content, ntype string) {
 		Type:    ntype,
 	}
 	model.DB.Create(&notif)
+	// 实时推送：业务通知落地后向在线连接广播（H5 EventSource / 其他端轮询兜底）
+	publishNotification(userID, title, content, ntype)
 }

@@ -59,26 +59,42 @@
           {{ $t('admin.detail') }} #{{ detail.user.id }}
         </text>
         <view class="detail-row">
-          <text class="d-label">{{ $t('admin.phone') }}</text>
+          <text class="d-label">
+            {{ $t('admin.phone') }}
+          </text>
           <text>{{ detail.user.phone }}</text>
         </view>
         <view class="detail-row">
-          <text class="d-label">{{ $t('admin.userType') }}</text>
+          <text class="d-label">
+            {{ $t('admin.userType') }}
+          </text>
           <text>{{ userTypeText(detail.user.user_type) }}</text>
         </view>
         <view class="detail-row">
-          <text class="d-label">{{ $t('admin.company') }}</text>
+          <text class="d-label">
+            {{ $t('admin.company') }}
+          </text>
           <text>{{ detail.user.company_name || '-' }}</text>
         </view>
         <view class="detail-row">
-          <text class="d-label">{{ $t('admin.creditScore') }}</text>
+          <text class="d-label">
+            {{ $t('admin.creditScore') }}
+          </text>
           <text>{{ detail.user.credit_score }}</text>
         </view>
         <view class="detail-stats">
-          <text class="ds-item">{{ $t('admin.statProjects') }} {{ detail.stats.projects }}</text>
-          <text class="ds-item">{{ $t('admin.statOrdersOwner') }} {{ detail.stats.orders_as_owner }}</text>
-          <text class="ds-item">{{ $t('admin.statOrdersSupplier') }} {{ detail.stats.orders_as_supplier }}</text>
-          <text class="ds-item">{{ $t('admin.statQualifications') }} {{ detail.stats.qualifications }}</text>
+          <text class="ds-item">
+            {{ $t('admin.statProjects') }} {{ detail.stats.projects }}
+          </text>
+          <text class="ds-item">
+            {{ $t('admin.statOrdersOwner') }} {{ detail.stats.orders_as_owner }}
+          </text>
+          <text class="ds-item">
+            {{ $t('admin.statOrdersSupplier') }} {{ detail.stats.orders_as_supplier }}
+          </text>
+          <text class="ds-item">
+            {{ $t('admin.statQualifications') }} {{ detail.stats.qualifications }}
+          </text>
         </view>
         <button
           class="btn btn-close"

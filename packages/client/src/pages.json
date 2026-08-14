@@ -103,6 +103,18 @@
       }
     },
     {
+      "path": "pages/case/mine",
+      "style": {
+        "navigationBarTitleText": "我的案例"
+      }
+    },
+    {
+      "path": "pages/tools/estimate",
+      "style": {
+        "navigationBarTitleText": "计价估算工具"
+      }
+    },
+    {
       "path": "pages/admin/index",
       "style": {
         "navigationBarTitleText": "管理后台"

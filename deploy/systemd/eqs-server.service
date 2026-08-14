@@ -16,18 +16,20 @@ NoNewPrivileges=true
 ProtectSystem=strict
 ProtectHome=true
 ReadWritePaths=/opt/eqs/packages/server
+# 凭据从 /opt/eqs/.env 加载（权限 600，格式 KEY=VALUE）：
+#   DB_PASSWORD=...  JWT_SECRET=...  DATA_ENCRYPTION_KEY=...  REDIS_PASS=...
+# 注意：systemd 不展开 shell 变量，禁止在 Environment= 中使用 ${VAR} 占位符。
+EnvironmentFile=/opt/eqs/.env
 Environment=SERVER_PORT=8090
 Environment=APP_ENV=production
 Environment=DB_DRIVER=mysql
 Environment=DB_HOST=localhost
 Environment=DB_PORT=3306
 Environment=DB_USER=eqs
-Environment=DB_PASSWORD=${DB_PASSWORD}
 Environment=DB_NAME=eqs
 Environment=REDIS_ADDR=localhost:6379
-Environment=REDIS_PASS=
-Environment=JWT_SECRET=${JWT_SECRET}
-Environment=DATA_ENCRYPTION_KEY=${DATA_ENCRYPTION_KEY}
+# 以下敏感项由 /opt/eqs/.env 提供，缺失时服务将按启动校验拒绝弱凭据/空加密密钥：
+#   DB_PASSWORD / JWT_SECRET / DATA_ENCRYPTION_KEY（生产必填）
 
 [Install]
 WantedBy=multi-user.target

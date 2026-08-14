@@ -55,23 +55,33 @@
           {{ $t('admin.disputeDetail') }} #{{ detail.id }}
         </text>
         <view class="detail-row">
-          <text class="d-label">{{ $t('admin.status') }}</text>
+          <text class="d-label">
+            {{ $t('admin.status') }}
+          </text>
           <text>{{ statusText(detail.status) }}</text>
         </view>
         <view class="detail-row">
-          <text class="d-label">{{ $t('admin.orderId') }}</text>
+          <text class="d-label">
+            {{ $t('admin.orderId') }}
+          </text>
           <text>#{{ detail.order_id }}</text>
         </view>
         <view class="detail-row">
-          <text class="d-label">{{ $t('admin.reason') }}</text>
+          <text class="d-label">
+            {{ $t('admin.reason') }}
+          </text>
           <text>{{ detail.reason }}</text>
         </view>
         <view class="detail-row">
-          <text class="d-label">{{ $t('admin.claim') }}</text>
+          <text class="d-label">
+            {{ $t('admin.claim') }}
+          </text>
           <text>{{ detail.claim }}</text>
         </view>
         <view class="detail-row">
-          <text class="d-label">{{ $t('admin.resolution') }}</text>
+          <text class="d-label">
+            {{ $t('admin.resolution') }}
+          </text>
           <text>{{ detail.resolution_type || '-' }}</text>
         </view>
         <button

@@ -116,6 +116,44 @@
           </text>
         </view>
       </view>
+
+      <!-- V9 企业案例沉淀：服务案例 -->
+      <view
+        v-if="cases.length"
+        class="info-card case-card"
+      >
+        <text class="qual-title">
+          {{ $t('provider.cases') }}
+        </text>
+        <view
+          v-for="cs in cases"
+          :key="cs.id"
+          class="case-item"
+        >
+          <text class="case-title">
+            {{ cs.title }}
+          </text>
+          <text
+            v-if="cs.description"
+            class="case-desc"
+          >
+            {{ cs.description }}
+          </text>
+          <view
+            v-if="csImages(cs).length"
+            class="case-imgs"
+          >
+            <image
+              v-for="fid in csImages(cs)"
+              :key="fid"
+              class="case-img"
+              :src="`/api/v1/file/${fid}/preview`"
+              mode="aspectFill"
+              @tap="previewCase(fid)"
+            />
+          </view>
+        </view>
+      </view>
     </view>
   </view>
 </template>
@@ -130,12 +168,38 @@ const { $t } = useI18n()
 usePageTitle('page.providerDetail', { onLoad })
 const provider = ref<any>(null)
 const stats = ref<any>(null)
+const cases = ref<any[]>([])
 
 onLoad((options) => {
   if (options?.id) {
     loadProvider(options.id)
+    loadCases(options.id)
   }
 })
+
+// V9：服务案例（公开接口）
+const loadCases = async (id: string) => {
+  try {
+    const res = await request.get(`/api/v1/provider/${id}/cases`, { silent401: true })
+    cases.value = (res && res.cases) || []
+  } catch {
+    cases.value = []
+  }
+}
+
+// 解析案例成果图 file_id 列表（后端以 JSON 字符串存储）
+const csImages = (cs: any): number[] => {
+  try {
+    const arr = JSON.parse(cs.image_file_ids || '[]')
+    return Array.isArray(arr) ? arr : []
+  } catch {
+    return []
+  }
+}
+
+const previewCase = (fid: number) => {
+  uni.previewImage({ urls: [`/api/v1/file/${fid}/preview`] })
+}
 
 const loadProvider = async (id: string) => {
   try {
@@ -269,5 +333,36 @@ const barWidth = (star: number) => {
 .rev-content {
   font-size: 26rpx;
   color: var(--text-color);
+}
+.case-card {
+  margin-top: 20rpx;
+}
+.case-item {
+  padding: 16rpx 0;
+  border-bottom: 1rpx solid var(--border-color);
+}
+.case-title {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: var(--text-color);
+  display: block;
+}
+.case-desc {
+  font-size: 26rpx;
+  color: var(--muted-color);
+  display: block;
+  margin-top: 8rpx;
+}
+.case-imgs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+  margin-top: 12rpx;
+}
+.case-img {
+  width: 160rpx;
+  height: 120rpx;
+  border-radius: 8rpx;
+  background: var(--input-bg);
 }
 </style>

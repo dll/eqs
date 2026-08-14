@@ -374,6 +374,16 @@ func seedByMode(mode string) seedResult {
 	})
 	r.Actions = append(r.Actions, "生成 2 个合同模板（电子签模板库）")
 
+	// ===== 企业案例沉淀（V9：服务商主页展示案例） =====
+	cases := []model.CaseShowcase{
+		{SupplierID: supplierID, Title: "滁州琅琊区商业地块岩土工程勘察（示范案例）", Description: "场地详勘 120 孔，提交完整勘察报告与柱状图，工期提前 3 天。", ServiceType: "geotech", ImageFileIDs: "[]", Status: "published"},
+		{SupplierID: supplier2ID, Title: "办公楼工程量清单及招标控制价编制（示范案例）", Description: "按 GB50500 完成清单与控制价编制，通过财政评审。", ServiceType: "cost", ImageFileIDs: "[]", Status: "published"},
+	}
+	for i := range cases {
+		model.DB.Create(&cases[i])
+	}
+	r.Actions = append(r.Actions, fmt.Sprintf("生成 %d 个服务案例（企业案例沉淀）", len(cases)))
+
 	// ===== 佣金（基于已生成订单，供结算中心展示） =====
 	var txnOrders []model.Order
 	model.DB.Where("status >= ?", 1).Limit(3).Find(&txnOrders)

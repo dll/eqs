@@ -1,6 +1,9 @@
 package handler
 
 import (
+	"os"
+
+	"github.com/eqs/server/internal/dxf"
 	"github.com/eqs/server/internal/model"
 	"github.com/gin-gonic/gin"
 )
@@ -146,8 +149,8 @@ func PreviewFile(c *gin.Context) {
 		return
 	}
 
-	// 仅图片与 PDF 允许内联预览
-	previewable := map[string]bool{"jpg": true, "jpeg": true, "png": true, "pdf": true}
+	// 图片/PDF/DXF 允许内联预览（DXF 由服务端转换为 SVG 渲染）
+	previewable := map[string]bool{"jpg": true, "jpeg": true, "png": true, "pdf": true, "dxf": true}
 	if !previewable[file.FileType] {
 		badRequest(c, "该文件类型不支持在线预览，请下载查看")
 		return
@@ -185,6 +188,23 @@ func PreviewFile(c *gin.Context) {
 	if len(path) > 0 && path[0] != '/' {
 		path = "./" + path
 	}
+
+	// DXF：服务端转换为 SVG 内联预览（自研渲染器，无第三方依赖）
+	if file.FileType == "dxf" {
+		data, err := os.ReadFile(path)
+		if err != nil {
+			serverError(c, err)
+			return
+		}
+		res, err := dxf.Render(data)
+		if err != nil {
+			badRequest(c, "DXF 文件解析失败，请下载后用 CAD 软件查看")
+			return
+		}
+		c.Data(200, "image/svg+xml; charset=utf-8", []byte(res.SVG))
+		return
+	}
+
 	c.FileAttachment(path, file.OriginalName)
 }
 

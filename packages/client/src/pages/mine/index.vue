@@ -102,6 +102,16 @@
         </text>
       </view>
       <view
+        v-if="isSupplier"
+        class="menu-item"
+        @tap="goTo('/pages/case/mine')"
+      >
+        <text>{{ $t('mine.cases') }}</text>
+        <text class="arrow">
+          >
+        </text>
+      </view>
+      <view
         class="menu-item"
         @tap="showThemePicker"
       >
@@ -121,6 +131,15 @@
       </view>
       <view
         class="menu-item"
+        @tap="goTo('/pages/tools/estimate')"
+      >
+        <text>{{ $t('mine.tools') }}</text>
+        <text class="arrow">
+          >
+        </text>
+      </view>
+      <view
+        class="menu-item"
         @tap="logout"
       >
         <text>{{ $t('mine.logout') }}</text>
@@ -134,11 +153,12 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { onShow } from '@dcloudio/uni-app'
+import { onHide, onShow } from '@dcloudio/uni-app'
 import { useUserStore } from '@/store/user'
 import { useSettingsStore, THEMES, LANGS } from '@/store/settings'
 import { useI18n, usePageTitle, applyTabBarI18n } from '@/utils/i18n'
 import { request } from '@/utils/request'
+import { connectNotify } from '@/utils/realtime'
 
 const userStore = useUserStore()
 const settingsStore = useSettingsStore()
@@ -156,9 +176,23 @@ const loadUnread = async () => {
   }
 }
 
+// V9：站内实时推送（H5 EventSource / 其他端轮询兜底），未读角标实时刷新
+let disconnectNotify: (() => void) | null = null
+
 onShow(() => {
   applyTabBarI18n()
   loadUnread()
+  disconnectNotify?.()
+  disconnectNotify = connectNotify((data) => {
+    if (data && typeof data.unread === 'number') {
+      unread.value = data.unread
+    }
+  })
+})
+
+onHide(() => {
+  disconnectNotify?.()
+  disconnectNotify = null
 })
 
 const themeName = computed(() => $t('theme.' + settingsStore.theme))

@@ -4,9 +4,15 @@
     <view class="hero">
       <view class="hero-glow hero-glow-ai" />
       <view class="hero-glow hero-glow-cyan" />
-      <view class="hero-badge">⚡</view>
-      <text class="hero-title">{{ $t('app.title') }}</text>
-      <text class="hero-sub">Agile · AI · Engineering Service</text>
+      <view class="hero-badge">
+        ⚡
+      </view>
+      <text class="hero-title">
+        {{ $t('app.title') }}
+      </text>
+      <text class="hero-sub">
+        Agile · AI · Engineering Service
+      </text>
     </view>
 
     <view class="container">
@@ -81,7 +87,9 @@
         >
           {{ $t('common.login') }}
         </button>
-        <text class="ai-tip">AI 智能审核 · 敏捷交付闭环</text>
+        <text class="ai-tip">
+          AI 智能审核 · 敏捷交付闭环
+        </text>
       </view>
     </view>
   </view>
