@@ -1,6 +1,8 @@
 package handler
 
 import (
+	"github.com/eqs/server/internal/channel"
+	"github.com/eqs/server/internal/config"
 	"github.com/eqs/server/internal/model"
 	"github.com/gin-gonic/gin"
 )
@@ -188,4 +190,20 @@ func CreateNotification(userID uint, title, content, ntype string) {
 	model.DB.Create(&notif)
 	// 实时推送：业务通知落地后向在线连接广播（H5 EventSource / 其他端轮询兜底）
 	publishNotification(userID, title, content, ntype)
+	// V10：App 推送（uni-push，按用户手机号别名推送；未配置凭据时静默跳过）
+	pushNotification(userID, title, content)
+}
+
+// pushNotification V10：App 离线推送（uni-push 别名=用户手机号；失败静默，不影响业务）
+func pushNotification(userID uint, title, content string) {
+	cfg := config.Get()
+	pusher := channel.NewPusher(cfg.PushAppID, cfg.PushAppKey, cfg.PushMasterSecret)
+	if pusher == nil {
+		return
+	}
+	var user model.User
+	if err := model.DB.First(&user, userID).Error; err != nil {
+		return
+	}
+	_ = pusher.PushByAlias(user.Phone, title, content)
 }

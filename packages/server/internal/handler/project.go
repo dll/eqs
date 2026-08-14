@@ -490,6 +490,14 @@ func GetRecommendations(c *gin.Context) {
 		if matched[s.ID] {
 			score += 60
 		}
+		// V10：会员推荐加权（银牌 +5 / 金牌 +10），综合分封顶 100
+		var su model.User
+		if model.DB.First(&su, s.ID).Error == nil {
+			score += memberLevelOf(&su).RecommendBonus
+		}
+		if score > 100 {
+			score = 100
+		}
 		items = append(items, supplierItem{
 			ID:          s.ID,
 			Phone:       model.MaskPhone(s.Phone),

@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/eqs/server/internal/channel"
 	"github.com/eqs/server/internal/config"
 	"github.com/eqs/server/internal/model"
 	"github.com/gin-gonic/gin"
@@ -295,6 +296,7 @@ func ReviewQualification(c *gin.Context) {
 		notFound(c, "资质不存在")
 		return
 	}
+	cfg := config.Get()
 
 	// V6：自动通过条件校验（信息完整性 + 有效期）——通过必须满足硬性条件；
 	// issues 同时供 AI 辅助审核做规则风险评估（仅算一次）
@@ -306,14 +308,23 @@ func ReviewQualification(c *gin.Context) {
 
 	// V6：AI 辅助审核——对资质信息做自动风险评估，生成建议（未配置 AI 时按规则降级）
 	aiSuggestion := aiAssistQualificationReview(&qual, gateIssues)
+	// V10：OCR 识别扫描件（腾讯云 OCR；未配置凭据时跳过，不影响审核流程）
+	ocrText := ocrAssistQualification(c, &qual, cfg)
 
 	status := "rejected"
 	if *req.Verified {
 		status = "approved"
 	}
 	comment := strings.TrimSpace(req.Comment)
+	prefix := ""
+	if ocrText != "" {
+		prefix += "OCR识别:" + ocrText + "。"
+	}
 	if aiSuggestion.Suggestion != "" {
-		comment = "AI建议:" + aiSuggestion.Suggestion + "。人工备注:" + comment
+		prefix += "AI建议:" + aiSuggestion.Suggestion + "。"
+	}
+	if prefix != "" {
+		comment = prefix + "人工备注:" + comment
 	}
 	now := time.Now()
 	model.DB.Model(&qual).Updates(map[string]interface{}{
@@ -385,4 +396,39 @@ func aiAssistQualificationReview(q *model.SupplierQualification, issues []string
 		return qualificationAISuggestion{Risk: risk, Suggestion: strings.TrimSpace(text), GeneratedBy: "ai"}
 	}
 	return qualificationAISuggestion{Risk: risk, Suggestion: "AI 调用失败，请人工复核", GeneratedBy: "ai"}
+}
+
+// ocrAssistQualification V10：腾讯云 OCR 识别资质扫描件，返回识别文本（失败/未配置返回空串，不影响审核）
+func ocrAssistQualification(c *gin.Context, qual *model.SupplierQualification, cfg *config.Config) string {
+	if cfg.TencentOCRSecretID == "" || cfg.TencentOCRSecretKey == "" || qual.EvidenceFileID == 0 {
+		return ""
+	}
+	var f model.ProjectFile
+	if err := model.DB.First(&f, qual.EvidenceFileID).Error; err != nil {
+		return ""
+	}
+	if len(f.StorageKey) > 7 && (f.StorageKey[:7] == "http://" || f.StorageKey[:8] == "https://") {
+		return "" // 外部 URL 文件不本地读取
+	}
+	path := f.StorageKey
+	if len(path) > 0 && path[0] != '/' {
+		path = "./" + path
+	}
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return ""
+	}
+	client := channel.NewOcrClient(cfg.TencentOCRSecretID, cfg.TencentOCRSecretKey)
+	if client == nil {
+		return ""
+	}
+	lines, err := client.RecognizeText(data)
+	if err != nil || len(lines) == 0 {
+		return ""
+	}
+	text := strings.Join(lines, "；")
+	if len(text) > 200 {
+		text = text[:200] + "…"
+	}
+	return text
 }

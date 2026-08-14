@@ -80,6 +80,7 @@ func AutoMigrate(db *gorm.DB) error {
 		&CommissionRecord{},
 		&CaseShowcase{},
 		&EscrowLedger{},
+		&MembershipOrder{},
 	)
 }
 

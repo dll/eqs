@@ -13,6 +13,9 @@ type User struct {
 	CompanyName string    `json:"company_name" gorm:"size:100"`
 	CreditScore float64   `json:"credit_score" gorm:"default:100"`
 	Status      int       `json:"status" gorm:"default:1"` // 0:禁用 1:正常
-	CreatedAt   time.Time `json:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at"`
+	// V10 会员体系：等级（free/silver/gold）与到期时间
+	MemberLevel   string     `json:"member_level" gorm:"size:20;default:free"`
+	MemberExpireAt *time.Time `json:"member_expire_at"`
+	CreatedAt     time.Time  `json:"created_at"`
+	UpdatedAt     time.Time  `json:"updated_at"`
 }

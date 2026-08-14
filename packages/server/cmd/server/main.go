@@ -182,6 +182,7 @@ func setupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 
 			// Payment（经持牌机构，非托管）
 			auth.POST("/pay/create", handler.CreatePayment)
+			auth.POST("/pay/refund", handler.RefundPayment)
 			auth.POST("/milestone/:id/settle", handler.SettleMilestone)
 			auth.GET("/pay/transactions", handler.ListPaymentTransactions)
 			auth.GET("/pay/balance", handler.GetBalance)
@@ -236,6 +237,11 @@ func setupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 			// V9 轻量计价工具（清单计价估算）
 			auth.POST("/tools/cost-estimate", handler.CostEstimate)
 
+			// V10 会员体系
+			auth.GET("/member/levels", handler.ListMemberLevels)
+			auth.GET("/member/info", handler.GetMemberInfo)
+			auth.POST("/member/upgrade", handler.UpgradeMember)
+
 			// Message / Notification（V8 补齐）
 			auth.POST("/message/send", handler.SendMessage)
 			auth.GET("/message/list", handler.ListMessages)
@@ -289,6 +295,8 @@ func setupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 			admin.POST("/admin/log/restore-config", handler.AdminRestoreConfig)
 			// V9 资金托管全量台账（平台对账）
 			admin.GET("/admin/escrow/ledger", handler.AdminListEscrowLedger)
+			// V10 会员列表（平台）
+			admin.GET("/admin/members", handler.AdminListMembers)
 		}
 	}
 

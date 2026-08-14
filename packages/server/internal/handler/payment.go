@@ -5,8 +5,10 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"io"
 	"time"
 
+	"github.com/eqs/server/internal/channel"
 	"github.com/eqs/server/internal/config"
 	"github.com/eqs/server/internal/model"
 	"github.com/gin-gonic/gin"
@@ -42,8 +44,53 @@ func CreatePayment(c *gin.Context) {
 		channel = "mock"
 	}
 	if channel == "wechat" && config.Get().PaymentProvider != "mock" {
-		// 真实通道尚未签约时不允许直接调用
-		badRequest(c, "支付通道未就绪")
+		// 真实通道已配置（PAYMENT_PROVIDER=wechat），走微信支付网关
+		gateway, gwErr := newWechatGateway()
+		if gwErr != nil {
+			badRequest(c, "微信支付未配置："+gwErr.Error())
+			return
+		}
+		if gateway == nil {
+			badRequest(c, "微信支付未配置（请填写 WXPAY_* 凭据）")
+			return
+		}
+
+		var order model.Order
+		if err := model.DB.First(&order, req.OrderID).Error; err != nil {
+			notFound(c, "订单不存在")
+			return
+		}
+		var proj model.Project
+		if err := model.DB.First(&proj, order.ProjectID).Error; err != nil || proj.UserID != c.GetUint("user_id") {
+			forbidden(c, "仅甲方可发起支付")
+			return
+		}
+		if req.Amount != order.Amount {
+			badRequest(c, "支付金额与订单金额不一致")
+			return
+		}
+
+		txn := model.PaymentTransaction{
+			UserID: order.SupplierID, OrderID: order.ID, Amount: req.Amount,
+			Type: "payment", Channel: "wechat", Status: 0,
+		}
+		if err := model.DB.Create(&txn).Error; err != nil {
+			serverError(c, err)
+			return
+		}
+		outTradeNo := fmt.Sprintf("EQS%08d", txn.ID)
+		model.DB.Model(&txn).Update("external_transaction_id", outTradeNo)
+
+		codeURL, err := gateway.CreateNativeOrder(outTradeNo, int64(req.Amount*100),
+			fmt.Sprintf("工程服务订单#%d", order.ID), config.Get().WXPayNotifyURL)
+		if err != nil {
+			// 下单失败：记录失败状态
+			model.DB.Model(&txn).Update("status", 2)
+			serverError(c, err)
+			return
+		}
+		WriteAudit(c, "payment.create.wechat", "order", req.OrderID, gin.H{"transaction_id": txn.ID, "out_trade_no": outTradeNo})
+		ok(c, gin.H{"transaction": txn, "paid": false, "channel": "wechat", "code_url": codeURL})
 		return
 	}
 
@@ -91,6 +138,47 @@ func CreatePayment(c *gin.Context) {
 // PaymentNotify 支付回调：验签、幂等更新支付状态
 func PaymentNotify(c *gin.Context) {
 	channel := c.Param("channel")
+
+	// V10：微信支付 v3 回调（验签+解密，返回微信要求格式）
+	if channel == "wechat" {
+		gateway, gwErr := newWechatGateway()
+		if gwErr != nil {
+			serverError(c, gwErr)
+			return
+		}
+		if gateway == nil {
+			badRequest(c, "微信支付未配置")
+			return
+		}
+		body, _ := io.ReadAll(c.Request.Body)
+		outTradeNo, totalFen, wechatTxnID, err := gateway.VerifyAndDecryptNotify(c.Request.Header, body)
+		if err != nil {
+			WriteAudit(c, "pay.notify.wechat.verify_fail", "transaction", 0, gin.H{"err": err.Error()})
+			c.JSON(401, gin.H{"code": "FAIL", "message": "验签失败"})
+			return
+		}
+		var txn model.PaymentTransaction
+		if err := model.DB.Where("external_transaction_id = ?", outTradeNo).First(&txn).Error; err != nil || txn.ID == 0 {
+			notFound(c, "交易不存在")
+			return
+		}
+		if txn.Status == 1 {
+			ok(c, gin.H{"code": "SUCCESS", "message": "成功"})
+			return
+		}
+		// 金额核对：微信金额单位为分
+		if txn.Status != 2 && int64(txn.Amount*100) == totalFen {
+			model.DB.Model(&txn).Updates(map[string]interface{}{"status": 1, "external_transaction_id": wechatTxnID})
+			// 订单状态 0→1（已支付），资金进入托管
+			model.DB.Model(&model.Order{}).Where("id = ? AND status = ?", txn.OrderID, 0).Update("status", 1)
+			WriteAudit(c, "pay.notify.wechat", "transaction", txn.ID, gin.H{"out_trade_no": outTradeNo, "wechat_txn": wechatTxnID, "amount": txn.Amount})
+			ok(c, gin.H{"code": "SUCCESS", "message": "成功"})
+			return
+		}
+		WriteAudit(c, "pay.notify.wechat.mismatch", "transaction", txn.ID, gin.H{"cb_fen": totalFen, "txn_amount": txn.Amount})
+		ok(c, gin.H{"code": "FAIL", "message": "金额不匹配"})
+		return
+	}
 
 	var req struct {
 		ExternalTransactionID string  `json:"external_transaction_id"`
@@ -256,4 +344,78 @@ func GetBalance(c *gin.Context) {
 
 	model.DB.Model(&model.PaymentTransaction{}).Where("user_id = ?", userID).Count(&count)
 	ok(c, gin.H{"received": paidIn, "settled": settledOut, "transaction_count": count})
+}
+
+// newWechatGateway 构造微信支付 v3 网关（凭据不完整时返回错误/空）
+func newWechatGateway() (channel.PaymentGateway, error) {
+	cfg := config.Get()
+	return channel.NewPaymentGateway(cfg.PaymentProvider, cfg.WXPayAppID, cfg.WXPayMchID,
+		cfg.WXPayAPIV3Key, cfg.WXPayMchSerialNo, cfg.WXPayMchPrivateKeyFile, cfg.WXPayPlatformCertFile)
+}
+
+// RefundPayment 退款（微信支付 v3 或 Mock）
+// POST /api/v1/pay/refund {transaction_id, amount?}
+func RefundPayment(c *gin.Context) {
+	userID := c.GetUint("user_id")
+
+	var req struct {
+		TransactionID uint    `json:"transaction_id" binding:"required"`
+		Amount        float64 `json:"amount"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		badRequest(c, "参数错误")
+		return
+	}
+
+	var txn model.PaymentTransaction
+	if err := model.DB.First(&txn, req.TransactionID).Error; err != nil {
+		notFound(c, "交易不存在")
+		return
+	}
+	if txn.Status != 1 {
+		badRequest(c, "该交易不可退款")
+		return
+	}
+	// 仅管理员或交易参与方（甲方=订单付款方，此处以项目创建者近似）可退款
+	if !isAdmin(c) {
+		var order model.Order
+		var project model.Project
+		if model.DB.First(&order, txn.OrderID).Error != nil ||
+			model.DB.First(&project, order.ProjectID).Error != nil || project.UserID != userID {
+			forbidden(c, "无权退款")
+			return
+		}
+	}
+
+	refundAmt := req.Amount
+	if refundAmt <= 0 || refundAmt > txn.Amount {
+		refundAmt = txn.Amount
+	}
+	refundNo := fmt.Sprintf("EQSREF%08d%02d", txn.ID, time.Now().UnixNano()%100)
+
+	if txn.Channel == "wechat" {
+		gateway, gwErr := newWechatGateway()
+		if gwErr != nil {
+			serverError(c, gwErr)
+			return
+		}
+		if gateway == nil {
+			badRequest(c, "微信支付未配置")
+			return
+		}
+		if err := gateway.Refund(txn.ExternalTransactionID, refundNo, int64(txn.Amount*100), int64(refundAmt*100)); err != nil {
+			serverError(c, err)
+			return
+		}
+	}
+
+	// 退款记录
+	model.DB.Create(&model.PaymentTransaction{
+		UserID: txn.UserID, OrderID: txn.OrderID, Amount: -refundAmt,
+		Type: "refund", Channel: txn.Channel, ExternalTransactionID: refundNo, Status: 1,
+	})
+	model.DB.Model(&txn).Update("status", 2)
+	recordEscrow(txn.OrderID, 0, 0, userID, "refund", refundAmt, "支付退款")
+	WriteAudit(c, "pay.refund", "transaction", txn.ID, gin.H{"amount": refundAmt, "channel": txn.Channel})
+	ok(c, gin.H{"message": "退款指令已提交", "refund_no": refundNo, "amount": refundAmt})
 }

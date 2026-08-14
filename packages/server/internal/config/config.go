@@ -32,6 +32,29 @@ type Config struct {
 	ESignAPIKey                 string
 	QualificationVerifyProvider string
 
+	// V10 外部通道凭据（代码已就绪，仅剩填入；未配置时自动降级）
+	// 腾讯云短信
+	TencentSMSSecretID  string
+	TencentSMSSecretKey string
+	SMSSDKAppID         string
+	SMSSignName         string
+	SMSTemplateID       string
+	// 腾讯云 OCR
+	TencentOCRSecretID  string
+	TencentOCRSecretKey string
+	// 微信支付 v3
+	WXPayAppID           string
+	WXPayMchID           string
+	WXPayAPIV3Key        string
+	WXPayMchSerialNo     string
+	WXPayMchPrivateKeyFile string
+	WXPayPlatformCertFile  string
+	WXPayNotifyURL       string
+	// uni-push（App 推送）
+	PushAppID       string
+	PushAppKey      string
+	PushMasterSecret string
+
 	// P1-09 敏感字段加密密钥（未配置时字段以明文存取，仅允许开发环境）
 	DataEncryptionKey string
 
@@ -81,6 +104,25 @@ func Load() *Config {
 		ESignAppID:                  getEnv("ESIGN_APP_ID", ""),
 		ESignAPIKey:                 getEnv("ESIGN_API_KEY", ""),
 		QualificationVerifyProvider: getEnv("QUALIFICATION_VERIFY_PROVIDER", "manual"),
+
+		// V10 外部通道凭据
+		TencentSMSSecretID:  getEnv("TENCENT_SMS_SECRET_ID", ""),
+		TencentSMSSecretKey: getEnv("TENCENT_SMS_SECRET_KEY", ""),
+		SMSSDKAppID:         getEnv("SMS_SDK_APP_ID", ""),
+		SMSSignName:         getEnv("SMS_SIGN_NAME", ""),
+		SMSTemplateID:       getEnv("SMS_TEMPLATE_ID", ""),
+		TencentOCRSecretID:  getEnv("TENCENT_OCR_SECRET_ID", ""),
+		TencentOCRSecretKey: getEnv("TENCENT_OCR_SECRET_KEY", ""),
+		WXPayAppID:          getEnv("WXPAY_APPID", ""),
+		WXPayMchID:          getEnv("WXPAY_MCHID", ""),
+		WXPayAPIV3Key:       getEnv("WXPAY_API_V3_KEY", ""),
+		WXPayMchSerialNo:    getEnv("WXPAY_MCH_SERIAL_NO", ""),
+		WXPayMchPrivateKeyFile: getEnv("WXPAY_MCH_PRIVATE_KEY_FILE", ""),
+		WXPayPlatformCertFile:  getEnv("WXPAY_PLATFORM_CERT_FILE", ""),
+		WXPayNotifyURL:      getEnv("WXPAY_NOTIFY_URL", ""),
+		PushAppID:           getEnv("PUSH_APP_ID", ""),
+		PushAppKey:          getEnv("PUSH_APP_KEY", ""),
+		PushMasterSecret:    getEnv("PUSH_MASTER_SECRET", ""),
 
 		DataEncryptionKey: getEnv("DATA_ENCRYPTION_KEY", ""),
 

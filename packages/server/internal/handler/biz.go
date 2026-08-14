@@ -21,12 +21,26 @@ func getCommissionRate() float64 {
 	return rate
 }
 
+// effectiveCommissionRate V10：按服务方会员等级折算后的实际佣金费率
+// （佣金折扣权益：银牌 9.5 折 / 金牌 9 折）
+func effectiveCommissionRate(supplierID uint) float64 {
+	rate := getCommissionRate()
+	if rate <= 0 {
+		return 0
+	}
+	var user model.User
+	if model.DB.First(&user, supplierID).Error != nil {
+		return rate
+	}
+	return rate * memberLevelOf(&user).CommissionDiscount
+}
+
 func calcAndCreateCommission(orderID uint) {
 	var order model.Order
 	if err := model.DB.First(&order, orderID).Error; err != nil {
 		return
 	}
-	rate := getCommissionRate()
+	rate := effectiveCommissionRate(order.SupplierID)
 	if rate <= 0 {
 		return
 	}

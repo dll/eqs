@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/eqs/server/internal/channel"
 	"github.com/eqs/server/internal/config"
 	"github.com/eqs/server/internal/model"
 	"github.com/gin-gonic/gin"
@@ -64,14 +65,18 @@ func SendSMS(c *gin.Context) {
 
 	code := "123456"
 	if cfg.IsProduction() {
-		// 生产环境：非演示手机号必须真实 SMS（未配置时拒绝）；演示手机号走固定码（受控例外）
+		// 生产环境：非演示手机号必须真实 SMS（腾讯云短信；未配置凭据时拒绝）
 		if !isDemoPhone(req.Phone) {
-			if cfg.SMSAppKey == "" {
-				badRequest(c, "短信服务未配置")
+			sender := channel.NewSmsSender(cfg.TencentSMSSecretID, cfg.TencentSMSSecretKey, cfg.SMSSDKAppID, cfg.SMSSignName, cfg.SMSTemplateID)
+			if sender == nil {
+				badRequest(c, "短信服务未配置（请填写 TENCENT_SMS_SECRET_ID 等凭据）")
 				return
 			}
 			code = fmt.Sprintf("%06d", time.Now().UnixNano()%1000000)
-			// TODO: 对接腾讯云 SMS 实际发送
+			if err := sender.SendVerificationCode(req.Phone, code); err != nil {
+				serverError(c, err)
+				return
+			}
 		}
 	}
 

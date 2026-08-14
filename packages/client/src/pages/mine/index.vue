@@ -140,6 +140,15 @@
       </view>
       <view
         class="menu-item"
+        @tap="goTo('/pages/member/index')"
+      >
+        <text>{{ $t('mine.member') }}</text>
+        <text class="arrow">
+          >
+        </text>
+      </view>
+      <view
+        class="menu-item"
         @tap="logout"
       >
         <text>{{ $t('mine.logout') }}</text>
