@@ -54,8 +54,37 @@
       </view>
     </view>
 
+    <!-- V9 资金托管台账（平台对账） -->
+    <text class="section-title">
+      {{ $t('admin.escrow') }}
+    </text>
     <view
-      v-if="!commissions.length && !transactions.length"
+      v-for="e in escrow"
+      :key="e.id"
+      class="settle-card"
+    >
+      <view class="s-head">
+        <text class="s-title">
+          #{{ e.id }} ¥{{ e.amount }}
+        </text>
+        <text
+          class="s-status"
+          :style="{ color: escrowColor(e.type) }"
+        >
+          {{ escrowTypeText(e.type) }}
+        </text>
+      </view>
+      <view class="s-info">
+        <text>{{ $t('admin.orderId') }}：#{{ e.order_id }}｜{{ $t('admin.milestoneId') }}：#{{ e.milestone_id || '-' }}｜{{ $t('admin.disputeId') }}：#{{ e.dispute_id || '-' }}</text>
+        <text v-if="e.note">
+          {{ e.note }}
+        </text>
+        <text>{{ $t('admin.createdAt') }}：{{ fmtTime(e.created_at) }}</text>
+      </view>
+    </view>
+
+    <view
+      v-if="!commissions.length && !transactions.length && !escrow.length"
       class="empty"
     >
       {{ $t('admin.noData') }}
@@ -76,6 +105,7 @@ usePageTitle('page.adminSettlement', { onShow })
 
 const commissions = ref<any[]>([])
 const transactions = ref<any[]>([])
+const escrow = ref<any[]>([])
 
 const load = async () => {
   try {
@@ -86,6 +116,10 @@ const load = async () => {
     const r2 = await request.get('/api/v1/admin/transactions', { silent401: true })
     transactions.value = r2.transactions || []
   } catch { transactions.value = [] }
+  try {
+    const r3 = await request.get('/api/v1/admin/escrow/ledger?size=50', { silent401: true })
+    escrow.value = r3.ledger || []
+  } catch { escrow.value = [] }
 }
 
 onShow(() => {
@@ -118,6 +152,19 @@ const typeText = (t: string) => {
 }
 
 const fmtTime = (s: string) => (s ? s.replace('T', ' ').slice(0, 19) : '')
+
+// V9：托管台账类型与颜色（freeze 冻结红 / release 释放绿 / refund 退款橙）
+const escrowTypeText = (t: string) => {
+  const map: Record<string, string> = {
+    freeze: $t('admin.escrowFreeze'), release: $t('admin.escrowRelease'), refund: $t('admin.escrowRefund'),
+  }
+  return map[t] || t
+}
+
+const escrowColor = (t: string) => {
+  const map: Record<string, string> = { freeze: '#F56C6C', release: '#67C23A', refund: '#E6A23C' }
+  return map[t] || '#909399'
+}
 </script>
 
 <style scoped>

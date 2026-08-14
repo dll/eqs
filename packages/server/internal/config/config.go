@@ -41,6 +41,12 @@ type Config struct {
 	// UploadDir 本地文件上传目录（资质扫描件等附件；相对工作目录或绝对路径）
 	UploadDir string
 
+	// CADConvertAPI 第三方 CAD 在线渲染转换服务地址（DWG 预览用）。
+	// 未配置时 DWG 返回"请下载查看"提示；配置后 /file/:id/preview 将文件转发至
+	// 该服务（multipart file + format=svg）并内联返回转换结果。
+	// 典型部署：自建 Aspose.CAD 封装服务 / 商业 CAD 渲染网关。
+	CADConvertAPI string
+
 	// 中国国产 AI 模型
 	BaiduAPIKey    string
 	BaiduSecretKey string
@@ -83,6 +89,9 @@ func Load() *Config {
 
 		// 本地上传目录（资质扫描件附件；相对工作目录或绝对路径）
 		UploadDir: getEnv("UPLOAD_DIR", "uploads/qualifications"),
+
+		// 第三方 CAD 渲染转换服务（DWG 预览；未配置则提示下载）
+		CADConvertAPI: getEnv("CAD_CONVERT_API", ""),
 
 		BaiduAPIKey:    getEnv("BAIDU_API_KEY", ""),
 		BaiduSecretKey: getEnv("BAIDU_SECRET_KEY", ""),

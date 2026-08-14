@@ -338,9 +338,9 @@ V7.0 已通过 `deploy/scripts/verify_prod.py` 在生产环境用演示账号完
 |---|------|------|------|
 | 1 | 企业案例沉淀 | 模型 `CaseShowcase` + API（公开列表/创建/我的/编辑/删除，仅已完成订单可沉淀）+ 服务商主页案例展示 + "我的案例"管理页 + 演示数据案例种子 | ✅ |
 | 2 | 站内实时推送 | 后端 SSE 流 `GET /notify/stream`（JWT 查询参数鉴权、hub 广播、心跳保活）+ `CreateNotification` 联动推送；H5 EventSource + 小程序/App 30s 轮询兜底；"我的"未读角标与消息页实时刷新 | ✅ |
-| 3 | CAD/DXF 在线预览 | 自研纯 Go DXF→SVG 渲染器（`internal/dxf`，支持 LINE/LWPOLYLINE/CIRCLE/ARC/POINT，Y 轴翻转/边界自适应）；`/file/:id/preview` 对 dxf 返回 SVG 内联；DWG 保持下载+提示（需专业引擎） | ✅ 覆盖率 92.9% |
+| 3 | CAD/DXF 在线预览 | 自研纯 Go DXF→SVG 渲染器（`internal/dxf`，支持 LINE/LWPOLYLINE/CIRCLE/ARC/POINT，Y 轴翻转/边界自适应）；`/file/:id/preview` 对 dxf 返回 SVG 内联；**DWG 走第三方引擎适配器（`CAD_CONVERT_API` 可插拔：配置后转发转换服务返回 SVG，未配置返回下载提示）** | ✅ 覆盖率 92.9% + `TestConvertCADExternal` |
 | 4 | 计价工具 | `POST /tools/cost-estimate` 清单计价估算（分部分项→措施→规费→税金→含税总价，费率可配置）+ 客户端"计价估算工具"页 | ✅ `TestCostEstimate` |
-| 5 | 资金托管台账 | 模型 `EscrowLedger` + 结算释放/争议冻结/结案解冻自动记账 + `GET /order/:id/escrow` 明细 + `GET /admin/escrow/ledger` 平台对账 + 订单详情页托管状态展示 | ✅ `TestEscrowFlow` |
+| 5 | 资金托管台账 | 模型 `EscrowLedger` + 结算释放/争议冻结/结案解冻自动记账 + `GET /order/:id/escrow` 明细 + `GET /admin/escrow/ledger` 平台对账 + **H5 管理端结算中心新增"资金托管台账"对账列表** + 订单详情页托管状态展示 | ✅ `TestEscrowFlow` |
 
 ### 11.3 外部依赖项（非代码可修，如实标注）
 
@@ -348,7 +348,7 @@ V7.0 已通过 `deploy/scripts/verify_prod.py` 在生产环境用演示账号完
 |----|------|
 | 真实支付通道 / 电子签 / OCR / 短信 | ⏳ 需服务商签约（接口与验签已就绪）；平台侧托管台账已使 Mock 通道资金可对账 |
 | App 推送 / 短信触达 | ⏳ 需第三方推送服务 |
-| DWG 在线预览 | ⏳ 需商业渲染引擎（如 Aspose.CAD） |
+| DWG 在线渲染引擎本体 | ⏳ 需采购/部署商业引擎（如 Aspose.CAD）；**接入点已就绪（`CAD_CONVERT_API` 可插拔适配器 + `deploy/.env.example` 示例）** |
 | 会员/保险/造价指数等增值服务 | ⏳ 商业立项 |
 
 ### 11.4 整改后质量基线（本机实测）

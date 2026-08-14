@@ -1,8 +1,15 @@
 package handler
 
 import (
+	"bytes"
+	"fmt"
+	"io"
+	"mime/multipart"
+	"net/http"
 	"os"
+	"time"
 
+	"github.com/eqs/server/internal/config"
 	"github.com/eqs/server/internal/dxf"
 	"github.com/eqs/server/internal/model"
 	"github.com/gin-gonic/gin"
@@ -149,8 +156,8 @@ func PreviewFile(c *gin.Context) {
 		return
 	}
 
-	// 图片/PDF/DXF 允许内联预览（DXF 由服务端转换为 SVG 渲染）
-	previewable := map[string]bool{"jpg": true, "jpeg": true, "png": true, "pdf": true, "dxf": true}
+	// 图片/PDF/DXF/DWG 允许内联预览（DXF 服务端自研转换；DWG 走第三方引擎适配器）
+	previewable := map[string]bool{"jpg": true, "jpeg": true, "png": true, "pdf": true, "dxf": true, "dwg": true}
 	if !previewable[file.FileType] {
 		badRequest(c, "该文件类型不支持在线预览，请下载查看")
 		return
@@ -189,23 +196,80 @@ func PreviewFile(c *gin.Context) {
 		path = "./" + path
 	}
 
-	// DXF：服务端转换为 SVG 内联预览（自研渲染器，无第三方依赖）
+	// DXF：自研渲染器转换为 SVG 内联预览（无第三方依赖）
 	if file.FileType == "dxf" {
 		data, err := os.ReadFile(path)
 		if err != nil {
-			serverError(c, err)
+			notFound(c, "文件存储不存在")
 			return
 		}
-		res, err := dxf.Render(data)
+		if res, err := dxf.Render(data); err == nil {
+			c.Data(200, "image/svg+xml; charset=utf-8", []byte(res.SVG))
+			return
+		}
+	}
+
+	// DWG（或 DXF 自研渲染失败）：走第三方 CAD 渲染引擎适配器（CAD_CONVERT_API）
+	if file.FileType == "dwg" || file.FileType == "dxf" {
+		data, err := os.ReadFile(path)
 		if err != nil {
-			badRequest(c, "DXF 文件解析失败，请下载后用 CAD 软件查看")
+			notFound(c, "文件存储不存在")
 			return
 		}
-		c.Data(200, "image/svg+xml; charset=utf-8", []byte(res.SVG))
+		if svg, err := convertCADExternal(data, file.OriginalName, file.FileType); err == nil {
+			c.Data(200, "image/svg+xml; charset=utf-8", svg)
+			return
+		}
+		badRequest(c, "CAD 文件暂不支持在线预览（未配置第三方渲染引擎），请下载后用 CAD 软件查看")
 		return
 	}
 
 	c.FileAttachment(path, file.OriginalName)
+}
+
+// convertCADExternal 调用第三方 CAD 渲染转换服务（如 Aspose.CAD 封装服务 / 商业渲染网关），
+// 返回 SVG。配置项 CAD_CONVERT_API 指向该服务的 HTTP 接口：
+//   POST {api}  multipart: file=<原始文件>  form: format=svg  header: X-File-Type
+// 响应体为 image/svg+xml 内容。
+func convertCADExternal(data []byte, name, fileType string) ([]byte, error) {
+	api := config.Get().CADConvertAPI
+	if api == "" {
+		return nil, fmt.Errorf("未配置 CAD_CONVERT_API")
+	}
+
+	var body bytes.Buffer
+	mw := multipart.NewWriter(&body)
+	fw, err := mw.CreateFormFile("file", name)
+	if err != nil {
+		return nil, err
+	}
+	if _, err := fw.Write(data); err != nil {
+		return nil, err
+	}
+	if err := mw.WriteField("format", "svg"); err != nil {
+		return nil, err
+	}
+	if err := mw.Close(); err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", api, &body)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Content-Type", mw.FormDataContentType())
+	req.Header.Set("X-File-Type", fileType)
+
+	client := &http.Client{Timeout: 30 * time.Second}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("CAD 转换服务返回 %d", resp.StatusCode)
+	}
+	return io.ReadAll(resp.Body)
 }
 
 type AddAnnotationRequest struct {

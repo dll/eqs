@@ -614,8 +614,13 @@ func TestCover_Files(t *testing.T) {
 		t.Fatalf("下载本地文件失败: %d %s", w.Code, w.Body.String())
 	}
 
-	// 预览：不支持的类型
-	w = doJSONFull(t, r, "GET", "/api/v1/file/"+strconv.Itoa(int(localFile.ID))+"/preview", nil)
+	// 预览：不支持的类型（txt 不在预览白名单）
+	txtFile := model.ProjectFile{
+		ProjectID: project.ID, UploaderID: clientID, OriginalName: "c.txt", FileType: "txt",
+		StorageKey: "uploads/projects/c.txt", Version: 1,
+	}
+	model.DB.Create(&txtFile)
+	w = doJSONFull(t, r, "GET", "/api/v1/file/"+strconv.Itoa(int(txtFile.ID))+"/preview", nil)
 	if w.Code != http.StatusBadRequest {
 		t.Fatalf("不支持类型应400，得到 %d", w.Code)
 	}
