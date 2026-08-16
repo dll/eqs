@@ -56,3 +56,6 @@ coverage/
 
 # npm 子包锁文件（vite 端由 pnpm-workspace 统一管理）
 packages/client/package-lock.json
+
+# OpenClaw agent workspaces (per-agent .git, not part of project)
+.openclaw/
