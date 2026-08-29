@@ -143,13 +143,7 @@ bindings: [
   -> channels status --probe
 ```
 
-不得删除或覆盖既有路由，不得启动第二个 Gateway：
-
-```text
-feishu/default          -> leader-wxx
-feishu/claude-vopc      -> leader-vopc
-feishu/gemini-gpps      -> leader-gpps
-```
+不得删除或覆盖其他项目既有路由，不得启动第二个 Gateway。EQS 只新增自己的 `deepseek-eqs` 账号和 binding，不改变现有通道的目标 Agent。
 
 ### 3.5 Feishu 会话与消息路由
 
@@ -231,7 +225,7 @@ EQS 应用内 `ai.go` 的智谱 GLM 链路与 OpenClaw DeepSeek Agent 链路是�
 
 任何真实 Key 只能保存在本机或服务器安全环境变量/SecretRefs 中，不得写入本文、Git、日志或飞书消息。
 
-## 9. 验收标准
+## 7. 验收标准
 
 ### 9.1 飞书平台验收
 
@@ -278,7 +272,7 @@ openclaw channels status --probe
 5. 新建或重置测试会话后，再执行一次只读工作区检查，确认工作目录为 EQS。
 6. 如需验证代码任务，先取得人工确认，再执行最小变更；禁止直接执行破坏性操作。
 7. 验证回复返回飞书群，卡片/文本流式输出正常，重复消息不会造成重复执行。
-8. 回归确认 WXX、VOPC、GPPS 的既有 Feishu 路由未改变。
+8. 回归确认其他项目的既有 Feishu 路由未改变。
 
 ### 9.4 EQS 工程验证
 
@@ -301,7 +295,7 @@ openclaw channels status --probe
 | 超时或重复执行 | 会话队列、模型响应时间、消息去重和 Gateway 日志 |
 | 回复模型与配置不一致 | 新建会话、检查 fallback/旧会话覆盖，并以实际日志为准 |
 
-## 10. 安全与写入边界
+## 8. 安全与写入边界
 
 - 不启动第二个 OpenClaw Gateway；
 - 修改 OpenClaw 配置前先备份 `C:\Users\ldl\.openclaw\openclaw.json`；
@@ -314,7 +308,7 @@ openclaw channels status --probe
 - 多个 Agent 不得同时修改同一文件；
 - 支付、短信、OCR、推送、电子签、生产部署、密钥和外部发布必须人工确认。
 
-## 11. 当前状态与后续事项
+## 9. 当前状态与后续事项
 
 | 项目 | 状态 |
 |---|---|
@@ -328,7 +322,7 @@ openclaw channels status --probe
 | EQS 应用内智谱 GLM | 独立链路，按 `AI配置说明.md` 验收 |
 | 外部支付/短信/OCR等通道 | 必须分别进行真实联调 |
 
-## 12. 版本记录
+## 10. 版本记录
 
 | 版本 | 日期 | 内容 |
 |---|---|---|
