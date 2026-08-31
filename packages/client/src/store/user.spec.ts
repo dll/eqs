@@ -34,6 +34,18 @@ describe('user store', () => {
     })
   })
 
+  it('wechatLogin 交换 token 并存储用户', async () => {
+    const store = useUserStore()
+    mocks.request.post.mockResolvedValue({ token: 'wx_t1', user: { id: 20, user_type: 1 } })
+    await store.wechatLogin('wx_code_abc', 1)
+    expect(store.token).toBe('wx_t1')
+    expect(store.user?.id).toBe(20)
+    expect(mocks.request.post).toHaveBeenCalledWith('/api/v1/auth/wechat-login', {
+      code: 'wx_code_abc', user_type: 1,
+    })
+    expect((globalThis as any).uni.getStorageSync('token')).toBe('wx_t1')
+  })
+
   it('loadUser 无 token 直接返回', async () => {
     const store = useUserStore()
     await store.loadUser()

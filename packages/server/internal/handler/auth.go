@@ -184,8 +184,17 @@ func WxLogin(c *gin.Context) {
 		return
 	}
 
-	openid := fmt.Sprintf("openid_%s", req.Code)
 	cfg := config.Get()
+	// V11：经 exchange 器换取真实 openid；未配置凭据或 WX_MINI_MOCK=1 时为 mock（openid_<code>）
+	exchanger := channel.NewWxExchanger(cfg.WXMiniAppID, cfg.WXMiniSecret, cfg.WXMiniMock)
+	wxSession, wxErr := exchanger.Code2Session(req.Code)
+	if wxErr != nil {
+		// 真实交换失败：告知原因（生产不泄露细节）；mock 永远不会走到这里
+		badRequest(c, "微信登录失败")
+		return
+	}
+	openid := wxSession.OpenID
+
 	user, isNew, err := findOrCreateUser("", req.UserType, openid)
 	if err != nil {
 		serverError(c, err)

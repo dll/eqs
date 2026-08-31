@@ -110,6 +110,42 @@ func TestCreatePayment_WechatNoSign(t *testing.T) {
 	}
 }
 
+// TestCreatePayment_Jsapi_NoOpenid PAYMENT_PROVIDER=wechat 但甲方无 openid：JSAPI 支付应被拒（不发起真实调用）
+func TestCreatePayment_Jsapi_NoOpenid(t *testing.T) {
+	r := setupFlowRouter()
+	createTestUser(t, "13610000004", 1) // 甲方未走小程序登录，无 WxOpenID
+	projectID := setupPublishedProject(t, r)
+	order := model.Order{ProjectID: projectID, SupplierID: 2, Amount: 100, Status: 1}
+	model.DB.Create(&order)
+
+	t.Setenv("PAYMENT_PROVIDER", "wechat")
+	config.ResetCache()
+	defer config.ResetCache()
+
+	w := doJSONFull(t, r, "POST", "/api/v1/pay/create", map[string]interface{}{
+		"order_id": order.ID, "amount": 100, "channel": "jsapi",
+	})
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("甲方无 openid 时 JSAPI 应400，得到 %d %s", w.Code, w.Body.String())
+	}
+}
+
+// TestCreatePayment_Jsapi_Mock PAYMENT_PROVIDER=mock 时 jsapi 走模拟通道，不触发真实微信调用
+func TestCreatePayment_Jsapi_Mock(t *testing.T) {
+	r := setupFlowRouter()
+	createTestUser(t, "13610000005", 1)
+	projectID := setupPublishedProject(t, r)
+	order := model.Order{ProjectID: projectID, SupplierID: 2, Amount: 100, Status: 1}
+	model.DB.Create(&order)
+
+	w := doJSONFull(t, r, "POST", "/api/v1/pay/create", map[string]interface{}{
+		"order_id": order.ID, "amount": 100, "channel": "jsapi",
+	})
+	if w.Code != http.StatusOK {
+		t.Fatalf("mock 模式下 jsapi 应200，得到 %d %s", w.Code, w.Body.String())
+	}
+}
+
 // TestPaymentNotify_AmountMismatch 回调金额不符不更新状态
 func TestPaymentNotify_AmountMismatch(t *testing.T) {
 	gin.SetMode(gin.TestMode)

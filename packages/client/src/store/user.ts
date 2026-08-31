@@ -22,6 +22,15 @@ export const useUserStore = defineStore('user', () => {
     setToken(res.token)
   }
 
+  // V11：微信小程序登录。code 由调用方（条件编译中的 uni.login/uni.getUserProfile 流程）取得，
+  // 此处仅负责交换 token 并落库，H5 不调用本方法。
+  const wechatLogin = async (code: string, userType = 1) => {
+    const res = await request.post('/api/v1/auth/wechat-login', { code, user_type: userType })
+    token.value = res.token
+    user.value = res.user
+    setToken(res.token)
+  }
+
   const logout = () => {
     user.value = null
     token.value = ''
@@ -40,5 +49,5 @@ export const useUserStore = defineStore('user', () => {
     }
   }
 
-  return { user, token, login, logout, loadUser }
+  return { user, token, login, wechatLogin, logout, loadUser }
 })
