@@ -10,6 +10,8 @@ build/
 # Go
 packages/server/server
 packages/server/server.linux
+packages/server/server.exe
+packages/server/bin/
 packages/server/tmp/
 packages/server/cover
 
