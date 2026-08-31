@@ -13,6 +13,7 @@
 | 腾讯云短信 | ✅ 已开发（TC3 签名黄金测试通过） | `TENCENT_SMS_SECRET_ID/KEY` + `SMS_SDK_APP_ID/SIGN_NAME/TEMPLATE_ID` | 生产登录真实发送验证码 | 演示号固定码；非演示号拒绝并提示"短信服务未配置" |
 | 腾讯云 OCR | ✅ 已开发（TC3 签名复用） | `TENCENT_OCR_SECRET_ID/KEY` | 资质审核自动识别扫描件（审核备注前缀"OCR识别:"） | 规则/AI 辅助审核 |
 | 微信支付 v3 | ✅ 已开发（签名+回调解密黄金测试通过，**未联调**） | `WXPAY_APPID/MCHID/API_V3_KEY/MCH_SERIAL_NO/私钥/平台证书/通知URL` + `PAYMENT_PROVIDER=wechat` | `/pay/create` 返回微信 Native 二维码；回调验签后订单自动进入"已支付" | `PAYMENT_PROVIDER=mock` 模拟通道 |
+| 微信小程序登录 | ✅ 已开发（code2session；随附黄金/单测） | `WX_MINI_APPID` + `WX_MINI_SECRET`（可选 `WX_MINI_MOCK`） | 真实 openid 落库并登录 | 未配置或 `WX_MINI_MOCK=1` 降级 mock（openid_<code>） |
 | App 推送（uni-push/个推） | ✅ 已开发（token 签名实现） | `PUSH_APP_ID/APP_KEY/MASTER_SECRET` | 通知创建后按用户手机号别名离线推送 | SSE 实时推送（H5）/30s 轮询（小程序/App） |
 | 电子签 | 🔶 网关抽象就绪（Mock 实现） | 需选定服务商（法大大/e签宝/上上签）后开发适配器 | — | Mock 签署链接 |
 | CAD 引擎 | ✅ 接入点就绪 | `CAD_CONVERT_API`（自建转换服务地址） | DWG 在线预览 | 提示下载 |
@@ -57,7 +58,29 @@ curl -X POST http://127.0.0.1:8090/api/v1/sms/send -H "Content-Type: application
 
 ---
 
-## 3. 微信支付 v3（唯一"未联调"通道）
+## 3. 微信小程序登录（code2session，V11 新增）
+
+### 步骤
+1. 微信公众平台 → 小程序 → 开发管理 → 开发设置 → 获取 `AppID` 与 `AppSecret`；
+2. 填入 `deploy/.env`：`WX_MINI_APPID` / `WX_MINI_SECRET`；
+3. 开发/CI 可设 `WX_MINI_MOCK=1` 强制 mock（openid_<code>），不真实请求；
+4. 重启服务。客户端在登录页点「微信一键登录」即可走真实登录。
+
+### 验证
+```bash
+curl -X POST http://127.0.0.1:8090/api/v1/auth/wechat-login -H "Content-Type: application/json" \
+  -d '{"code":"<真实验证临时code>","user_type":2}'
+# 返回真实 openid 对应的用户 token（不再出现 openid_<code> 前缀）
+```
+
+### 说明
+- 代码：`internal/channel/wxlogin.go`（code2session 交换器 + mock 降级）；调用点 `auth.go WxLogin`；
+- 未配置或 mock 时维持旧仿真行为（openid_<code>），单测覆盖成功/失败/mock 三路径；
+- 客户端：`pages/login/index.vue` 的「微信一键登录」按 `#ifdef MP-WEIXIN` 条件编译，H5 不受影响。
+
+---
+
+## 4. 微信支付 v3（唯一"未联调"通道）
 
 ### 步骤
 1. 微信商户平台开通 Native 支付（扫码）与退款权限；
@@ -147,6 +170,7 @@ curl -X POST http://127.0.0.1:8090/api/v1/pay/create -H "Authorization: Bearer <
 | 3 | 短信：真实手机号收到验证码 | ☐ 填凭据后联调 |
 | 4 | OCR：审核备注出现识别文本 | ☐ 填凭据后联调 |
 | 5 | 微信支付：下单→扫码→回调→订单已支付→退款 | ☐ 填凭据后联调（唯一未联调通道） |
+| 5a | 小程序 JSAPI：登录拿真实 openid → 下单 → 拉起支付 → 回调 | ☐ 填凭据 + A1 登录后联调 |
 | 6 | App 推送：业务通知离线送达 | ☐ 填凭据 + 客户端上报 clientid 后联调 |
 | 7 | 电子签：选定服务商后开发适配器 | ☐ 商务决策 |
 | 8 | DWG 预览：引擎部署后填 `CAD_CONVERT_API` | ☐ 采购/部署 |

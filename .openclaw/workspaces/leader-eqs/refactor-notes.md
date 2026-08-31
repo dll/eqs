@@ -95,3 +95,41 @@
 4. **R3-1 状态常量收敛**：建议随状态机专项评审一并推进。
 
 *重构完成，业务逻辑与接口契约均未改变。*
+
+---
+
+## 7. EQS-MP-20260831-01：微信小程序多端真实化（leader-eqs 执行）
+
+> 日期：2026-08-31 ｜ 分支：`feature/mp-weixin-real`（基于 main@04a1b9f）
+> 上游：ccit-ceo（P0，@from ccit-ceo @to leader-eqs）
+> 定位：在既有 133 路由/28 模型基础上，补小程序登录与支付真实化；未新增业务规则，未触碰资金/状态机红线。
+
+### 7.1 服务端（A1）
+- `internal/config/config.go`：新增 `WXMiniAppID/WXMiniSecret/WXMiniMock`（← `WX_MINI_APPID/WX_MINI_SECRET/WX_MINI_MOCK`）。
+- `internal/channel/wxlogin.go`（新增）：`WxExchanger` 接口；`mockExchanger`（openid_<code>，兼容旧行为）；`code2sessionExchanger`（真调 api.weixin.qq.com/sns/jscode2session）。`NewWxExchanger(appID,secret,useMock)`：mock/缺凭据→mock，否则真实。
+- `internal/handler/auth.go WxLogin`：改用 exchanger；真实交换失败返回 400（不 panic）。
+- 单测：`internal/channel/wxlogin_test.go`（mock 3 例 + 真实成功 + 微信错误 + 网络错误）；`internal/handler/wxlogin_test.go`（mock 开关 200 + 真实不可达 400）。
+
+### 7.2 客户端小程序登录（A2）
+- `packages/client/src/store/user.ts`：新增 `wechatLogin(code,userType)`（POST /auth/wechat-login，token 入 store+storage）。
+- `packages/client/src/pages/login/index.vue`：新增「微信一键登录」按钮；`#ifdef MP-WEIXIN` 内 `uni.login({provider:'weixin'})` → wechatLogin → switchTab。
+- 条件编译：小程序含、H5 剥离（H5 构建已验证不受影响）。store 单测 `user.spec.ts` 新增 wechatLogin 用例。
+
+### 7.3 小程序 JSAPI 支付（A3，不真实联调）
+- `internal/handler/payment.go CreatePayment`：新增 `channel="jsapi"` 分支——`PAYMENT_PROVIDER=wechat` 时取甲方 `WxOpenID`，调 `CreateJSAPIOrder` 返回 prepay_id；无 openid/未配置→400。`PAYMENT_PROVIDER=mock` 时走模拟通道，不触发真实调用。
+- 单测：`final_test.go` 新增 `TestCreatePayment_Jsapi_NoOpenid`（400）、`TestCreatePayment_Jsapi_Mock`（200）。
+
+### 7.4 凭据与文档
+- `deploy/.env.example`：新增 WX_MINI_APPID / WX_MINI_SECRET / WX_MINI_MOCK。
+- `docs/EQS外部通道接入指南.md`：新增微信小程序登录章节 + 结项清单条目。
+- `docs/EQS多端开发计划.md`（新增）：各端现状/缺口/改动/A5 App 盘点/所需人工事项/验证。
+
+### 7.5 验证
+- `go vet` / `go test ./...`：7 包全 ok。
+- 客户端 `vue-tsc --noEmit`：EXIT 0；vitest store 6/6 pass。
+- `build:mp-weixin`：产物 `dist/build/mp-weixin`，登录页已含 uni.login+wechatLogin；`build:h5` EXIT 0。
+
+### 7.6 所需人工事项（非代码）
+- 小程序 AppID/AppSecret（→ WX_MINI_* 与 manifest appid）；微信支付商户号 + WXPAY_*；真机上传体验版验证；Android/iOS 原生工程 + 签名 Secrets（仅出安装包用，见计划文档 §6）。
+
+*本轮未改既有业务逻辑与接口契约；新增登录/支付能力均带开关隔离可回退。*

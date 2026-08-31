@@ -76,6 +76,13 @@ type Config struct {
 	AliyunAPIKey   string
 	IflyAPIKey     string
 	IflyAPISecret  string
+
+	// V11：微信小程序登录（code2session）
+	// 未配置 AppID/Secret 时自动降级为 mock（保留 openid_<code> 行为）；
+	// WX_MINI_MOCK=1 可强制 mock（开发/CI 用），即使已配置凭据也不真实请求。
+	WXMiniAppID   string
+	WXMiniSecret  string
+	WXMiniMock    bool
 }
 
 // Load 从环境变量构造完整配置（每次调用都会重新解析环境变量）
@@ -140,6 +147,10 @@ func Load() *Config {
 		AliyunAPIKey:   getEnv("ALIYUN_API_KEY", ""),
 		IflyAPIKey:     getEnv("IFLY_API_KEY", ""),
 		IflyAPISecret:  getEnv("IFLY_API_SECRET", ""),
+
+		WXMiniAppID:  getEnv("WX_MINI_APPID", ""),
+		WXMiniSecret: getEnv("WX_MINI_SECRET", ""),
+		WXMiniMock:   getEnv("WX_MINI_MOCK", "") == "1",
 	}
 }
 

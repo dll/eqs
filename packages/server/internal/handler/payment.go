@@ -94,6 +94,64 @@ func CreatePayment(c *gin.Context) {
 		return
 	}
 
+	// V11：微信小程序 JSAPI 支付（需甲方 openid）。
+	// 仅当 channel=jsapi 且真实通道已配置（PAYMENT_PROVIDER=wechat）时启用；
+	// 商户凭据未到位/未配置时保持隔离，不发起真实调用（返回业务提示）。
+	if channel == "jsapi" && config.Get().PaymentProvider != "mock" {
+		gateway, gwErr := newWechatGateway()
+		if gwErr != nil {
+			badRequest(c, "微信支付未配置："+gwErr.Error())
+			return
+		}
+		if gateway == nil {
+			badRequest(c, "微信支付未配置（请填写 WXPAY_* 凭据）")
+			return
+		}
+
+		var order model.Order
+		if err := model.DB.First(&order, req.OrderID).Error; err != nil {
+			notFound(c, "订单不存在")
+			return
+		}
+		var proj model.Project
+		if err := model.DB.First(&proj, order.ProjectID).Error; err != nil || proj.UserID != c.GetUint("user_id") {
+			forbidden(c, "仅甲方可发起支付")
+			return
+		}
+		if req.Amount != order.Amount {
+			badRequest(c, "支付金额与订单金额不一致")
+			return
+		}
+		// 取甲方 openid（A1 小程序登录时写入 WxOpenID）
+		var payer model.User
+		if err := model.DB.First(&payer, c.GetUint("user_id")).Error; err != nil || payer.WxOpenID == nil || *payer.WxOpenID == "" {
+			badRequest(c, "请先通过微信小程序登录以获取支付身份")
+			return
+		}
+
+		txn := model.PaymentTransaction{
+			UserID: order.SupplierID, OrderID: order.ID, Amount: req.Amount,
+			Type: "payment", Channel: "jsapi", Status: 0,
+		}
+		if err := model.DB.Create(&txn).Error; err != nil {
+			serverError(c, err)
+			return
+		}
+		outTradeNo := fmt.Sprintf("EQS%08d", txn.ID)
+		model.DB.Model(&txn).Update("external_transaction_id", outTradeNo)
+
+		prepayID, err := gateway.CreateJSAPIOrder(*payer.WxOpenID, outTradeNo,
+			int64(req.Amount*100), fmt.Sprintf("工程服务订单#%d", order.ID), config.Get().WXPayNotifyURL)
+		if err != nil {
+			model.DB.Model(&txn).Update("status", 2)
+			serverError(c, err)
+			return
+		}
+		WriteAudit(c, "payment.create.jsapi", "order", req.OrderID, gin.H{"transaction_id": txn.ID, "out_trade_no": outTradeNo})
+		ok(c, gin.H{"transaction": txn, "paid": false, "channel": "jsapi", "prepay_id": prepayID})
+		return
+	}
+
 	var order model.Order
 	if err := model.DB.First(&order, req.OrderID).Error; err != nil {
 		notFound(c, "订单不存在")

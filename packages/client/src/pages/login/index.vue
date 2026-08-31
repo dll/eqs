@@ -87,6 +87,14 @@
         >
           {{ $t('common.login') }}
         </button>
+        <!-- #ifdef MP-WEIXIN -->
+        <button
+          class="wechat-login-btn"
+          @tap="wechatLogin"
+        >
+          微信一键登录
+        </button>
+        <!-- #endif -->
         <text class="ai-tip">
           AI 智能审核 · 敏捷交付闭环
         </text>
@@ -142,6 +150,23 @@ const login = async () => {
   await userStore.login(form.value.phone, form.value.code, form.value.userType)
   uni.switchTab({ url: '/pages/index/index' })
 }
+
+// V11：微信小程序一键登录。仅在小程序端编译（#ifdef MP-WEIXIN），H5 不包含此逻辑。
+// #ifdef MP-WEIXIN
+const wechatLogin = async () => {
+  try {
+    const codeRes = await uni.login({ provider: 'weixin' })
+    if (!codeRes.code) {
+      uni.showToast({ title: '微信登录失败', icon: 'none' })
+      return
+    }
+    await userStore.wechatLogin(codeRes.code, form.value.userType)
+    uni.switchTab({ url: '/pages/index/index' })
+  } catch {
+    uni.showToast({ title: '微信登录失败', icon: 'none' })
+  }
+}
+// #endif
 </script>
 
 <style scoped>
@@ -301,6 +326,15 @@ const login = async () => {
   font-size: 32rpx;
   font-weight: 600;
   box-shadow: 0 8rpx 24rpx rgba(37, 99, 235, .3);
+}
+
+.wechat-login-btn {
+  background: #07c160;
+  color: #fff;
+  margin-top: 24rpx;
+  border-radius: 14rpx;
+  font-size: 30rpx;
+  font-weight: 600;
 }
 
 .ai-tip {
