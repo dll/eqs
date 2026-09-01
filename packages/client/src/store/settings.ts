@@ -94,16 +94,25 @@ export const useSettingsStore = defineStore('settings', () => {
       },
     }
     const themeVars = vars[t] || vars.print
+    // #ifdef H5
+    // 浏览器端：CSS 变量挂到 :root；小程序端无 DOM，用 uni.setCssVariable 或页面级变量兑底
     const root = (document.documentElement || document.body) as HTMLElement
-    Object.entries(themeVars).forEach(([key, value]) => {
-      root.style.setProperty(key, value)
-    })
-    const page = document.querySelector('page') as HTMLElement | null
-    if (page) {
+    if (root) {
       Object.entries(themeVars).forEach(([key, value]) => {
-        page.style.setProperty(key, value)
+        root.style.setProperty(key, value)
       })
+      const page = document.querySelector('page') as HTMLElement | null
+      if (page) {
+        Object.entries(themeVars).forEach(([key, value]) => {
+          page.style.setProperty(key, value)
+        })
+      }
     }
+    // #endif
+    // #ifdef MP-WEIXIN
+    // 小程序端：主题色通过页面根节点 style 绑定 themeClass，此处仅记录当前主题供页面引用
+    console.log('[settings] theme applied (mp):', t, Object.keys(themeVars).length, 'vars')
+    // #endif
   }
 
   const checkVersion = async () => {

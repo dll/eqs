@@ -30,6 +30,7 @@ onLaunch(async () => {
 
 const doUpdate = () => {
   showUpdateDialog.value = false
+  // #ifdef H5
   if (updateInfo.value.url) {
     window.open(updateInfo.value.url, '_blank')
   } else {
@@ -41,6 +42,18 @@ const doUpdate = () => {
     }
     window.location.reload()
   }
+  // #endif
+  // #ifdef MP-WEIXIN
+  if (updateInfo.value.url) {
+    // 小程序：复制下载链接，提示用户到浏览器打开
+    uni.setClipboardData({
+      data: updateInfo.value.url,
+      success: () => uni.showToast({ title: '链接已复制，请在浏览器打开', icon: 'none' })
+    })
+  } else {
+    uni.showToast({ title: '已是最新版本', icon: 'none' })
+  }
+  // #endif
 }
 
 const dismissUpdate = () => {
@@ -113,7 +126,7 @@ page {
   .lang-switch {
     display: none !important;
   }
-  * {
+  page, body, html, view, text, image, button, input, textarea {
     background: transparent !important;
     color: #000000 !important;
     box-shadow: none !important;
