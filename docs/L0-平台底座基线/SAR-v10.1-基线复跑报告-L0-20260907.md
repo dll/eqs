@@ -84,6 +84,24 @@ ok  github.com/eqs/server/internal/model     3.356s
 ```
 与 SAR-v10.1 的包构成（cmd/channel/config/dxf/handler/middleware/model）完全一致，无新增包、无断链包。
 
+### 3.1 ⚠️ 复跑环境陷阱（重要：自动化/验收跑测试的必读）
+
+> 复跑过程中发现，**本开发主机每一个 exec/子进程都会继承其它项目（wxx/蔚小芯）注入的环境变量**，例如 `JWT_SECRET=79d1dee4dafe…cbab`（与本仓库根 `.env` 中 wxx 项目同名变量一致）、`WX_MINI_APPID/SECRET`、`ZHIPU_*/DEEPSEEK_*` 等。若直接跑 `go test ./...`，会触发**假失败**而非源码回归：
+
+| 现象 | 根因 | 印证 |
+|------|------|------|
+| `config_test.go TestLoad_Defaults` FAIL：JWT 默认值异常 | 断言默认凭据 `eqs-secret-key`，但继承到真实 `JWT_SECRET` 使 `os.Getenv` 命中非默认值 | 净化后 `go test -count=1 ./internal/config/` → ok |
+| `auth_extra_test.go TestWxLogin` 400 | 继承到真实 `WX_MINI_APPID/SECRET` 使 `NewWxExchanger` 走真实 code2session（`useMock=false`），无网/无效凭据 → 400（期望 mocks 200/400 分支见 config 导出测试） | 净化后 `-run Wx` → ok |
+
+**正确复跑姿势**（在同一进程先清再测，勿依赖跨进程继承）：
+```powershell
+cd packages/server
+'JWT_SECRET','JWT_EXPIRE_HOURS','APP_ENV','SERVER_PORT','DB_DRIVER','DB_NAME','DB_USER','DB_PASSWORD','DB_HOST','DB_PORT','REDIS_ADDR','REDIS_PASS','WX_MINI_APPID','WX_MINI_SECRET','WX_MINI_MOCK','DATA_ENCRYPTION_KEY','ZHIPU_API_KEY','DEEPSEEK_API_KEY' | ForEach-Object { Remove-Item "env:$_" -ErrorAction SilentlyContinue }
+go test -count=1 -p 1 ./...
+```
+
+**判定**：本报告 §3 的 7 包全绿，即**在此净化环境下**测得（上面刚重跑：cmd/channel/config/dxf/handler/middleware/model 全 ok，EXIT 0）。此前一次直接跑（未净化）config、handler 两个包假失败，净化后均恢复 ok —— 说明**是环境变量污染、非源码回归**。后续 L1→L3 每笔合入回归也须采用此净化姿势；CI 若在干净容器跑则天然规避。
+
 ---
 
 ## 4. SAR-v10.1 锚点至今的源码漂移审计
