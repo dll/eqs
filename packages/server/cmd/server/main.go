@@ -297,6 +297,14 @@ func setupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 			admin.GET("/admin/escrow/ledger", handler.AdminListEscrowLedger)
 			// V10 会员列表（平台）
 			admin.GET("/admin/members", handler.AdminListMembers)
+
+			// L1-A 存量项目收录（已有/线下承接项目直接录入 EQS，不走招标；仅平台/公司运营侧）
+			admin.POST("/admin/archive/projects", handler.CreateArchivedProject)
+			admin.POST("/admin/archive/projects/batch", handler.BatchImportArchivedProjects)
+			admin.GET("/admin/archive/projects", handler.ListArchivedProjects)
+			admin.GET("/admin/archive/projects/:id", handler.GetArchivedProject)
+			admin.PUT("/admin/archive/projects/:id", handler.UpdateArchivedProject)
+			admin.DELETE("/admin/archive/projects/:id", handler.DeleteArchivedProject)
 		}
 	}
 

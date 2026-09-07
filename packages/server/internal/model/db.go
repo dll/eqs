@@ -81,6 +81,8 @@ func AutoMigrate(db *gorm.DB) error {
 		&CaseShowcase{},
 		&EscrowLedger{},
 		&MembershipOrder{},
+		// L1-A 存量项目归档（已有项目直接收录 EQS，不走招标主流程；只做加法）
+		&ArchivedProject{},
 	)
 }
 
