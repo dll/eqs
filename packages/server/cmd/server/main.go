@@ -308,6 +308,18 @@ func setupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 			admin.GET("/admin/archive/projects/:id", handler.GetArchivedProject)
 			admin.PUT("/admin/archive/projects/:id", handler.UpdateArchivedProject)
 			admin.DELETE("/admin/archive/projects/:id", handler.DeleteArchivedProject)
+
+			// 真人放行(2026-09-07)：存量/在管项目推进闭环(里程碑/风险/决策待办, 加表, 不进交易状态机)
+			admin.GET("/admin/archive/projects/:id/overview", handler.ArchiveGetOverview)
+			admin.POST("/admin/archive/projects/:id/milestones", handler.ArchiveAddMilestone)
+			admin.PUT("/admin/archive/projects/:id/milestones/:mid", handler.ArchiveUpdateMilestone)
+			admin.DELETE("/admin/archive/projects/:id/milestones/:mid", handler.ArchiveDeleteMilestone)
+			admin.POST("/admin/archive/projects/:id/risks", handler.ArchiveAddRisk)
+			admin.PUT("/admin/archive/projects/:id/risks/:rid", handler.ArchiveUpdateRisk)
+			admin.DELETE("/admin/archive/projects/:id/risks/:rid", handler.ArchiveDeleteRisk)
+			admin.POST("/admin/archive/projects/:id/todos", handler.ArchiveAddTodo)
+			admin.PUT("/admin/archive/projects/:id/todos/:tid", handler.ArchiveUpdateTodo)
+			admin.DELETE("/admin/archive/projects/:id/todos/:tid", handler.ArchiveDeleteTodo)
 		}
 	}
 

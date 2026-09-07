@@ -83,6 +83,10 @@ func AutoMigrate(db *gorm.DB) error {
 		&MembershipOrder{},
 		// L1-A 存量项目归档（已有项目直接收录 EQS，不走招标主流程；只做加法）
 		&ArchivedProject{},
+		// 真人放行(2026-09-07): 公司在管项目推进闭环(归档项目下的里程碑/风险/决策待办, 不入交易状态机)
+		&ArchivedMilestone{},
+		&ArchivedRisk{},
+		&ArchivedTodo{},
 	)
 }
 
