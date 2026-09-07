@@ -13,7 +13,7 @@
 | 盘点项 | 现状结论 | 首要缺口 | 建议等级 |
 |---|---|---|---|
 | 授权/RBAC × 四主体 | 已具 user_type(1甲方/2服务方/3平台运营/4专家)，自注册仅甲方/服务方 | **无组织/公司模型**(无 Company/OrgID)，无法"同一项目内多人/多组织隔离"；**无 agent principal** | 橙(改动需门禁) |
-| audit | 51 类动作可写(含今日存量项目归档动作) | **无读取/检索端点**，监管/OPC 无法走 API 查审计；无 request-id 关联 | 橙(加法可补) |
+| audit | 51 类动作可写(含今日存量项目归档动作) | **无读取/检索端点**，监管/OPC 无法走 API 查审计；无 request-id 关联 | 检索端点 **已补**(0e37b4f)；request-id/agent 维度待后续(橙) |
 | 配置公私边界 | 有 is_public + /config/public 缓存 + 管理侧 upsert | 私密边界靠单 admin 语义；环境注入 `os.Getenv` 分散于 config.Load | 黄 |
 | 错误契约 / 幂等 | 统一 ok/fail/response helper | 写操作普遍无幂等键；批量我今日已事务化 | 黄 |
 
