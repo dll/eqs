@@ -70,10 +70,10 @@ jobs:
         run: |
           mkdir -p release
           cp packages/server/server release/eqs-server
-          cp -r packages/admin/dist release/admin-web
-          cp -r packages/client/dist/build/h5 release/eqs-h5
-          cp -r packages/client/dist/build/mp-weixin release/eqs-mp-weixin
-          cp -r packages/client/dist/build/app release/eqs-app-resources
+          tar -czf release/admin-web.tar.gz -C packages/admin/dist .
+          tar -czf release/eqs-h5.tar.gz -C packages/client/dist/build/h5 .
+          tar -czf release/eqs-mp-weixin.tar.gz -C packages/client/dist/build/mp-weixin .
+          tar -czf release/eqs-app-resources.tar.gz -C packages/client/dist/build/app .
 
       - name: Upload release artifacts
         uses: actions/upload-artifact@v4
@@ -111,10 +111,10 @@ jobs:
 
             ### 产物
             - `eqs-server`：后端 Linux 二进制（CGO 静态，依赖 sqlite）
-            - `admin-web/`：管理后台静态资源
-            - `eqs-h5/`：用户端 H5 静态资源
-            - `eqs-mp-weixin/`：微信小程序产物（微信开发者工具导入）
-            - `eqs-app-resources/`：App 资源包（供 HBuilderX/离线 SDK 打包 APK/IPA）
+            - `admin-web.tar.gz`：管理后台静态资源
+            - `eqs-h5.tar.gz`：用户端 H5 静态资源
+            - `eqs-mp-weixin.tar.gz`：微信小程序产物（微信开发者工具导入）
+            - `eqs-app-resources.tar.gz`：App 资源包（供 HBuilderX/离线 SDK 打包 APK/IPA）
 
             ### 使用方式
             1. 后端：`./eqs-server` 运行，配合 `deploy/systemd` 常驻
@@ -123,9 +123,9 @@ jobs:
             4. App：资源包导入 HBuilderX 云打包，或交给离线 SDK 工程自动出包
           files: |
             release/eqs-server
-            release/admin-web/**/*
-            release/eqs-h5/**/*
-            release/eqs-mp-weixin/**/*
-            release/eqs-app-resources/**/*
+            release/admin-web.tar.gz
+            release/eqs-h5.tar.gz
+            release/eqs-mp-weixin.tar.gz
+            release/eqs-app-resources.tar.gz
           draft: true
           generate_release_notes: true
