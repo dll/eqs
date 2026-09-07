@@ -1,6 +1,6 @@
 {
   "name": "eqs",
-  "version": "0.1.0",
+  "version": "0.3.0",
   "private": true,
   "description": "工程快捷服务 (Engineering Quick Service)",
   "scripts": {
