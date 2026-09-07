@@ -122,3 +122,41 @@
 3. OPC：`user_type=3` 现含超管语义过宽——若 OPC 用普通账号即够监管/审批，请确认 L1 是否把"监管只读+审批"与"系统 admin"权限分离。
 
 *—— leader-eqs，L1-A 盘点 v1（只读取证），2026-09-07。待补充项可在后续轮次按 CTO 门禁落代码。*
+
+---
+
+## 附A：组织层 Organization 预研设计 + 变更影响登记草稿（待 CTO A/B 门禁后落码）
+
+> 目的：不因 CTO 暂未回执而断主线；此档将「组织层」落为可直接开工的设计与门禁登记。红线声明：方案，未落库、未改任何既有交易域/既有 AutoMigrate 成员。
+
+### A.1 为何需要（缺口成立）
+盘点确认：甲/乙资源隔离目前仅至「本人 owner」（`== user_id`），无组织维度。同公司多人（多账号）发的事同属一家，却互不可见/不可共享，违背真人「多角色共用平台、甲方/服务方为本组织资源」输入。
+
+### A.2 设计（只加新表，不改既有 28 模型）
+新增模型（AutoMigrate 尾部追加，加法）：
+- `Organization{id, name, code, owner_id, verified, created_at}`
+- `OrgMember{org_id, user_id, role(owner/admin/member), created_at}`（联接表）
+- 可选 `Project{...}`/`Supplier{...}` 关联：以**加法**在需归属处新增 `OrgID` 索引列（不改变既有 user 归属语义，仅作为扩展）。
+端点（纯新增，挂既有鉴权）：
+- `auth`：`GET /org/mine`、`POST /org/join`(邀请/申请)，owner 管理 `PUT /org/members/:id/role`、`DELETE /org/members/:id`
+- 写入挂 `WriteAudit`（org.create/join/role/delete）
+作用域扩展原则：新增 `canAccessOrgResource(userID, orgID)`，在原 owner 判断基础上**并上**「本人为组织成员」——不改原单人 owner 检查，不缩权、只加组织共享面。
+
+### A.3 变更影响登记（草稿，CTO 门禁用）
+```markdown
+# 变更影响登记 —— EQS 组织层 Organization
+> 变更ID：EQS-L1A-20260907-org
+> 关联：L1-A RBAC×四主体╱真人多角色平台；红线不动。
+1. 增删 main.go 路由注册行？→ 是（新增 /org/* 端点，加法）；涉红区？→ 否
+2. 增删 AutoMigrate 清单？→ 是（新增 Organization/OrgMember 两表及可选加列）；既有 28 成员引用？→ 不动，仅是加
+3. 碰红区(资金/dispute/AI)？→ 否；碰既有交易状态机/落库值？→ 否
+4. 改动方式：纯新增模型+新端点+既有模型可选加列（OrgID index）
+5. 回归兜底：净化环境 go build/vet + go test -count=1 -p1 ./... 7包绿 + 新单测(org join/role/跨组织隔离) + QA 留证据
+6. 凭据/生产：不涉及新凭据；不写生产；mock 单测
+7. CTO 门禁结论：（待 ccit-cto 填：□放行 □需修正 □拒绝）
+```
+
+### A.4 回滚
+新增表按新增迁移删除即可回滚；对既有表仅加列不删——可随时安全回滚，不影响交易域。
+
+*—— leader-eqs，组织层预研草案，2026-09-07（方案，未落库）。*
