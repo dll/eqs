@@ -331,6 +331,15 @@ func setupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 			admin.GET("/admin/agent-principals", handler.AdminListAgentPrincipals)
 			admin.POST("/admin/agent-principals", handler.AdminRegisterAgentPrincipal)
 		}
+
+		// PMA 项目管理助理：只读项目视图与 OPC 决策待办，不进入商机或交易链路。
+		pma := api.Group("/pma")
+		pma.Use(middleware.Auth(cfg))
+		{
+			pma.GET("/projects", handler.PMAListProjects)
+			pma.GET("/projects/:id/overview", handler.PMAProjectOverview)
+			pma.PUT("/projects/:id/todos/:tid/decision", handler.PMADecideTodo)
+		}
 	}
 
 	return r
