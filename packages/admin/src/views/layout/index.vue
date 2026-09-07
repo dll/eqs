@@ -65,6 +65,14 @@
           <el-icon><Document /></el-icon>
           <span>{{ $t('menu.log') }}</span>
         </el-menu-item>
+        <el-menu-item index="/archive">
+          <el-icon><FolderOpened /></el-icon>
+          <span>{{ $t('menu.archive') }}</span>
+        </el-menu-item>
+        <el-menu-item index="/auditlog">
+          <el-icon><Tickets /></el-icon>
+          <span>{{ $t('menu.auditlog') }}</span>
+        </el-menu-item>
       </el-menu>
       <div class="aside-footer">
         <div class="ai-chip">

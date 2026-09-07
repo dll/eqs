@@ -24,6 +24,8 @@ const router = createRouter({
         { path: 'user', name: 'User', component: () => import('@/views/user/index.vue'), meta: { titleKey: 'user' } },
         { path: 'settings', name: 'Settings', component: () => import('@/views/settings/index.vue'), meta: { titleKey: 'settings' } },
         { path: 'log', name: 'Log', component: () => import('@/views/log/index.vue'), meta: { titleKey: 'log' } },
+        { path: 'archive', name: 'Archive', component: () => import('@/views/archive/index.vue'), meta: { titleKey: 'archive' } },
+        { path: 'auditlog', name: 'AuditLog', component: () => import('@/views/auditlog/index.vue'), meta: { titleKey: 'auditlog' } },
       ],
     },
     { path: '/:pathMatch(.*)*', redirect: '/dashboard' },
