@@ -298,6 +298,9 @@ func setupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 			// V10 会员列表（平台）
 			admin.GET("/admin/members", handler.AdminListMembers)
 
+			// L1-A 审计检索（只读；补 OPC/监管经 API 查阅审计缺口）
+			admin.GET("/admin/audit/logs", handler.ListAuditLogs)
+
 			// L1-A 存量项目收录（已有/线下承接项目直接录入 EQS，不走招标；仅平台/公司运营侧）
 			admin.POST("/admin/archive/projects", handler.CreateArchivedProject)
 			admin.POST("/admin/archive/projects/batch", handler.BatchImportArchivedProjects)
