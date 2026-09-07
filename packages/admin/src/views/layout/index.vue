@@ -73,6 +73,10 @@
           <el-icon><Tickets /></el-icon>
           <span>{{ $t('menu.auditlog') }}</span>
         </el-menu-item>
+        <el-menu-item index="/org">
+          <el-icon><OfficeBuilding /></el-icon>
+          <span>{{ $t('menu.org') }}</span>
+        </el-menu-item>
       </el-menu>
       <div class="aside-footer">
         <div class="ai-chip">

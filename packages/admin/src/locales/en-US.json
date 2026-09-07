@@ -374,5 +374,20 @@
   "archive.kind.other": "Other",
   "archive.progress": "Milestone progress",
   "archive.summary": "Summary",
-  "archive.milestoneDone": "Complete milestone"
+  "archive.milestoneDone": "Complete milestone",
+  "menu.org": "Org/Identity",
+  "org.title": "My Organizations",
+  "org.hint": "Party/supplier may create an org so team members share it; company internal teams use internal org (owner/admin as supervision/approval).",
+  "org.create": "New org",
+  "org.id": "ID",
+  "org.name": "Name",
+  "org.type": "Type",
+  "org.type.client": "Client",
+  "org.type.supplier": "Supplier",
+  "org.type.internal": "Internal (ops)",
+  "org.type.other": "Other",
+  "org.members": "Members",
+  "org.userId": "User ID",
+  "org.userPhone": "Phone",
+  "org.role": "Role"
 }

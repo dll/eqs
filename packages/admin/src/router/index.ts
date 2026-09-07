@@ -26,6 +26,7 @@ const router = createRouter({
         { path: 'log', name: 'Log', component: () => import('@/views/log/index.vue'), meta: { titleKey: 'log' } },
         { path: 'archive', name: 'Archive', component: () => import('@/views/archive/index.vue'), meta: { titleKey: 'archive' } },
         { path: 'auditlog', name: 'AuditLog', component: () => import('@/views/auditlog/index.vue'), meta: { titleKey: 'auditlog' } },
+        { path: 'org', name: 'Org', component: () => import('@/views/org/index.vue'), meta: { titleKey: 'org' } },
       ],
     },
     { path: '/:pathMatch(.*)*', redirect: '/dashboard' },

@@ -374,5 +374,20 @@
   "archive.kind.other": "其它",
   "archive.progress": "里程碑进度",
   "archive.summary": "摘要",
-  "archive.milestoneDone": "完成里程碑"
+  "archive.milestoneDone": "完成里程碑",
+  "menu.org": "组织/身份",
+  "org.title": "我的组织",
+  "org.hint": "甲方/服务方可建组织让本单位多人共用；公司内部团队用 internal 组织(owner/admin 作监管·审批位)。",
+  "org.create": "新建组织",
+  "org.id": "ID",
+  "org.name": "组织名",
+  "org.type": "类型",
+  "org.type.client": "甲方",
+  "org.type.supplier": "服务方",
+  "org.type.internal": "内部(监管)",
+  "org.type.other": "其它",
+  "org.members": "成员",
+  "org.userId": "用户ID",
+  "org.userPhone": "手机",
+  "org.role": "角色"
 }
