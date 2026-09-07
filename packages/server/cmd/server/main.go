@@ -255,6 +255,12 @@ func setupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 			auth.GET("/config/user/prefs", handler.GetUserPrefs)
 			auth.PUT("/config/user/prefs", handler.UpdateUserPrefs)
 			auth.PUT("/project/:id/theme", handler.SetProjectTheme)
+
+			// 真人放行(09-07) 组织层：自助建组织/加入/列表（多账号同单位归属）
+			auth.POST("/org/create", handler.OrgCreate)
+			auth.POST("/org/join", handler.OrgJoin)
+			auth.GET("/org/mine", handler.OrgMyList)
+			auth.GET("/org/:oid/members", handler.OrgMembers)
 		}
 
 		// Admin routes
@@ -320,6 +326,10 @@ func setupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 			admin.POST("/admin/archive/projects/:id/todos", handler.ArchiveAddTodo)
 			admin.PUT("/admin/archive/projects/:id/todos/:tid", handler.ArchiveUpdateTodo)
 			admin.DELETE("/admin/archive/projects/:id/todos/:tid", handler.ArchiveDeleteTodo)
+
+			// 真人放行(09-07) 公司侧 AI agent 身份登记(平台运营)
+			admin.GET("/admin/agent-principals", handler.AdminListAgentPrincipals)
+			admin.POST("/admin/agent-principals", handler.AdminRegisterAgentPrincipal)
 		}
 	}
 

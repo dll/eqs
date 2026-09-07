@@ -87,6 +87,10 @@ func AutoMigrate(db *gorm.DB) error {
 		&ArchivedMilestone{},
 		&ArchivedRisk{},
 		&ArchivedTodo{},
+		// 真人放行(2026-09-07): 组织层 + 公司侧 AI agent 身份(OPC/组织隔离/agent principal)
+		&Organization{},
+		&OrgMember{},
+		&AgentPrincipal{},
 	)
 }
 
