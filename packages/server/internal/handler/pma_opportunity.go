@@ -1,9 +1,19 @@
 package handler
 
 import (
+	"net/http"
+	"strings"
+
 	"github.com/eqs/server/internal/model"
 	"github.com/gin-gonic/gin"
 )
+
+var pmaOpportunityStatuses = map[string]bool{"new": true, "triaged": true, "closed": true}
+
+var pmaOpportunityStatusTransitions = map[string]map[string]bool{
+	"new":     {"triaged": true, "closed": true},
+	"triaged": {"closed": true},
+}
 
 // requirePMAOpportunityAccess limits this internal MVP to active internal members.
 // Platform administrators may inspect system data, but do not implicitly become PMA operators.
@@ -38,7 +48,7 @@ func CreatePMAOpportunity(c *gin.Context) {
 	if in.Status == "" {
 		in.Status = "new"
 	}
-	if in.Status != "new" && in.Status != "triaged" && in.Status != "closed" {
+	if !pmaOpportunityStatuses[in.Status] {
 		badRequest(c, "商机状态无效")
 		return
 	}
@@ -83,4 +93,52 @@ func ListPMAOpportunities(c *gin.Context) {
 		list = []model.PMAOpportunity{}
 	}
 	ok(c, gin.H{"opportunities": list, "count": total, "page": page, "size": size})
+}
+
+// UpdatePMAOpportunityStatus applies the approved new->triaged->closed flow and records a complete audit entry.
+// PUT /api/v1/pma/opportunities/:id/status
+func UpdatePMAOpportunityStatus(c *gin.Context) {
+	if !requirePMAOpportunityAccess(c) {
+		return
+	}
+	id, err := parseUint(c.Param("id"))
+	if err != nil {
+		badRequest(c, "商机ID无效")
+		return
+	}
+	var in struct {
+		Status string `json:"status" binding:"required"`
+		Reason string `json:"reason" binding:"required"`
+	}
+	if err := c.ShouldBindJSON(&in); err != nil || !pmaOpportunityStatuses[in.Status] || strings.TrimSpace(in.Reason) == "" {
+		badRequest(c, "商机状态和变更原因不能为空，且状态必须有效")
+		return
+	}
+	var op model.PMAOpportunity
+	if err := model.DB.First(&op, id).Error; err != nil {
+		notFound(c, "商机不存在")
+		return
+	}
+	old := op.Status
+	if old == in.Status || !pmaOpportunityStatusTransitions[old][in.Status] {
+		fail(c, http.StatusConflict, "invalid_status_transition", "不允许该商机状态转换")
+		return
+	}
+	result := model.DB.Model(&model.PMAOpportunity{}).
+		Where("id = ? AND status = ?", op.ID, old).
+		Update("status", in.Status)
+	if result.Error != nil {
+		serverError(c, result.Error)
+		return
+	}
+	if result.RowsAffected != 1 {
+		fail(c, http.StatusConflict, "status_conflict", "商机状态已被其他请求变更")
+		return
+	}
+	op.Status = in.Status
+	WriteAudit(c, "pma.opportunity.status", "pma_opportunity", op.ID, gin.H{
+		"from": old, "to": in.Status, "reason": strings.TrimSpace(in.Reason),
+		"operator_principal": gin.H{"type": "user", "user_id": c.GetUint("user_id")},
+	})
+	ok(c, gin.H{"opportunity": op})
 }
