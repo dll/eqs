@@ -65,6 +65,11 @@ func TestPMA_OPCPermissionsAndDecisionAudit(t *testing.T) {
 	if w.Code != http.StatusForbidden {
 		t.Fatalf("非OPC决策应403，得到 %d", w.Code)
 	}
+	// 平台管理员是系统运维角色，不能代替公司 OPC 真人定案。
+	w = doJSONFullAuth(t, r, "PUT", "/api/v1/pma/projects/"+u64(projectID)+"/todos/"+u64(todo.ID)+"/decision", map[string]interface{}{"status": "done"}, 3, 3)
+	if w.Code != http.StatusForbidden {
+		t.Fatalf("系统管理员不得代替OPC决策，应403，得到 %d", w.Code)
+	}
 
 	org := model.Organization{Name: "PMA测试内部组织", Code: "PMA-TEST", Type: "internal", Status: 1}
 	if err := model.DB.Create(&org).Error; err != nil {

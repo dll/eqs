@@ -15,10 +15,12 @@ func requirePMARead(c *gin.Context) bool {
 }
 
 func requirePMADecision(c *gin.Context) bool {
-	if isAdmin(c) || pmaInternalMember(c, true) {
+	// EQS platform administrators manage the system; they are not the company
+	// OPC and must not approve/close company decisions by admin privilege.
+	if pmaInternalMember(c, true) {
 		return true
 	}
-	forbidden(c, "仅OPC或平台管理员可处理项目决策")
+	forbidden(c, "仅OPC真人可处理项目决策")
 	return false
 }
 
