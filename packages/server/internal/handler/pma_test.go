@@ -19,6 +19,8 @@ func setupPMARouter() *gin.Engine {
 		pma.GET("/projects", PMAListProjects)
 		pma.GET("/projects/:id/overview", PMAProjectOverview)
 		pma.PUT("/projects/:id/todos/:tid/decision", PMADecideTodo)
+		pma.POST("/opportunities", CreatePMAOpportunity)
+		pma.GET("/opportunities", ListPMAOpportunities)
 	}
 	return r
 }
@@ -106,10 +108,10 @@ func TestPMA_OPCPermissionsAndDecisionAudit(t *testing.T) {
 	}
 }
 
-func TestPMA_DoesNotExposeOpportunityWorkflow(t *testing.T) {
+func TestPMA_OpportunityWorkflowIsControlled(t *testing.T) {
 	r := setupPMARouter()
-	w := doJSONFullAuth(t, r, "POST", "/api/v1/pma/opportunities", map[string]interface{}{"title": "不应存在的商机"}, 3, 3)
-	if w.Code != http.StatusNotFound {
-		t.Fatalf("PMA不应暴露商机入口，得到 %d", w.Code)
+	w := doJSONFullAuth(t, r, "POST", "/api/v1/pma/opportunities", map[string]interface{}{"title": "管理员越权商机"}, 3, 3)
+	if w.Code != http.StatusForbidden {
+		t.Fatalf("PMA商机入口必须受控，系统管理员无internal成员身份应403，得到 %d", w.Code)
 	}
 }

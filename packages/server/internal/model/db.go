@@ -91,6 +91,8 @@ func AutoMigrate(db *gorm.DB) error {
 		&Organization{},
 		&OrgMember{},
 		&AgentPrincipal{},
+		// PMA offline opportunity capture; separate from ArchivedProject and transaction domain.
+		&PMAOpportunity{},
 	)
 }
 

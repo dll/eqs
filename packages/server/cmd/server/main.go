@@ -339,6 +339,8 @@ func setupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 			pma.GET("/projects", handler.PMAListProjects)
 			pma.GET("/projects/:id/overview", handler.PMAProjectOverview)
 			pma.PUT("/projects/:id/todos/:tid/decision", handler.PMADecideTodo)
+			pma.POST("/opportunities", handler.CreatePMAOpportunity)
+			pma.GET("/opportunities", handler.ListPMAOpportunities)
 		}
 	}
 
