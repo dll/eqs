@@ -8,6 +8,28 @@ import (
 )
 
 func scoreAccess(c *gin.Context) bool { return requirePMAOpportunityAccess(c) }
+
+// scoreForMember 同时校验评分存在、商机存在，并要求当前成员属于该商机的组织。
+// PMAOpportunity.OwnerOrg 保存组织编码；不允许仅凭评分 ID 横向读取其他组织数据。
+func scoreForMember(c *gin.Context, scoreID uint) (*model.PMAScore, bool) {
+	var s model.PMAScore
+	if model.DB.Preload("Items").First(&s, scoreID).Error != nil {
+		notFound(c, "评分不存在")
+		return nil, false
+	}
+	var op model.PMAOpportunity
+	if model.DB.First(&op, s.OpportunityID).Error != nil {
+		notFound(c, "商机不存在")
+		return nil, false
+	}
+	var memberCount int64
+	model.DB.Model(&model.OrgMember{}).Joins("JOIN organizations ON organizations.id = org_members.org_id").Where("org_members.user_id = ? AND org_members.status = 1 AND organizations.type = ? AND organizations.status = 1 AND organizations.code = ?", c.GetUint("user_id"), "internal", op.OwnerOrg).Count(&memberCount)
+	if memberCount == 0 {
+		forbidden(c, "无该商机评分权限")
+		return nil, false
+	}
+	return &s, true
+}
 func scoreID(c *gin.Context) (uint, bool) {
 	n, e := strconv.ParseUint(c.Param("id"), 10, 32)
 	return uint(n), e == nil
@@ -38,6 +60,12 @@ func CreatePMAScore(c *gin.Context) {
 		notFound(c, "商机不存在")
 		return
 	}
+	var memberCount int64
+	model.DB.Model(&model.OrgMember{}).Joins("JOIN organizations ON organizations.id = org_members.org_id").Where("org_members.user_id = ? AND org_members.status = 1 AND organizations.type = ? AND organizations.status = 1 AND organizations.code = ?", c.GetUint("user_id"), "internal", op.OwnerOrg).Count(&memberCount)
+	if memberCount == 0 {
+		forbidden(c, "无该商机评分权限")
+		return
+	}
 	var max int
 	model.DB.Model(&model.PMAScore{}).Where("opportunity_id = ?", oid).Select("COALESCE(MAX(version),0)").Scan(&max)
 	s := model.PMAScore{OpportunityID: oid, Version: max + 1, CreatedBy: c.GetUint("user_id"), Items: scoreItems()}
@@ -59,9 +87,8 @@ func GetPMAScore(c *gin.Context) {
 		badRequest(c, "评分ID无效")
 		return
 	}
-	var s model.PMAScore
-	if model.DB.Preload("Items").First(&s, id).Error != nil {
-		notFound(c, "评分不存在")
+	s, ok := scoreForMember(c, id)
+	if !ok {
 		return
 	}
 	okJSON(c, s)
@@ -73,6 +100,17 @@ func ListPMAScores(c *gin.Context) {
 	oid, ok := scoreID(c)
 	if !ok {
 		badRequest(c, "商机ID无效")
+		return
+	}
+	var op model.PMAOpportunity
+	if model.DB.First(&op, oid).Error != nil {
+		notFound(c, "商机不存在")
+		return
+	}
+	var memberCount int64
+	model.DB.Model(&model.OrgMember{}).Joins("JOIN organizations ON organizations.id = org_members.org_id").Where("org_members.user_id = ? AND org_members.status = 1 AND organizations.type = ? AND organizations.status = 1 AND organizations.code = ?", c.GetUint("user_id"), "internal", op.OwnerOrg).Count(&memberCount)
+	if memberCount == 0 {
+		forbidden(c, "无该商机评分权限")
 		return
 	}
 	var ss []model.PMAScore
@@ -115,6 +153,10 @@ func UpdatePMAScoreItem(c *gin.Context) {
 		badRequest(c, "逐项编辑仅允许manual")
 		return
 	}
+	s, ok := scoreForMember(c, uint(id))
+	if !ok {
+		return
+	}
 	var item model.PMAScoreItem
 	if model.DB.First(&item, iid).Error != nil || item.ScoreID != uint(id) {
 		notFound(c, "评分项不存在")
@@ -126,8 +168,6 @@ func UpdatePMAScoreItem(c *gin.Context) {
 	item.Missing = in.Missing
 	item.Source = in.Source
 	model.DB.Save(&item)
-	var s model.PMAScore
-	model.DB.Preload("Items").First(&s, uint(id))
 	s.Blocked = false
 	s.BlockedReason = ""
 	s.ApplyGates()
@@ -144,6 +184,9 @@ func SuggestPMAScoreAI(c *gin.Context) {
 	id, ok := scoreID(c)
 	if !ok {
 		badRequest(c, "评分ID无效")
+		return
+	}
+	if _, ok := scoreForMember(c, id); !ok {
 		return
 	}
 	var in struct {

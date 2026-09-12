@@ -21,6 +21,11 @@ func setupPMARouter() *gin.Engine {
 		pma.PUT("/projects/:id/todos/:tid/decision", PMADecideTodo)
 		pma.POST("/opportunities", CreatePMAOpportunity)
 		pma.GET("/opportunities", ListPMAOpportunities)
+		pma.POST("/opportunities/:id/scores", CreatePMAScore)
+		pma.GET("/opportunities/:id/scores", ListPMAScores)
+		pma.GET("/scores/:id", GetPMAScore)
+		pma.PUT("/scores/:id/items/:itemId", UpdatePMAScoreItem)
+		pma.POST("/scores/:id/ai-suggestions", SuggestPMAScoreAI)
 	}
 	return r
 }

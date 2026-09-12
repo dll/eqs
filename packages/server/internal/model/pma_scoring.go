@@ -74,8 +74,14 @@ func (s *PMAScore) Recalculate() {
 }
 
 func (s *PMAScore) ApplyGates() {
+	if s.HardGates != "" {
+		s.Blocked = true
+		if s.BlockedReason == "" {
+			s.BlockedReason = s.HardGates
+		}
+	}
 	for _, i := range s.Items {
-		if i.Score == nil && (i.CategoryKey == "requirements" || i.CategoryKey == "technical_match" || i.CategoryKey == "compliance_security" || i.CategoryKey == "delivery_risk") {
+		if i.Score == nil && (i.CategoryKey == "requirements" || i.CategoryKey == "technical_match" || i.CategoryKey == "compliance_security" || i.CategoryKey == "schedule" || i.CategoryKey == "resources") {
 			s.Blocked = true
 			if s.BlockedReason == "" {
 				s.BlockedReason = "关键项存在unknown"
