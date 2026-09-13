@@ -20,9 +20,11 @@ func WriteAudit(c *gin.Context, action, targetType string, targetID uint, detail
 
 	var userID uint
 	var ip string
+	var requestID string
 	if c != nil {
 		userID = c.GetUint("user_id")
 		ip = c.ClientIP()
+		requestID = c.GetString("request_id")
 	}
 
 	if model.DB == nil {
@@ -32,6 +34,7 @@ func WriteAudit(c *gin.Context, action, targetType string, targetID uint, detail
 
 	entry := model.AuditLog{
 		UserID:     userID,
+		RequestID:  requestID,
 		Action:     action,
 		TargetType: targetType,
 		TargetID:   targetID,

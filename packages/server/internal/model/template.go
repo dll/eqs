@@ -31,6 +31,7 @@ type ContractTemplate struct {
 type AuditLog struct {
 	ID         uint      `json:"id" gorm:"primaryKey"`
 	UserID     uint      `json:"user_id" gorm:"index"`
+	RequestID  string    `json:"request_id,omitempty" gorm:"size:128;index"`
 	Action     string    `json:"action" gorm:"size:50"`
 	TargetType string    `json:"target_type" gorm:"size:50"`
 	TargetID   uint      `json:"target_id"`

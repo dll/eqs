@@ -37,6 +37,12 @@ func AdminUpsertConfig(c *gin.Context) {
 	if req.ValueType == "" {
 		req.ValueType = "string"
 	}
+	if req.IsPublic {
+		if err := validatePublicConfig(req.ConfigKey, req.ConfigValue); err != nil {
+			badRequest(c, err.Error())
+			return
+		}
+	}
 
 	var cfg model.SystemConfig
 	err := model.DB.Where("config_key = ?", req.ConfigKey).First(&cfg).Error
@@ -67,9 +73,9 @@ func AdminUpsertConfig(c *gin.Context) {
 		}
 	}
 
-	if req.IsPublic {
-		invalidatePublicCache()
-	}
+	// Any upsert may change public visibility or value; invalidate on both
+	// transitions so a public cache never serves a value that was made private.
+	invalidatePublicCache()
 	WriteAudit(c, "config.upsert", "config", cfg.ID, gin.H{"key": req.ConfigKey})
 	ok(c, gin.H{"config": cfg, "message": "配置已保存"})
 }

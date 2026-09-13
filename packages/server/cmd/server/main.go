@@ -94,6 +94,7 @@ func setupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 	r := gin.Default()
 
 	r.Use(middleware.CORS())
+	r.Use(middleware.RequestID())
 	r.Use(middleware.Logger())
 	r.Use(handler.MonitorMiddleware())
 

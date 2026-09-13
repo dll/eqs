@@ -2,6 +2,7 @@ package handler
 
 import (
 	"net/http"
+	"net/http/httptest"
 	"testing"
 	"time"
 
@@ -87,6 +88,21 @@ func TestAuditLogQuery_ListAndFilter(t *testing.T) {
 	}
 }
 
+func TestWriteAudit_PreservesRequestID(t *testing.T) {
+	setupAuditQueryRouter()
+	c, _ := gin.CreateTestContext(httptest.NewRecorder())
+	c.Request = httptest.NewRequest(http.MethodGet, "/test", nil)
+	c.Set("user_id", uint(3))
+	c.Set("request_id", "req-audit-123")
+	WriteAudit(c, "config.upsert", "config", 7, gin.H{"key": "theme.default"})
+	var entry model.AuditLog
+	if err := model.DB.Order("id DESC").First(&entry).Error; err != nil {
+		t.Fatalf("读取审计记录失败: %v", err)
+	}
+	if entry.RequestID != "req-audit-123" {
+		t.Fatalf("request_id = %q", entry.RequestID)
+	}
+}
 func TestAuditLogQuery_PermissionDeniedForClient(t *testing.T) {
 	r := setupAuditQueryRouter()
 	seedAudit(t, "project.publish", 1, "project", 101)

@@ -85,6 +85,75 @@ func TestConfigCenter_AdminCRUD(t *testing.T) {
 	}
 }
 
+func TestConfigCenter_PublicConfigRejectsSensitiveKeyOrValue(t *testing.T) {
+	r := setupConfigRouter()
+	cases := []struct {
+		name  string
+		key   string
+		value string
+	}{
+		{"密钥键", "payment.api_key", "public-value"},
+		{"密码键", "smtp.password", "public-value"},
+		{"私钥值", "integration.endpoint", "-----BEGIN PRIVATE KEY-----\\nsecret\\n-----END PRIVATE KEY-----"},
+		{"JWT值", "integration.endpoint", "eyJheader.eyJpayload.signature"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			w := doJSONFull(t, r, "POST", "/api/v1/admin/config/upsert", map[string]interface{}{
+				"config_key": tc.key, "config_value": tc.value, "is_public": true,
+			})
+			if w.Code != http.StatusBadRequest {
+				t.Fatalf("敏感配置公开应400，得到 %d: %s", w.Code, w.Body.String())
+			}
+		})
+	}
+	var count int64
+	model.DB.Model(&model.SystemConfig{}).Count(&count)
+	if count != 0 {
+		t.Fatalf("被拒绝的敏感配置不应写入数据库，得到 %d 条", count)
+	}
+}
+
+func TestConfigCenter_PrivateSensitiveConfigAllowed(t *testing.T) {
+	r := setupConfigRouter()
+	w := doJSONFull(t, r, "POST", "/api/v1/admin/config/upsert", map[string]interface{}{
+		"config_key": "payment.api_key", "config_value": "private-value", "is_public": false,
+	})
+	if w.Code != http.StatusOK {
+		t.Fatalf("敏感配置保持私密应允许，得到 %d: %s", w.Code, w.Body.String())
+	}
+}
+
+func TestConfigCenter_MakingPublicConfigPrivateInvalidatesPublicCache(t *testing.T) {
+	r := setupConfigRouter()
+	invalidatePublicCache()
+
+	w := doJSONFull(t, r, "POST", "/api/v1/admin/config/upsert", map[string]interface{}{
+		"config_key": "theme.default", "config_value": "light", "is_public": true,
+	})
+	if w.Code != http.StatusOK {
+		t.Fatalf("新增公开配置失败: %d %s", w.Code, w.Body.String())
+	}
+	w = doJSONFull(t, r, "GET", "/api/v1/config/public", nil)
+	if w.Code != http.StatusOK || decodeBody(t, w)["configs"].(map[string]interface{})["theme.default"] != "light" {
+		t.Fatalf("公开配置首次读取失败: %d %s", w.Code, w.Body.String())
+	}
+
+	w = doJSONFull(t, r, "POST", "/api/v1/admin/config/upsert", map[string]interface{}{
+		"config_key": "theme.default", "config_value": "dark", "is_public": false,
+	})
+	if w.Code != http.StatusOK {
+		t.Fatalf("改为私密配置失败: %d %s", w.Code, w.Body.String())
+	}
+	w = doJSONFull(t, r, "GET", "/api/v1/config/public", nil)
+	if w.Code != http.StatusOK {
+		t.Fatalf("读取公开配置失败: %d %s", w.Code, w.Body.String())
+	}
+	configs := decodeBody(t, w)["configs"].(map[string]interface{})
+	if _, leaked := configs["theme.default"]; leaked {
+		t.Fatalf("配置改为私密后不应继续从公开缓存返回: %v", configs)
+	}
+}
 func TestConfigCenter_UserPrefs(t *testing.T) {
 	r := setupConfigRouter()
 
