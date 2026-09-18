@@ -1,0 +1,48 @@
+openapi: 3.0.3
+info:
+  title: EQS AOC 只读适配器
+  version: 1.0.0
+  description: 为 AOC 提供 EQS 项目只读视图；所有接口仅允许 GET/HEAD。
+servers:
+  - url: /
+paths:
+  /adapter/v1/health:
+    get:
+      summary: 健康检查
+      responses: {"200": {description: 健康}, "503": {description: 数据库不可用}}
+  /adapter/v1/projects:
+    get:
+      summary: 项目列表
+      parameters:
+        - {name: page, in: query, schema: {type: integer, minimum: 1, default: 1}}
+        - {name: page_size, in: query, schema: {type: integer, minimum: 1, maximum: 100, default: 20}}
+        - {name: status, in: query, schema: {type: string, enum: [active, completed, cancelled]}}
+        - {name: project_id, in: query, schema: {type: string, enum: [eqs]}}
+      responses: {"200": {description: 项目列表}, "403": {description: 跨项目访问被拒绝}, "503": {description: 数据库不可用}}
+  /adapter/v1/projects/{id}/summary:
+    get:
+      summary: 项目脱敏摘要
+      parameters: [{name: id, in: path, required: true, schema: {type: string}}]
+      responses: {"200": {description: 项目摘要}, "404": {description: 项目不存在}, "503": {description: 数据库不可用}}
+  /adapter/v1/alerts:
+    get:
+      summary: 告警列表
+      parameters:
+        - {name: page, in: query, schema: {type: integer, minimum: 1, default: 1}}
+        - {name: page_size, in: query, schema: {type: integer, minimum: 1, maximum: 100, default: 20}}
+        - {name: severity, in: query, schema: {type: string, enum: [info, warning, error, critical]}}
+      responses: {"200": {description: 告警列表}, "503": {description: 数据库不可用}}
+  /adapter/v1/version:
+    get:
+      summary: 版本信息
+      responses: {"200": {description: 版本信息}, "503": {description: 数据库不可用}}
+components:
+  schemas:
+    Metadata:
+      type: object
+      required: [project_id, source, observed_at, schema_version]
+      properties:
+        project_id: {type: string, example: eqs}
+        source: {type: string, example: eqs}
+        observed_at: {type: string, format: date-time}
+        schema_version: {type: string, example: v1}

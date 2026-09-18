@@ -9,6 +9,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/eqs/server/internal/adapter"
 	"github.com/eqs/server/internal/config"
 	"github.com/eqs/server/internal/handler"
 	"github.com/eqs/server/internal/middleware"
@@ -97,6 +98,8 @@ func setupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 	r.Use(middleware.RequestID())
 	r.Use(middleware.Logger())
 	r.Use(handler.MonitorMiddleware())
+
+	adapter.Register(r, db)
 
 	api := r.Group("/api/v1")
 	{
